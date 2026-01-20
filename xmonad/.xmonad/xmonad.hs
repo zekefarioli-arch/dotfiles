@@ -135,4 +135,9 @@ main = do
     , ("M-w",          kill)
     , ("M-C-q",        io (exitWith ExitSuccess))
     , ("M-<Tab>",      sendMessage NextLayout)
+    , ("M-S-b",          spawn "polybar-msg cmd toggle")
+    -- Toggle Barra Principal (Monitor 0 / VGA)
+    , ("M-b",          spawn "~/.config/polybar/toggle-bar.sh main")
+    -- Toggle Barra Secundaria (Monitor 1 / DVI)
+    , ("M-C-b",        spawn "~/.config/polybar/toggle-bar.sh second")
     ]
