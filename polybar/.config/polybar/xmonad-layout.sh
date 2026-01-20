@@ -38,11 +38,11 @@ while read -r line; do
 
     # 3. CONVERT TEXT TO ICONS (Optional)
     case "$RAW_LAYOUT" in
-        *"Tall"*)      ICON_LAY=" " ;;  # Tiled/Columns
+        *"Tall"*)      ICON_LAY="󰯌 " ;;  # Tiled/Columns
         *"Full"*)      ICON_LAY=" " ;;  # Fullscreen
         *"Grid"*)      ICON_LAY=" " ;;  # Grid
-        *"ThreeCol"*)  ICON_LAY=" " ;;  # Three Columns
-        *"Mirror"*)    ICON_LAY=" " ;;  # Mirror/Stack
+        *"ThreeCol"*)  ICON_LAY="󰕫 " ;;  # Three Columns
+        *"Mirror"*)    ICON_LAY="󱢈 " ;;  # Mirror/Stack
         *)             ICON_LAY="$RAW_LAYOUT" ;; # Fallback to text if unknown
     esac
 
