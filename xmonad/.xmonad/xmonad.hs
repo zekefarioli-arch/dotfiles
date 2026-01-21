@@ -1,3 +1,7 @@
+-- ~/.xmonad/xmonad.hs
+-- XMonad + Polybar DBus (Catppuccin Mocha)
+-- All comments in English
+
 import XMonad
 import XMonad.Config (def)
 import XMonad.Util.EZConfig (additionalKeysP)
@@ -15,7 +19,11 @@ import System.Exit (exitWith, ExitCode(ExitSuccess))
 
 import XMonad.Layout.Grid
 import XMonad.Layout.ThreeColumns
-import XMonad.Layout.NoBorders  -- Necessary for removing borders in Fullscreen
+import XMonad.Layout.NoBorders  -- Removes borders in fullscreen (Full)
+
+-- Needed for per-screen focused window title (WIN0 / WIN1)
+import XMonad.Util.NamedWindows (getName)
+import Data.Char (toUpper) -- Para formatear nombres si se desea
 
 -- ==========================================================================
 -- COLORS (Catppuccin Mocha)
@@ -28,16 +36,17 @@ colorEmp  = "#6c7086" -- Light Grey (Empty)
 
 -- Window Borders
 myBorderWidth = 2
-myNormColor   = "#313244" -- Dark grey for unfocused windows
-myFocusColor  = "#f5c2e7" -- Pink for focused windows
+myNormColor   = "#313244" -- Unfocused windows
+myFocusColor  = "#f5c2e7" -- Focused window
 
-myWorkspaces :: [String]
+-- ==========================================================================
+-- WORKSPACES
+-- ==========================================================================
 myWorkspaces = ["1","2","3","4","5","6","7","8"]
 
 -- ==========================================================================
 -- LAYOUTS
 -- ==========================================================================
--- 'noBorders Full' ensures no pink border when in fullscreen mode
 myLayout = avoidStruts $ tiled ||| Mirror tiled ||| noBorders Full ||| Grid ||| threeCol
   where
     tiled    = Tall nmaster delta ratio
@@ -47,66 +56,79 @@ myLayout = avoidStruts $ tiled ||| Mirror tiled ||| noBorders Full ||| Grid ||| 
     delta    = 3/100
 
 -- ==========================================================================
--- CUSTOM LOGGERS (The magic for Polybar)
+-- CUSTOM LOGGERS (For Polybar via DBus)
 -- ==========================================================================
 
--- 1. Detect Active Screen ID (0, 1) fixed to Int
+-- 1) Active screen ID (0, 1, ...)
 logScreen :: X (Maybe String)
 logScreen = do
   s <- gets windowset
-  -- Use fromIntegral to send "0" instead of "S 0"
   return $ Just $ "SCREEN:" ++ show (fromIntegral (W.screen (W.current s)) :: Int)
 
--- 2. Detect Layouts of ALL screens
+-- 2) Layouts for ALL screens
 logLayouts :: X (Maybe String)
 logLayouts = do
   ws <- gets windowset
   let allScreens = W.current ws : W.visible ws
-  -- Format: LAY0:Tall LAY1:Grid (Using fromIntegral for the ID)
-  let formatScreen s = "LAY" ++ show (fromIntegral (W.screen s) :: Int) ++ ":" ++ description (W.layout (W.workspace s))
+      formatScreen s =
+        "LAY" ++ show (fromIntegral (W.screen s) :: Int)
+        ++ ":" ++ description (W.layout (W.workspace s))
   return $ Just $ unwords $ map formatScreen allScreens
 
--- Function to make workspaces clickable
-wrapClick :: String -> String -> String
+-- 3) Focused window title PER screen (CORREGIDO: Programa - Título)
+logWinTitles :: X (Maybe String)
+logWinTitles = do
+  ws <- gets windowset
+  let allScreens = W.current ws : W.visible ws
+  parts <- mapM one allScreens
+  return $ Just $ unwords parts
+  where
+    one s = do
+      let sid = show (fromIntegral (W.screen s) :: Int)
+          mW  = W.focus <$> W.stack (W.workspace s)
+      titleString <- case mW of
+        Nothing -> return "-"
+        Just w  -> do
+          cls <- runQuery className w -- Obtiene el nombre de la app (ej: kitty, code)
+          name <- fmap show (getName w) -- Obtiene el título de la ventana
+          -- Si la clase y el nombre son iguales, solo muestra uno. Si no, Programa - Título
+          return $ if cls == name || null name 
+                   then cls 
+                   else cls ++ " - " ++ name
+      let clean = map (\c -> if c == '\n' then ' ' else c) titleString
+      return $ "WIN" ++ sid ++ ":" ++ clean
+
+-- Make workspaces clickable
 wrapClick ws content = "%{A1:xdotool key super+" ++ ws ++ ":}" ++ content ++ "%{A}"
 
--- Configuration of what is sent to Polybar via DBus
-dbusPP :: D.Client -> PP
+-- DBus PP: what we send to Polybar
 dbusPP dbus = def
   { ppOutput = \str -> do
-      let signal = (D.signal objectPath interfaceName memberName) { D.signalBody = [D.toVariant str] }
+      let signal = (D.signal objectPath interfaceName memberName)
+                    { D.signalBody = [D.toVariant str] }
       D.emit dbus signal
-   
-  -- Workspace state colors
   , ppCurrent = \ws -> wrapClick ws $ "%{B" ++ colorAct ++ "}%{F" ++ colorBack ++ "} " ++ ws ++ " %{F-}%{B-}"
   , ppVisible = \ws -> wrapClick ws $ "%{B" ++ colorVis ++ "}%{F" ++ colorBack ++ "} " ++ ws ++ " %{F-}%{B-}"
   , ppHidden  = \ws -> wrapClick ws $ "%{B" ++ colorOcc ++ "}%{F" ++ colorVis ++ "} " ++ ws ++ " %{F-}%{B-}"
   , ppHiddenNoWindows = \ws -> wrapClick ws $ "%{F" ++ colorEmp ++ "} " ++ ws ++ " %{F-}"
-   
-  , ppSep     = "" 
-  , ppWsSep   = ""
-   
-  -- ADD EXTRAS: Screen ID and Layout List
-  , ppExtras  = [ logScreen, logLayouts ]
-   
-  -- ORDER: Only send Workspaces and Extras (the bash script processes the rest)
-  , ppOrder   = \(ws:_:_:ex) -> [ws] ++ ex
+  , ppSep   = " "
+  , ppWsSep = " "
+  , ppExtras = [ logScreen, logLayouts, logWinTitles ]
+  , ppOrder  = \(ws : _ : _ : ex) -> [ws] ++ ex
   }
   where
     objectPath    = D.objectPath_ "/org/xmonad/Log"
     interfaceName = D.interfaceName_ "org.xmonad.Log"
     memberName    = D.memberName_ "Update"
 
-getWellKnownName :: D.Client -> IO ()
 getWellKnownName dbus = do
   let name = D.busName_ "org.xmonad.Log"
-  _ <- D.requestName dbus name [D.nameAllowReplacement, D.nameReplaceExisting, D.nameDoNotQueue]
+  _ <- D.requestName dbus name [ D.nameAllowReplacement, D.nameReplaceExisting, D.nameDoNotQueue ]
   return ()
 
 -- ==========================================================================
 -- MAIN
 -- ==========================================================================
-main :: IO ()
 main = do
   dbus <- D.connectSession
   getWellKnownName dbus
@@ -119,7 +141,7 @@ main = do
     , manageHook         = manageDocks <+> manageHook def
     , startupHook        = spawnOnce "sh /home/zeke/.xmonad/autostart.sh"
     , logHook            = dynamicLogWithPP (dbusPP dbus)
-    
+     
     -- Border configuration
     , borderWidth        = myBorderWidth
     , normalBorderColor  = myNormColor
