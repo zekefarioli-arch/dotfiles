@@ -92,8 +92,8 @@ logWinTitles = do
           cls <- runQuery className w -- Obtiene el nombre de la app (ej: kitty, code)
           name <- fmap show (getName w) -- Obtiene el título de la ventana
           -- Si la clase y el nombre son iguales, solo muestra uno. Si no, Programa - Título
-          return $ if cls == name || null name 
-                   then cls 
+          return $ if cls == name || null name
+                   then cls
                    else cls ++ " - " ++ name
       let clean = map (\c -> if c == '\n' then ' ' else c) titleString
       return $ "WIN" ++ sid ++ ":" ++ clean
@@ -141,14 +141,14 @@ main = do
     , manageHook         = manageDocks <+> manageHook def
     , startupHook        = spawnOnce "sh /home/zeke/.xmonad/autostart.sh"
     , logHook            = dynamicLogWithPP (dbusPP dbus)
-     
+
     -- Border configuration
     , borderWidth        = myBorderWidth
     , normalBorderColor  = myNormColor
     , focusedBorderColor = myFocusColor
     }
     `additionalKeysP`
-    [ ("M-r",          spawn "rofi -show drun")
+    [ ("M-r",          spawn "rofi -show combi -combi-modes 'drun,run,window'")
     , ("<Print>",      spawn "flameshot gui")
     , ("M-l",          spawn "i3lock-fancy")
     , ("M-<Return>",   spawn "kitty")
@@ -157,9 +157,15 @@ main = do
     , ("M-w",          kill)
     , ("M-C-q",        io (exitWith ExitSuccess))
     , ("M-<Tab>",      sendMessage NextLayout)
-    , ("M-S-b",          spawn "polybar-msg cmd toggle")
+    , ("M-S-b",        spawn "polybar-msg cmd toggle")
     -- Toggle Barra Principal (Monitor 0 / VGA)
     , ("M-b",          spawn "~/.config/polybar/toggle-bar.sh main")
     -- Toggle Barra Secundaria (Monitor 1 / DVI)
     , ("M-C-b",        spawn "~/.config/polybar/toggle-bar.sh second")
+
+    -- Full layout with bar: Win + F
+    , ("M-f",          sendMessage (JumpToLayout "Full"))
+
+    -- Fullscreen like F11 (toggle bar) and jump to Full: Win + Ctrl + F
+    , ("M-C-f",        sendMessage ToggleStruts >> sendMessage (JumpToLayout "Full"))
     ]
