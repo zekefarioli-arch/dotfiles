@@ -42,7 +42,18 @@ myFocusColor  = "#f5c2e7" -- Focused window
 -- ==========================================================================
 -- WORKSPACES
 -- ==========================================================================
-myWorkspaces = ["1","2","3","4","5","6","7","8"]
+myWorkspaces =
+  [ "1 \xF268"   -- web: Chrome        (nf-fa-chrome)
+  , "2 \xF07C"   -- file manager       (nf-fa-folder)
+  , "3 \xF120"   -- terminal           (nf-fa-terminal)
+  , "4 \xF09B"   -- github             (nf-fa-github)
+  , "5 \xE70C"   -- VS Code            (nf-dev-visualstudio)
+  , "6 \xF001"   -- entertainment      (music / video)
+  , "7 \xF02AB"  -- gmail              (nf-md-gmail)
+  , "8 \xF232"   -- WhatsApp           (nf-fa-whatsapp)
+  , "9 \xf1c2"   -- file-alt (nf-fa-file_alt)
+  ]
+
 
 -- ==========================================================================
 -- LAYOUTS
@@ -149,6 +160,7 @@ main = do
     }
     `additionalKeysP`
     [ ("M-r",          spawn "rofi -show combi -combi-modes 'drun,run,window'")
+    , ("M-t",       spawn "rofi -show window")
     , ("<Print>",      spawn "flameshot gui")
     , ("M-l",          spawn "i3lock-fancy")
     , ("M-<Return>",   spawn "kitty")

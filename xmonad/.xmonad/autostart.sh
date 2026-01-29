@@ -21,7 +21,7 @@ pkill -x xidlehook 2>/dev/null || true
 # Lock tras 4 minutos
 xidlehook \
   --not-when-fullscreen \
-  --timer 240 'i3lock-fancy' '' &
+  --timer 600 'i3lock-fancy' '' &
 
 pkill polybar
 sleep 1

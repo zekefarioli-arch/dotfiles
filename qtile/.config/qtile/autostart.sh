@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 source ~/.xprofile
 autorandr --load 2monitors
-feh --no-fehbg --bg-fill ~/Pictures/wallpaper/messi01.jpg ~/Pictures/wallpaper/lionel-messi-leo-messi-wallpaper-494088ed019a5d5bd6f7b8af4081d64d.jpg
+feh --no-fehbg --bg-fill ~/Pictures/catpuccin/bluehour.jpg ~/Pictures/catpuccin/Gemini_Generated_Image_trjufdtrjufdtrju.png
 
 # 3) Compositor
 picom &
