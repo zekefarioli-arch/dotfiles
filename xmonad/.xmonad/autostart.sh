@@ -25,8 +25,7 @@ xidlehook \
 
 pkill polybar
 sleep 1
-polybar main &
-polybar second &
+~/.config/polybar/launch-polybar.sh &
 # 4) Fondo de pantalla (Solo una vez es necesario)
 feh --no-fehbg --bg-fill ~/Pictures/catpuccin/city-horizon.jpg ~/Pictures/catpuccin/flower.jpg &
 
