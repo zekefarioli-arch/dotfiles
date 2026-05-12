@@ -19,8 +19,8 @@ pkill -x xidlehook 2>/dev/null || true
 
 # Lock tras 4 minutos de inactividad
 xidlehook \
-  --not-when-fullscreen \
-  --timer 240 'i3lock-fancy' '' &
+  # --not-when-fullscreen \
+  # --timer 240 'i3lock-fancy' '' &
 
 # 4) Fondo de pantalla
 feh --bg-fill ~/Pictures/wallpaper.jpg &

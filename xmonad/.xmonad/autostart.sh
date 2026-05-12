@@ -20,15 +20,15 @@ pkill -x xidlehook 2>/dev/null || true
 
 # Lock tras 4 minutos
 xidlehook \
-  --not-when-fullscreen \
-  --timer 600 'i3lock-fancy' '' &
+  # --not-when-fullscreen \
+  # --timer 600 'i3lock-fancy' '' &
 
 pkill polybar
 sleep 1
 polybar main &
 polybar second &
 # 4) Fondo de pantalla (Solo una vez es necesario)
-feh --no-fehbg --bg-fill ~/Pictures/wallpaper/messi01.jpg ~/Pictures/wallpaper/lionel-messi-leo-messi-wallpaper-494088ed019a5d5bd6f7b8af4081d64d.jpg &
+feh --no-fehbg --bg-fill ~/Pictures/catpuccin/city-horizon.jpg ~/Pictures/catpuccin/flower.jpg &
 
 
 
