@@ -19,7 +19,7 @@ import XMonad.ManageHook (doFloat, composeAll, (-->))
 
 import qualified XMonad.StackSet as W
 
-import Control.Monad (forM_)
+import Control.Monad (filterM, forM_, when)
 
 import Data.Char (toLower)
 import Data.List (elemIndex, find, isInfixOf)
@@ -83,8 +83,7 @@ myBorderWidth = 2
 myNormColor   = "#313244"
 myFocusColor  = "#f5c2e7"
 
--- wezterm no está en los repos de Fedora: si falta, usa alacritty
-myTerminal = "sh -c 'command -v wezterm >/dev/null && exec wezterm || exec alacritty'"
+myTerminal = "terminator"
 
 -- ==========================================================================
 -- WORKSPACES
@@ -106,18 +105,32 @@ myWorkspaces =
 -- SCRATCHPADS (terminal desplegable)
 -- ==========================================================================
 
--- wezterm (clase "dropterm", tema de alto contraste en dropterm.lua) con la
--- sesión de tmux "drop":
+-- Terminator con role "dropterm" corriendo la sesión de tmux "drop":
 -- al ocultarlo o cerrarlo, lo que corre adentro (p. ej. Claude) sigue vivo
--- y se reconecta al volver a abrirlo. Flota a pantalla completa.
+-- y se reconecta al volver a abrirlo. Flota a todo lo ancho y deja visible
+-- la barra de abajo (35px de 1080), con la hora y el aviso de que está abierto.
 -- Para cambiar el tamaño: RationalRect x y ancho alto (0.5 = 50%).
 scratchpads :: [NamedScratchpad]
 scratchpads =
     [ NS "drop"
-         "wezterm --config-file ~/.config/wezterm/dropterm.lua start --class dropterm -- tmux new-session -A -s drop"
-         (className =? "dropterm")
-         (customFloating $ W.RationalRect 0 0 1 1)
+         "terminator -r dropterm -x tmux new-session -A -s drop"
+         isDrop
+         (customFloating $ W.RationalRect 0 0 1 (1045 / 1080))
     ]
+
+isDrop :: Query Bool
+isDrop = stringProperty "WM_WINDOW_ROLE" =? "dropterm"
+
+-- ¿El desplegable está en el workspace de esa pantalla?
+dropOnWorkspace :: W.Workspace i l Window -> X Bool
+dropOnWorkspace w = not . null <$> filterM (runQuery isDrop) (W.integrate' (W.stack w))
+
+-- Oculta el desplegable si está abierto (antes de abrir otra cosa encima)
+hideDrop :: X ()
+hideDrop = do
+    cur <- gets (W.workspace . W.current . windowset)
+    visible <- dropOnWorkspace cur
+    when visible $ namedScratchpadAction scratchpads "drop"
 
 -- ==========================================================================
 -- LAYOUTS
@@ -185,9 +198,10 @@ screenPP s = def
     , ppExtras          = [ logScreenIndicator s
                           , fmap (fmap layoutBlock) (logLayoutOnScreen s)
                           , fmap (fmap (sep ++)) (logWinTitleOnScreen s)
+                          , logDropBadge s
                           ]
     , ppOrder           = \xs -> case xs of
-                              (ws : _ : _ : ind : lay : win : _) -> [ind, ws, lay, win]
+                              (ws : _ : _ : ind : lay : win : badge : _) -> [ind, badge, ws, lay, win]
                               _                                  -> xs
     }
   where
@@ -201,6 +215,16 @@ logScreenIndicator s = do
     pure $ Just $ if cur == s
         then fgbg colorBack colorAct  "  \xF0379   "
         else fgbg colorEmp  colorBack "  \xF0D90   "
+
+-- Aviso naranja mientras el desplegable tapa esa pantalla
+logDropBadge :: ScreenId -> X (Maybe String)
+logDropBadge s = do
+    ws <- gets windowset
+    case find ((== s) . W.screen) (W.current ws : W.visible ws) of
+        Nothing -> pure Nothing
+        Just sc -> do
+            open <- dropOnWorkspace (W.workspace sc)
+            pure $ if open then Just (fgbg colorBack "#fab387" " \xF018D desplegable ") else Nothing
 
 -- Ventana con foco en esa pantalla, con ícono según la aplicación
 logWinTitleOnScreen :: ScreenId -> X (Maybe String)
@@ -259,23 +283,23 @@ main = xmonad
             <+> manageDocks
             <+> manageHook def
         , startupHook        = spawnOnce "sh /home/zeke/.xmonad/autostart.sh" >> launchBars
-        , logHook            = barsLogHook
+        , logHook            = barsLogHook >> nsHideOnFocusLoss scratchpads
         , borderWidth        = myBorderWidth
         , normalBorderColor  = myNormColor
         , focusedBorderColor = myFocusColor
         }
         `additionalKeysP`
-        [ ("M-r",        spawn "rofi -show combi -combi-modes 'drun,run,window'")
-        , ("M-t",        spawn "rofi -show window")
-        , ("M-e",        spawn "thunar")
+        [ ("M-r",        hideDrop >> spawn "rofi -show combi -combi-modes 'drun,run,window'")
+        , ("M-t",        hideDrop >> spawn "rofi -show window")
+        , ("M-e",        hideDrop >> spawn "thunar")
         , ("<Print>",    spawn "maim -s -u 2>/dev/null | xclip -selection clipboard -t image/png")
         , ("M-l",        spawn "~/.local/bin/lock-screen")
-        , ("M-<Return>", spawn myTerminal)
+        , ("M-<Return>", hideDrop >> spawn myTerminal)
         , ("M-q",        spawn "xmonad --recompile; xmonad --restart")
         , ("M-v",        spawn "copyq toggle")
         , ("M-w",        kill)
         , ("M-C-q",      io (exitWith ExitSuccess))
-        , ("M-<Tab>",    spawn "rofi -show window -show-icons")
+        , ("M-<Tab>",    hideDrop >> spawn "rofi -show window -show-icons")
         , ("M-C-<Tab>",  sendMessage NextLayout)
         , ("M-S-b",      spawn "polybar-msg cmd toggle")
         , ("M-b",        spawn "~/.config/polybar/toggle-bar.sh main")
