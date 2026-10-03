@@ -6,9 +6,11 @@ import XMonad.Util.EZConfig (additionalKeysP)
 import XMonad.Util.SpawnOnce (spawnOnce)
 import XMonad.Util.Loggers (logLayoutOnScreen)
 import XMonad.Util.NamedWindows (getName)
+import XMonad.Util.NamedScratchpad
+import XMonad.Util.WorkspaceCompare (filterOutWs)
 
 import XMonad.Hooks.ManageDocks
-import XMonad.Hooks.EwmhDesktops (ewmh, ewmhFullscreen)
+import XMonad.Hooks.EwmhDesktops (ewmh, ewmhFullscreen, addEwmhWorkspaceSort)
 import XMonad.Hooks.Rescreen
 import XMonad.Hooks.StatusBar
 import XMonad.Hooks.StatusBar.PP
@@ -26,6 +28,7 @@ import System.Exit (exitWith, ExitCode(ExitSuccess))
 import XMonad.Layout.Grid
 import XMonad.Layout.ThreeColumns
 import XMonad.Layout.NoBorders
+import XMonad.Layout.Fullscreen (fullscreenSupport)
 
 -- ==========================================================================
 -- F1 LAYOUT
@@ -100,6 +103,20 @@ myWorkspaces =
     ]
 
 -- ==========================================================================
+-- SCRATCHPADS (terminal desplegable)
+-- ==========================================================================
+
+-- wezterm con clase "dropterm", flotando a pantalla completa.
+-- Para cambiar el tamaño: RationalRect x y ancho alto (0.5 = 50%).
+scratchpads :: [NamedScratchpad]
+scratchpads =
+    [ NS "drop"
+         "wezterm start --class dropterm"
+         (className =? "dropterm")
+         (customFloating $ W.RationalRect 0 0 1 1)
+    ]
+
+-- ==========================================================================
 -- LAYOUTS
 -- ==========================================================================
 
@@ -129,7 +146,7 @@ barsLogHook :: X ()
 barsLogHook = do
     screens <- gets (map W.screen . W.screens . windowset)
     forM_ screens $ \s@(S n) ->
-        dynamicLogString (screenPP s) >>= xmonadPropLog' ("_XMONAD_LOG_" ++ show n)
+        dynamicLogString (filterOutWsPP [scratchpadWorkspaceTag] (screenPP s)) >>= xmonadPropLog' ("_XMONAD_LOG_" ++ show n)
 
 -- Mata todas las barras y lanza una por monitor conectado
 launchBars :: X ()
@@ -219,7 +236,10 @@ myRescreen = def
 
 main :: IO ()
 main = xmonad
-     . ewmhFullscreen . ewmh . docks
+     . ewmhFullscreen
+     . addEwmhWorkspaceSort (pure (filterOutWs [scratchpadWorkspaceTag]))
+     . ewmh . docks
+     . fullscreenSupport
      . rescreenHook myRescreen
      $ def
         { terminal           = myTerminal
@@ -227,7 +247,8 @@ main = xmonad
         , workspaces         = myWorkspaces
         , layoutHook         = myLayout
         , manageHook =
-            composeAll
+            namedScratchpadManageHook scratchpads
+            <+> composeAll
                 [ className =? "kmag"  --> doFloat
                 , className =? "KMag"  --> doFloat
                 , title     =? "KMag"  --> doFloat
@@ -244,7 +265,7 @@ main = xmonad
         [ ("M-r",        spawn "rofi -show combi -combi-modes 'drun,run,window'")
         , ("M-t",        spawn "rofi -show window")
         , ("M-e",        spawn "thunar")
-        , ("<Print>",    spawn "flameshot gui")
+        , ("<Print>",    spawn "maim -s -u 2>/dev/null | xclip -selection clipboard -t image/png")
         , ("M-l",        spawn "i3lock -c 1e1e2e")
         , ("M-<Return>", spawn myTerminal)
         , ("M-q",        spawn "xmonad --recompile; xmonad --restart")
@@ -260,6 +281,8 @@ main = xmonad
         , ("M-C-f",      sendMessage ToggleStruts >> sendMessage (JumpToLayout "Full"))
         , ("M-C-m",      spawn "sh -c 'pgrep -x kmag >/dev/null && pkill -x kmag || kmag'")
         , ("M-C-S-m",    spawn "pkill -x kmag")
+        -- Terminal desplegable (toggle): Ctrl + Win + T
+        , ("M-C-t",      namedScratchpadAction scratchpads "drop")
         , ("<XF86AudioRaiseVolume>",  spawn "wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+")
         , ("<XF86AudioLowerVolume>",  spawn "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-")
         , ("<XF86AudioMute>",         spawn "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle")
