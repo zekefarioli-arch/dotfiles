@@ -1,0 +1,3 @@
+# Snapper pre/post snapshots of / around every dnf transaction
+pre_transaction::::/usr/bin/sh -c echo\ "tmp.snapper_pre_number=$(snapper\ -c\ root\ create\ -t\ pre\ -c\ number\ -p\ -d\ 'dnf\ transaction')"
+post_transaction::::/usr/bin/sh -c [\ -n\ "${tmp.snapper_pre_number}"\ ]\ &&\ snapper\ -c\ root\ create\ -t\ post\ -c\ number\ --pre-number\ "${tmp.snapper_pre_number}"\ -d\ 'dnf\ transaction'\ ;\ echo\ tmp.snapper_pre_number=
