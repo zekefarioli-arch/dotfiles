@@ -21,8 +21,10 @@ xss-lock -- ~/.local/bin/lock-screen &
 xsetroot -cursor_name left_ptr
 
 # 4) Wallpaper
-if [ -f ~/Pictures/catpuccin/city-horizon.jpg ]; then
-  feh --no-fehbg --bg-fill ~/Pictures/catpuccin/city-horizon.jpg ~/Pictures/catpuccin/flower.jpg &
+# Catppuccin Mocha wallpapers from orangci/walls-catppuccin-mocha (one image
+# on every monitor)
+if [ -f ~/Pictures/catpuccin/dark-forest.jpg ]; then
+  feh --no-fehbg --bg-fill ~/Pictures/catpuccin/dark-forest.jpg &
 elif [ -x ~/.fehbg ]; then
   ~/.fehbg &
 else
