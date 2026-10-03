@@ -106,15 +106,16 @@ myWorkspaces =
 -- SCRATCHPADS (terminal desplegable)
 -- ==========================================================================
 
--- Terminator con role "dropterm" corriendo la sesión de tmux "drop":
+-- wezterm (clase "dropterm", tema de alto contraste en dropterm.lua) con la
+-- sesión de tmux "drop":
 -- al ocultarlo o cerrarlo, lo que corre adentro (p. ej. Claude) sigue vivo
 -- y se reconecta al volver a abrirlo. Flota a pantalla completa.
 -- Para cambiar el tamaño: RationalRect x y ancho alto (0.5 = 50%).
 scratchpads :: [NamedScratchpad]
 scratchpads =
     [ NS "drop"
-         "terminator -r dropterm -x tmux new-session -A -s drop"
-         (stringProperty "WM_WINDOW_ROLE" =? "dropterm")
+         "wezterm --config-file ~/.config/wezterm/dropterm.lua start --class dropterm -- tmux new-session -A -s drop"
+         (className =? "dropterm")
          (customFloating $ W.RationalRect 0 0 1 1)
     ]
 
