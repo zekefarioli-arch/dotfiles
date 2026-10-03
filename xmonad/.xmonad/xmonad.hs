@@ -217,15 +217,17 @@ logScreenIndicator s = do
         then fgbg colorBack colorAct  "  \xF0379   "
         else fgbg colorEmp  colorBack "  \xF0D90   "
 
--- Orange badge while the dropdown covers that screen
+-- Orange badge while the dropdown covers that screen. It returns Just ""
+-- rather than Nothing when hidden: dynamicLogString drops Nothing extras,
+-- which would shift the list and break the ppOrder pattern.
 logDropBadge :: ScreenId -> X (Maybe String)
 logDropBadge s = do
     ws <- gets windowset
     case find ((== s) . W.screen) (W.current ws : W.visible ws) of
-        Nothing -> pure Nothing
+        Nothing -> pure (Just "")
         Just sc -> do
             open <- dropOnWorkspace (W.workspace sc)
-            pure $ if open then Just (fgbg colorBack "#fab387" " \xF018D dropdown ") else Nothing
+            pure $ Just $ if open then fgbg colorBack "#fab387" " \xF018D dropdown " else ""
 
 -- Focused window on that screen, with an icon per application
 logWinTitleOnScreen :: ScreenId -> X (Maybe String)
