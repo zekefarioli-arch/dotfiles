@@ -12,6 +12,7 @@ import XMonad.Util.WorkspaceCompare (filterOutWs)
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.EwmhDesktops (ewmh, ewmhFullscreen, addEwmhWorkspaceSort)
 import XMonad.Hooks.Rescreen
+import XMonad.Hooks.RefocusLast (refocusLastLogHook)
 import XMonad.Hooks.StatusBar
 import XMonad.Hooks.StatusBar.PP
 
@@ -283,7 +284,7 @@ main = xmonad
             <+> manageDocks
             <+> manageHook def
         , startupHook        = spawnOnce "sh /home/zeke/.xmonad/autostart.sh" >> launchBars
-        , logHook            = barsLogHook >> nsHideOnFocusLoss scratchpads
+        , logHook            = barsLogHook >> refocusLastLogHook >> nsHideOnFocusLoss scratchpads
         , borderWidth        = myBorderWidth
         , normalBorderColor  = myNormColor
         , focusedBorderColor = myFocusColor
