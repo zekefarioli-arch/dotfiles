@@ -86,7 +86,7 @@ myBorderWidth = 2
 myNormColor   = "#313244"
 myFocusColor  = "#f5c2e7"
 
-myTerminal = "terminator"
+myTerminal = "alacritty"
 
 -- ==========================================================================
 -- WORKSPACES
@@ -108,7 +108,8 @@ myWorkspaces =
 -- SCRATCHPADS (dropdown terminal)
 -- ==========================================================================
 
--- Terminator with role "dropterm" running the tmux session "drop": hiding
+-- Alacritty with class "dropterm" (high-contrast theme in dropterm.toml)
+-- running the tmux session "drop": hiding
 -- or closing it keeps whatever runs inside (e.g. Claude) alive, and it is
 -- reattached on the next toggle. It floats full width and leaves the bottom
 -- bar visible (35px out of 1080), with the clock and the "dropdown" badge.
@@ -116,13 +117,13 @@ myWorkspaces =
 scratchpads :: [NamedScratchpad]
 scratchpads =
     [ NS "drop"
-         "terminator -r dropterm -x tmux new-session -A -s drop"
+         "alacritty --config-file ~/.config/alacritty/dropterm.toml --class dropterm -e tmux new-session -A -s drop"
          isDrop
          (customFloating $ W.RationalRect 0 0 1 (1045 / 1080))
     ]
 
 isDrop :: Query Bool
-isDrop = stringProperty "WM_WINDOW_ROLE" =? "dropterm"
+isDrop = className =? "dropterm"
 
 -- Is the dropdown on that screen's workspace?
 dropOnWorkspace :: W.Workspace i l Window -> X Bool

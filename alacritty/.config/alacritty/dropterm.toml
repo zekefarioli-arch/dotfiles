@@ -1,0 +1,42 @@
+# ~/.config/alacritty/dropterm.toml — dropdown terminal (Super+Ctrl+T)
+# Inherits alacritty.toml and applies the high-contrast theme that terminator had.
+
+[general]
+import = ["~/.config/alacritty/alacritty.toml"]
+
+[window]
+opacity = 1.0
+padding = { x = 4, y = 2 }
+
+[colors.primary]
+background = "#0b0b12"
+foreground = "#f4f6ff"
+bright_foreground = "#ffffff"
+
+[colors.cursor]
+text = "#0b0b12"
+cursor = "#f5c2e7"
+
+[colors.selection]
+text = "#0b0b12"
+background = "#f5c2e7"
+
+[colors.normal]
+black = "#45475a"
+red = "#ff7aa2"
+green = "#a6e3a1"
+yellow = "#f9e2af"
+blue = "#89b4fa"
+magenta = "#f5c2e7"
+cyan = "#94e2d5"
+white = "#dce0f0"
+
+[colors.bright]
+black = "#6c7086"
+red = "#ff9ab8"
+green = "#c3f5be"
+yellow = "#fff0c4"
+blue = "#a9c8ff"
+magenta = "#ffd6f1"
+cyan = "#b6f2e6"
+white = "#ffffff"
