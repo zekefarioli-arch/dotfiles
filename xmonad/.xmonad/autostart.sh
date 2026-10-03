@@ -1,37 +1,33 @@
 #!/usr/bin/env bash
+# Autostart de XMonad (Fedora). Las barras las lanza xmonad, no este script.
 
 # 1) Configuración de pantalla y entorno
-source ~/.xprofile
-autorandr --load 2monitors
+[ -f ~/.xprofile ] && source ~/.xprofile
+autorandr --change --default horizontal
 
 # 2) Compositor (Transparencias y sombras)
-# Matamos instancias previas para evitar duplicados al recargar
-pkill picom
-picom &
+pkill -x picom
+picom --backend glx &
 
 # 3) Configuración de energía y protector de pantalla
 xset s off
 xset +dpms
 xset dpms 300 300 300
 
-# Limpieza de procesos de bloqueo anteriores
+# Bloqueo al suspender / cerrar la tapa (xidlehook no está en Fedora)
 pkill -x xss-lock 2>/dev/null || true
-pkill -x xidlehook 2>/dev/null || true
+xss-lock -- i3lock -n -c 1e1e2e &
 
-# Lock tras 4 minutos
-xidlehook \
-  # --not-when-fullscreen \
-  # --timer 600 'i3lock-fancy' '' &
+# 4) Fondo de pantalla
+if [ -f ~/Pictures/catpuccin/city-horizon.jpg ]; then
+  feh --no-fehbg --bg-fill ~/Pictures/catpuccin/city-horizon.jpg ~/Pictures/catpuccin/flower.jpg &
+elif [ -x ~/.fehbg ]; then
+  ~/.fehbg &
+else
+  xsetroot -solid '#1e1e2e'
+fi
 
-pkill polybar
-sleep 1
-~/.config/polybar/launch-polybar.sh &
-# 4) Fondo de pantalla (Solo una vez es necesario)
-feh --no-fehbg --bg-fill ~/Pictures/catpuccin/city-horizon.jpg ~/Pictures/catpuccin/flower.jpg &
-
-
-
-# 6) Applets del Systray
+# 5) Applets del Systray
 nm-applet &
 blueman-applet &
 pasystray &

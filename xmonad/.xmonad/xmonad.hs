@@ -1,28 +1,29 @@
 -- ~/.xmonad/xmonad.hs
--- XMonad + Polybar DBus (Catppuccin Mocha)
+-- XMonad + Polybar, una barra por monitor (Catppuccin Mocha)
 
 import XMonad
-import XMonad.Config (def)
 import XMonad.Util.EZConfig (additionalKeysP)
 import XMonad.Util.SpawnOnce (spawnOnce)
+import XMonad.Util.Loggers (logLayoutOnScreen)
+import XMonad.Util.NamedWindows (getName)
 
 import XMonad.Hooks.ManageDocks
-import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.EwmhDesktops (ewmh, ewmhFullscreen)
+import XMonad.Hooks.Rescreen
+import XMonad.Hooks.StatusBar
+import XMonad.Hooks.StatusBar.PP
 
 import XMonad.ManageHook (doFloat, composeAll, (-->))
 
-import qualified DBus as D
-import qualified DBus.Client as D
 import qualified XMonad.StackSet as W
 
+import Data.Char (toLower)
+import Data.List (elemIndex, find, isInfixOf)
 import System.Exit (exitWith, ExitCode(ExitSuccess))
 
 import XMonad.Layout.Grid
 import XMonad.Layout.ThreeColumns
 import XMonad.Layout.NoBorders
-
-import XMonad.Util.NamedWindows (getName)
 
 -- ==========================================================================
 -- F1 LAYOUT
@@ -77,6 +78,9 @@ myBorderWidth = 2
 myNormColor   = "#313244"
 myFocusColor  = "#f5c2e7"
 
+-- wezterm no está en los repos de Fedora: si falta, usa alacritty
+myTerminal = "sh -c 'command -v wezterm >/dev/null && exec wezterm || exec alacritty'"
+
 -- ==========================================================================
 -- WORKSPACES
 -- ==========================================================================
@@ -103,88 +107,118 @@ myLayout = avoidStruts $
     tiled    = Tall 1 (3/100) (1/2)
     threeCol = ThreeColMid 1 (3/100) (1/2)
 
+layoutIcon :: String -> String
+layoutIcon l
+    | "Mirror"   `isInfixOf` l = "\xF1888"
+    | "ThreeCol" `isInfixOf` l = "\xF056B"
+    | "Tall"     `isInfixOf` l = "\xF0BCC"
+    | "Full"     `isInfixOf` l = "\xF0C8"
+    | "Grid"     `isInfixOf` l = "\xF009"
+    | "F1"       `isInfixOf` l = "\xF0574"
+    | otherwise                = polyEsc l
+
 -- ==========================================================================
--- CUSTOM LOGGERS (Polybar / DBus)
+-- POLYBAR: una barra por monitor
 -- ==========================================================================
 
-logScreen :: X (Maybe String)
-logScreen = do
-    s <- gets windowset
-    return $ Just $ "SCREEN:" ++ show (fromIntegral (W.screen (W.current s)) :: Int)
+-- xmonad publica el texto de cada pantalla en la propiedad _XMONAD_LOG_N
+-- (la lee ~/.config/polybar/xmonad-log.sh) y lanza una polybar por monitor
+-- con launch-bar.sh N. Si el monitor desaparece, xmonad mata su barra.
+barSpawner :: ScreenId -> X StatusBarConfig
+barSpawner s@(S n) = pure $
+    statusBarPropTo ("_XMONAD_LOG_" ++ show n)
+                    ("exec ~/.config/polybar/launch-bar.sh " ++ show n)
+                    (pure (screenPP s))
 
-logLayouts :: X (Maybe String)
-logLayouts = do
-    ws <- gets windowset
-    let allScreens = W.current ws : W.visible ws
-        formatScreen s = "LAY" ++ show (fromIntegral (W.screen s) :: Int) ++ ":" ++ description (W.layout (W.workspace s))
-    return $ Just $ unwords $ map formatScreen allScreens
+-- Marcado de polybar
+fgbg :: String -> String -> String -> String
+fgbg f b t = "%{F" ++ f ++ "}%{B" ++ b ++ "}" ++ t ++ "%{B-}%{F-}"
 
-logWinTitles :: X (Maybe String)
-logWinTitles = do
-    ws <- gets windowset
-    let allScreens = W.current ws : W.visible ws
-    parts <- mapM one allScreens
-    return $ Just $ unwords parts
-  where
-    one s = do
-        let sid = show (fromIntegral (W.screen s) :: Int)
-            mW  = W.focus <$> W.stack (W.workspace s)
-        titleString <- case mW of
-            Nothing -> return "-"
-            Just w  -> do
-                cls  <- runQuery className w
-                name <- fmap show (getName w)
-                return $ if cls == name || null name
-                    then cls
-                    else cls ++ " - " ++ name
-        return $ "WIN" ++ sid ++ ":" ++ filter (/= '\n') titleString
+fgc :: String -> String -> String
+fgc f t = "%{F" ++ f ++ "}" ++ t ++ "%{F-}"
 
-wrapClick ws content =
-    "%{A1:xdotool key super+" ++ ws ++ ":}" ++ content ++ "%{A}"
+-- Evita que un título con "%{" se interprete como marcado
+polyEsc :: String -> String
+polyEsc ('%' : '{' : r) = "% {" ++ polyEsc r
+polyEsc (c : r)         = c : polyEsc r
+polyEsc []              = []
 
-dbusPP dbus = def
-    { ppOutput = \str -> do
-        let signal = (D.signal objectPath interfaceName memberName)
-                { D.signalBody = [D.toVariant str] }
-        D.emit dbus signal
-    , ppCurrent = \ws -> wrapClick ws $
-        "%{B" ++ colorAct ++ "}%{F" ++ colorBack ++ "} " ++ ws ++ " %{F-}%{B-}"
-    , ppVisible = \ws -> wrapClick ws $
-        "%{B" ++ colorVis ++ "}%{F" ++ colorBack ++ "} " ++ ws ++ " %{F-}%{B-}"
-    , ppHidden  = \ws -> wrapClick ws $
-        "%{B" ++ colorOcc ++ "}%{F" ++ colorVis ++ "} " ++ ws ++ " %{F-}%{B-}"
-    , ppHiddenNoWindows = \ws -> wrapClick ws $
-        "%{F" ++ colorEmp ++ "} " ++ ws ++ " %{F-}"
-    , ppSep   = " "
-    , ppWsSep = " "
-    , ppExtras = [ logScreen, logLayouts, logWinTitles ]
-    -- Lambda function missing backslash fixed below
-    , ppOrder  = \(ws : _ : _ : ex) -> [ws] ++ ex
+wrapClick :: String -> String -> String
+wrapClick ws content = case elemIndex ws myWorkspaces of
+    Just i  -> "%{A1:xdotool set_desktop " ++ show i ++ ":}" ++ content ++ "%{A}"
+    Nothing -> content
+
+screenPP :: ScreenId -> PP
+screenPP s = def
+    { ppCurrent         = \ws -> wrapClick ws $ fgbg colorBack colorAct (" " ++ ws ++ " ")
+    , ppVisible         = \ws -> wrapClick ws $ fgbg colorBack colorVis (" " ++ ws ++ " ")
+    , ppHidden          = \ws -> wrapClick ws $ fgbg colorVis  colorOcc (" " ++ ws ++ " ")
+    , ppHiddenNoWindows = \ws -> wrapClick ws $ fgc  colorEmp (" " ++ ws ++ " ")
+    , ppUrgent          = \ws -> wrapClick ws $ fgbg colorBack "#f38ba8" (" " ++ ws ++ " ")
+    , ppSep             = " "
+    , ppWsSep           = " "
+    , ppExtras          = [ logScreenIndicator s
+                          , fmap (fmap layoutBlock) (logLayoutOnScreen s)
+                          , fmap (fmap (sep ++)) (logWinTitleOnScreen s)
+                          ]
+    , ppOrder           = \xs -> case xs of
+                              (ws : _ : _ : ind : lay : win : _) -> [ind, ws, lay, win]
+                              _                                  -> xs
     }
   where
-    objectPath    = D.objectPath_ "/org/xmonad/Log"
-    interfaceName = D.interfaceName_ "org.xmonad.Log"
-    memberName    = D.memberName_ "Update"
+    sep           = fgc colorEmp "|" ++ " "
+    layoutBlock l = sep ++ layoutIcon l
 
-getWellKnownName dbus = do
-    let name = D.busName_ "org.xmonad.Log"
-    _ <- D.requestName dbus name
-        [ D.nameAllowReplacement
-        , D.nameReplaceExisting
-        , D.nameDoNotQueue
-        ]
-    return ()
+-- Monitor con foco: bloque rosa; sin foco: gris
+logScreenIndicator :: ScreenId -> X (Maybe String)
+logScreenIndicator s = do
+    cur <- gets (W.screen . W.current . windowset)
+    pure $ Just $ if cur == s
+        then fgbg colorBack colorAct  "  \xF0379   "
+        else fgbg colorEmp  colorBack "  \xF0D90   "
+
+-- Ventana con foco en esa pantalla, con ícono según la aplicación
+logWinTitleOnScreen :: ScreenId -> X (Maybe String)
+logWinTitleOnScreen s = do
+    ws <- gets windowset
+    case find ((== s) . W.screen) (W.current ws : W.visible ws) of
+        Nothing -> pure Nothing
+        Just sc -> case W.focus <$> W.stack (W.workspace sc) of
+            Nothing -> pure $ Just $ fgc colorEmp "\xF05B2" ++ " Desktop"
+            Just w  -> do
+                cls  <- runQuery className w
+                name <- show <$> getName w
+                let text | null name || cls == name = cls
+                         | otherwise                = cls ++ " - " ++ name
+                pure $ Just $ appIcon (map toLower cls) ++ " " ++ polyEsc (shorten 45 (filter (/= '\n') text))
+
+appIcon :: String -> String
+appIcon c
+    | "code"   `isInfixOf` c = fgc "#89b4fa" "\xE70C"
+    | "kitty"  `isInfixOf` c = fgc "#f5e0dc" "\xF489"
+    | "thunar" `isInfixOf` c = fgc "#f9e2af" "\xF0DCF"
+    | "brave"  `isInfixOf` c = fgc "#fab387" "\xE743"
+    | otherwise              = fgc colorEmp  "\xF05B2"
+
+-- Al conectar/desconectar monitores: autorandr acomoda las pantallas y
+-- después se relanzan todas las barras en sus monitores.
+myRescreen :: RescreenConfig
+myRescreen = def
+    { randrChangeHook   = spawn "autorandr --change --default horizontal"
+    , afterRescreenHook = killAllStatusBars >> startAllStatusBars
+    }
 
 -- ==========================================================================
 -- MAIN
 -- ==========================================================================
 
-main = do
-    dbus <- D.connectSession
-    getWellKnownName dbus
-
-    xmonad $ ewmhFullscreen $ ewmh $ docks $ def
-        { terminal           = "wezterm"
+main :: IO ()
+main = xmonad
+     . ewmhFullscreen . ewmh . docks
+     . dynamicSBs barSpawner
+     . rescreenHook myRescreen
+     $ def
+        { terminal           = myTerminal
         , modMask            = mod4Mask
         , workspaces         = myWorkspaces
         , layoutHook         = myLayout
@@ -197,7 +231,6 @@ main = do
             <+> manageDocks
             <+> manageHook def
         , startupHook        = spawnOnce "sh /home/zeke/.xmonad/autostart.sh"
-        , logHook            = dynamicLogWithPP (dbusPP dbus)
         , borderWidth        = myBorderWidth
         , normalBorderColor  = myNormColor
         , focusedBorderColor = myFocusColor
@@ -206,8 +239,8 @@ main = do
         [ ("M-r",        spawn "rofi -show combi -combi-modes 'drun,run,window'")
         , ("M-t",        spawn "rofi -show window")
         , ("<Print>",    spawn "flameshot gui")
-        , ("M-l",        spawn "i3lock-fancy")
-        , ("M-<Return>", spawn "wezterm")
+        , ("M-l",        spawn "i3lock -c 1e1e2e")
+        , ("M-<Return>", spawn myTerminal)
         , ("M-q",        spawn "xmonad --recompile; xmonad --restart")
         , ("M-v",        spawn "copyq toggle")
         , ("M-w",        kill)
@@ -221,4 +254,9 @@ main = do
         , ("M-C-f",      sendMessage ToggleStruts >> sendMessage (JumpToLayout "Full"))
         , ("M-C-m",      spawn "sh -c 'pgrep -x kmag >/dev/null && pkill -x kmag || kmag'")
         , ("M-C-S-m",    spawn "pkill -x kmag")
+        , ("<XF86AudioRaiseVolume>",  spawn "wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+")
+        , ("<XF86AudioLowerVolume>",  spawn "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-")
+        , ("<XF86AudioMute>",         spawn "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle")
+        , ("<XF86MonBrightnessUp>",   spawn "brightnessctl set +10%")
+        , ("<XF86MonBrightnessDown>", spawn "brightnessctl set 10%-")
         ]
