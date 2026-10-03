@@ -1,0 +1,108 @@
+// Catppuccin Mocha, acento rosa (paleta oficial de catppuccin/rofi)
+@import "catppuccin-mocha"
+
+* {
+  accent:           @pink;
+  background-color: transparent;
+  text-color:       @text;
+}
+
+window {
+  width:            42%;
+  border:           2px;
+  border-color:     @accent;
+  border-radius:    12px;
+  background-color: @base;
+  padding:          14px;
+}
+
+mainbox {
+  spacing:  12px;
+  children: [ inputbar, listview, message ];
+}
+
+inputbar {
+  spacing:          10px;
+  padding:          8px 12px;
+  border-radius:    8px;
+  background-color: @surface0;
+  children:         [ prompt, entry, num-filtered-rows ];
+}
+
+prompt {
+  text-color: @accent;
+}
+
+entry {
+  placeholder:       "Buscar...";
+  placeholder-color: @overlay0;
+  cursor:            text;
+}
+
+num-filtered-rows {
+  text-color: @overlay0;
+}
+
+listview {
+  lines:        8;
+  columns:      1;
+  spacing:      4px;
+  fixed-height: true;
+  scrollbar:    false;
+}
+
+element {
+  spacing:       10px;
+  padding:       7px 12px;
+  border-radius: 8px;
+  cursor:        pointer;
+}
+
+element normal.normal,
+element alternate.normal {
+  text-color: @text;
+}
+
+element normal.active,
+element alternate.active {
+  text-color: @blue;
+}
+
+element normal.urgent,
+element alternate.urgent {
+  text-color: @red;
+}
+
+element selected.normal,
+element selected.active {
+  background-color: @accent;
+  text-color:       @crust;
+}
+
+element selected.urgent {
+  background-color: @red;
+  text-color:       @crust;
+}
+
+element-icon {
+  size:       1.3em;
+  text-color: inherit;
+  cursor:     inherit;
+}
+
+element-text {
+  text-color:     inherit;
+  highlight:      bold underline;
+  vertical-align: 0.5;
+  cursor:         inherit;
+}
+
+message {
+  padding:          8px 12px;
+  border-radius:    8px;
+  background-color: @surface0;
+}
+
+textbox {
+  text-color: @subtext1;
+}

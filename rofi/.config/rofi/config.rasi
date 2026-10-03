@@ -1,0 +1,14 @@
+// ~/.config/rofi/config.rasi
+configuration {
+  modi: "drun,run,window";
+  show-icons: true;
+  icon-theme: "Papirus-Dark";
+  font: "JetBrainsMono Nerd Font 11";
+  display-drun: " Apps";
+  display-run: " Run";
+  display-window: " Ventanas";
+  display-combi: " Todo";
+  drun-display-format: "{name}";
+  window-format: "{c}  {t}";
+}
+@theme "catppuccin-mocha-pink"

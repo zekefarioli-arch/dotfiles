@@ -1,0 +1,61 @@
+# ~/.config/dunst/dunstrc — Catppuccin Mocha, acento rosa
+# (colores de catppuccin/dunst con el acento cambiado de azul a rosa)
+
+[global]
+    # Arriba a la derecha del monitor con foco (la barra está abajo)
+    follow = keyboard
+    origin = top-right
+    offset = (14, 14)
+    width = (280, 380)
+    height = (0, 220)
+    notification_limit = 6
+    gap_size = 8
+
+    font = JetBrainsMono Nerd Font 10
+    markup = full
+    format = "<b>%s</b>\n%b"
+    alignment = left
+    vertical_alignment = center
+    ellipsize = middle
+    padding = 12
+    horizontal_padding = 14
+    text_icon_padding = 12
+
+    corner_radius = 10
+    frame_width = 2
+    frame_color = "#f5c2e7"
+    separator_color = frame
+    highlight = "#f5c2e7"
+    progress_bar_corner_radius = 4
+
+    icon_theme = Papirus-Dark
+    enable_recursive_icon_lookup = true
+    icon_position = left
+    min_icon_size = 32
+    max_icon_size = 48
+
+    idle_threshold = 120
+    show_age_threshold = 60
+    stack_duplicates = true
+    hide_duplicate_count = false
+
+    mouse_left_click = do_action, close_current
+    mouse_middle_click = close_all
+    mouse_right_click = close_current
+
+[urgency_low]
+    background = "#1e1e2e"
+    foreground = "#cdd6f4"
+    frame_color = "#6c7086"
+    timeout = 4
+
+[urgency_normal]
+    background = "#1e1e2e"
+    foreground = "#cdd6f4"
+    timeout = 8
+
+[urgency_critical]
+    background = "#1e1e2e"
+    foreground = "#cdd6f4"
+    frame_color = "#f38ba8"
+    timeout = 0
