@@ -1,6 +1,8 @@
 -- ~/.xmonad/xmonad.hs
 -- XMonad + Polybar, one bar per monitor (Catppuccin Mocha)
 
+{-# LANGUAGE MultiWayIf #-}
+
 import XMonad
 import XMonad.Util.EZConfig (additionalKeysP)
 import XMonad.Util.SpawnOnce (spawnOnce)
@@ -209,13 +211,17 @@ screenPP s = def
     sep           = fgc colorEmp "|" ++ " "
     layoutBlock l = sep ++ layoutIcon l
 
--- Focused monitor: pink block; unfocused: grey
+-- Focused monitor: pink block; unfocused: grey. Hidden with a single
+-- monitor (Just "" keeps the ppOrder pattern intact).
 logScreenIndicator :: ScreenId -> X (Maybe String)
 logScreenIndicator s = do
-    cur <- gets (W.screen . W.current . windowset)
-    pure $ Just $ if cur == s
-        then fgbg colorBack colorAct  "  \xF0379   "
-        else fgbg colorEmp  colorBack "  \xF0D90   "
+    ws <- gets windowset
+    let single = null (W.visible ws)
+        cur    = W.screen (W.current ws)
+    pure $ Just $ if
+        | single    -> ""
+        | cur == s  -> fgbg colorBack colorAct  "  \xF0379   "
+        | otherwise -> fgbg colorEmp  colorBack "  \xF0D90   "
 
 -- Orange badge while the dropdown covers that screen. It returns Just ""
 -- rather than Nothing when hidden: dynamicLogString drops Nothing extras,
