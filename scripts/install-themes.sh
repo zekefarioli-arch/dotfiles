@@ -7,7 +7,7 @@
 #   Arch:   sudo pacman -S sassc gtk-engine-murrine kvantum qt5ct qt6ct xdg-desktop-portal-gtk unzip git curl
 #
 # Las configuraciones (gtk-3.0, gtk-4.0, qt6ct, Kvantum, .xprofile) están en
-# los paquetes de stow "gtk" y "qt": stow --no-folding -t ~ gtk qt
+# los paquetes de stow "gtk", "qt", "x11" y "copyq": stow --no-folding -t ~ gtk qt x11 copyq
 set -euo pipefail
 
 ACCENT=pink
@@ -61,4 +61,12 @@ if command -v gsettings >/dev/null; then
   gsettings set org.gnome.desktop.interface monospace-font-name "JetBrainsMono Nerd Font 10"
 fi
 
+
+
+# CopyQ usa su propio sistema de temas (no el de Qt): se aplica si está corriendo
+if pgrep -u "$UID" -x copyq >/dev/null; then
+  "$(dirname "$0")/../copyq/apply-theme.sh"
+else
+  echo "CopyQ no está corriendo: aplica su tema después con copyq/apply-theme.sh"
+fi
 echo "Listo. Cierra sesión y vuelve a entrar para que todas las apps tomen el tema."
