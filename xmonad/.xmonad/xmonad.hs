@@ -17,6 +17,8 @@ import XMonad.ManageHook (doFloat, composeAll, (-->))
 
 import qualified XMonad.StackSet as W
 
+import Control.Monad (forM_)
+
 import Data.Char (toLower)
 import Data.List (elemIndex, find, isInfixOf)
 import System.Exit (exitWith, ExitCode(ExitSuccess))
@@ -122,13 +124,16 @@ layoutIcon l
 -- ==========================================================================
 
 -- xmonad publica el texto de cada pantalla en la propiedad _XMONAD_LOG_N
--- (la lee ~/.config/polybar/xmonad-log.sh) y lanza una polybar por monitor
--- con launch-bar.sh N. Si el monitor desaparece, xmonad mata su barra.
-barSpawner :: ScreenId -> X StatusBarConfig
-barSpawner s@(S n) = pure $
-    statusBarPropTo ("_XMONAD_LOG_" ++ show n)
-                    ("exec ~/.config/polybar/launch-bar.sh " ++ show n)
-                    (pure (screenPP s))
+-- (la lee ~/.config/polybar/xmonad-log.sh, una barra por pantalla).
+barsLogHook :: X ()
+barsLogHook = do
+    screens <- gets (map W.screen . W.screens . windowset)
+    forM_ screens $ \s@(S n) ->
+        dynamicLogString (screenPP s) >>= xmonadPropLog' ("_XMONAD_LOG_" ++ show n)
+
+-- Mata todas las barras y lanza una por monitor conectado
+launchBars :: X ()
+launchBars = spawn "~/.config/polybar/launch-bars.sh"
 
 -- Marcado de polybar
 fgbg :: String -> String -> String -> String
@@ -201,11 +206,11 @@ appIcon c
     | otherwise              = fgc colorEmp  "\xF05B2"
 
 -- Al conectar/desconectar monitores: autorandr acomoda las pantallas y
--- después se relanzan todas las barras en sus monitores.
+-- después se relanzan las barras, una por monitor.
 myRescreen :: RescreenConfig
 myRescreen = def
     { randrChangeHook   = spawn "autorandr --change --default horizontal"
-    , afterRescreenHook = killAllStatusBars >> startAllStatusBars
+    , afterRescreenHook = launchBars
     }
 
 -- ==========================================================================
@@ -215,7 +220,6 @@ myRescreen = def
 main :: IO ()
 main = xmonad
      . ewmhFullscreen . ewmh . docks
-     . dynamicSBs barSpawner
      . rescreenHook myRescreen
      $ def
         { terminal           = myTerminal
@@ -230,7 +234,8 @@ main = xmonad
                 ]
             <+> manageDocks
             <+> manageHook def
-        , startupHook        = spawnOnce "sh /home/zeke/.xmonad/autostart.sh"
+        , startupHook        = spawnOnce "sh /home/zeke/.xmonad/autostart.sh" >> launchBars
+        , logHook            = barsLogHook
         , borderWidth        = myBorderWidth
         , normalBorderColor  = myNormColor
         , focusedBorderColor = myFocusColor
@@ -238,6 +243,7 @@ main = xmonad
         `additionalKeysP`
         [ ("M-r",        spawn "rofi -show combi -combi-modes 'drun,run,window'")
         , ("M-t",        spawn "rofi -show window")
+        , ("M-e",        spawn "thunar")
         , ("<Print>",    spawn "flameshot gui")
         , ("M-l",        spawn "i3lock -c 1e1e2e")
         , ("M-<Return>", spawn myTerminal)
