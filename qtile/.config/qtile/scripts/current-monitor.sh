@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 
-# 1) outputs conectados
+# 1) connected outputs
 mapfile -t outs < <(xrandr --query | awk '/ connected/{print $1}')
 
 # 2) primary
 PRIMARY="$(xrandr --query | awk '/ connected primary/{print $1; exit}')"
 
-# 3) arma labels y calcula maxlen (en "nombre corto", con * si es primary)
+# 3) build labels and compute maxlen (short name, with * if primary)
 maxlen=0
 declare -A label
 
 for o in "${outs[@]}"; do
-  short="${o//-/}"              # quita '-'
+  short="${o//-/}"              # strip '-'
   if [ "$o" = "$PRIMARY" ]; then
     l="${short}*"
   else
@@ -21,7 +21,7 @@ for o in "${outs[@]}"; do
   ((${#l} > maxlen)) && maxlen=${#l}
 done
 
-# 4) detecta output actual por posición del mouse (X11) usando xrandr --listmonitors
+# 4) detect the current output from the mouse position (X11) using xrandr --listmonitors
 eval "$(xdotool getmouselocation --shell)"
 x="$X"; y="$Y"
 
@@ -37,5 +37,5 @@ current="$(
   '
 )"
 
-# 5) imprime padded a maxlen (espacios a la derecha)
+# 5) print padded to maxlen (spaces on the right)
 printf "%-*s\n" "$maxlen" "${label[$current]}"

@@ -1,5 +1,5 @@
 -- ~/.xmonad/xmonad.hs
--- XMonad + Polybar, una barra por monitor (Catppuccin Mocha)
+-- XMonad + Polybar, one bar per monitor (Catppuccin Mocha)
 
 import XMonad
 import XMonad.Util.EZConfig (additionalKeysP)
@@ -103,14 +103,14 @@ myWorkspaces =
     ]
 
 -- ==========================================================================
--- SCRATCHPADS (terminal desplegable)
+-- SCRATCHPADS (dropdown terminal)
 -- ==========================================================================
 
--- Terminator con role "dropterm" corriendo la sesión de tmux "drop":
--- al ocultarlo o cerrarlo, lo que corre adentro (p. ej. Claude) sigue vivo
--- y se reconecta al volver a abrirlo. Flota a todo lo ancho y deja visible
--- la barra de abajo (35px de 1080), con la hora y el aviso de que está abierto.
--- Para cambiar el tamaño: RationalRect x y ancho alto (0.5 = 50%).
+-- Terminator with role "dropterm" running the tmux session "drop": hiding
+-- or closing it keeps whatever runs inside (e.g. Claude) alive, and it is
+-- reattached on the next toggle. It floats full width and leaves the bottom
+-- bar visible (35px out of 1080), with the clock and the "dropdown" badge.
+-- To change the size: RationalRect x y width height (0.5 = 50%).
 scratchpads :: [NamedScratchpad]
 scratchpads =
     [ NS "drop"
@@ -122,11 +122,11 @@ scratchpads =
 isDrop :: Query Bool
 isDrop = stringProperty "WM_WINDOW_ROLE" =? "dropterm"
 
--- ¿El desplegable está en el workspace de esa pantalla?
+-- Is the dropdown on that screen's workspace?
 dropOnWorkspace :: W.Workspace i l Window -> X Bool
 dropOnWorkspace w = not . null <$> filterM (runQuery isDrop) (W.integrate' (W.stack w))
 
--- Oculta el desplegable si está abierto (antes de abrir otra cosa encima)
+-- Hide the dropdown if it is open (before opening something on top of it)
 hideDrop :: X ()
 hideDrop = do
     cur <- gets (W.workspace . W.current . windowset)
@@ -154,29 +154,29 @@ layoutIcon l
     | otherwise                = polyEsc l
 
 -- ==========================================================================
--- POLYBAR: una barra por monitor
+-- POLYBAR: one bar per monitor
 -- ==========================================================================
 
--- xmonad publica el texto de cada pantalla en la propiedad _XMONAD_LOG_N
--- (la lee ~/.config/polybar/xmonad-log.sh, una barra por pantalla).
+-- xmonad publishes each screen's text in the _XMONAD_LOG_N property
+-- (read by ~/.config/polybar/xmonad-log.sh, one bar per screen).
 barsLogHook :: X ()
 barsLogHook = do
     screens <- gets (map W.screen . W.screens . windowset)
     forM_ screens $ \s@(S n) ->
         dynamicLogString (filterOutWsPP [scratchpadWorkspaceTag] (screenPP s)) >>= xmonadPropLog' ("_XMONAD_LOG_" ++ show n)
 
--- Mata todas las barras y lanza una por monitor conectado
+-- Kill all bars and start one per connected monitor
 launchBars :: X ()
 launchBars = spawn "~/.config/polybar/launch-bars.sh"
 
--- Marcado de polybar
+-- Polybar markup
 fgbg :: String -> String -> String -> String
 fgbg f b t = "%{F" ++ f ++ "}%{B" ++ b ++ "}" ++ t ++ "%{B-}%{F-}"
 
 fgc :: String -> String -> String
 fgc f t = "%{F" ++ f ++ "}" ++ t ++ "%{F-}"
 
--- Evita que un título con "%{" se interprete como marcado
+-- Keep a title containing "%{" from being parsed as markup
 polyEsc :: String -> String
 polyEsc ('%' : '{' : r) = "% {" ++ polyEsc r
 polyEsc (c : r)         = c : polyEsc r
@@ -209,7 +209,7 @@ screenPP s = def
     sep           = fgc colorEmp "|" ++ " "
     layoutBlock l = sep ++ layoutIcon l
 
--- Monitor con foco: bloque rosa; sin foco: gris
+-- Focused monitor: pink block; unfocused: grey
 logScreenIndicator :: ScreenId -> X (Maybe String)
 logScreenIndicator s = do
     cur <- gets (W.screen . W.current . windowset)
@@ -217,7 +217,7 @@ logScreenIndicator s = do
         then fgbg colorBack colorAct  "  \xF0379   "
         else fgbg colorEmp  colorBack "  \xF0D90   "
 
--- Aviso naranja mientras el desplegable tapa esa pantalla
+-- Orange badge while the dropdown covers that screen
 logDropBadge :: ScreenId -> X (Maybe String)
 logDropBadge s = do
     ws <- gets windowset
@@ -225,9 +225,9 @@ logDropBadge s = do
         Nothing -> pure Nothing
         Just sc -> do
             open <- dropOnWorkspace (W.workspace sc)
-            pure $ if open then Just (fgbg colorBack "#fab387" " \xF018D desplegable ") else Nothing
+            pure $ if open then Just (fgbg colorBack "#fab387" " \xF018D dropdown ") else Nothing
 
--- Ventana con foco en esa pantalla, con ícono según la aplicación
+-- Focused window on that screen, with an icon per application
 logWinTitleOnScreen :: ScreenId -> X (Maybe String)
 logWinTitleOnScreen s = do
     ws <- gets windowset
@@ -250,8 +250,8 @@ appIcon c
     | "brave"  `isInfixOf` c = fgc "#fab387" "\xE743"
     | otherwise              = fgc colorEmp  "\xF05B2"
 
--- Al conectar/desconectar monitores: autorandr acomoda las pantallas y
--- después se relanzan las barras, una por monitor.
+-- On monitor (dis)connect: autorandr arranges the screens, then the bars
+-- are relaunched, one per monitor.
 myRescreen :: RescreenConfig
 myRescreen = def
     { randrChangeHook   = spawn "autorandr --change --default horizontal"
@@ -309,7 +309,7 @@ main = xmonad
         , ("M-C-f",      sendMessage ToggleStruts >> sendMessage (JumpToLayout "Full"))
         , ("M-C-m",      spawn "sh -c 'pgrep -x kmag >/dev/null && pkill -x kmag || kmag'")
         , ("M-C-S-m",    spawn "pkill -x kmag")
-        -- Terminal desplegable (toggle): Ctrl + Win + T
+        -- Dropdown terminal (toggle): Ctrl + Win + T
         , ("M-C-t",      namedScratchpadAction scratchpads "drop")
         , ("<XF86AudioRaiseVolume>",  spawn "wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+")
         , ("<XF86AudioLowerVolume>",  spawn "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-")

@@ -1,4 +1,4 @@
-# ~/.config/terminator/config — alto contraste (paleta Catppuccin Mocha)
+# ~/.config/terminator/config — high contrast (Catppuccin Mocha palette)
 [global_config]
   borderless = True
   suppress_multiple_term_dialog = True
@@ -9,7 +9,7 @@
   [[default]]
     use_system_font = False
     font = JetBrainsMono Nerd Font 11
-    # Fondo casi negro y texto casi blanco para máximo contraste
+    # Near-black background and near-white text for maximum contrast
     background_color = "#0b0b12"
     foreground_color = "#f4f6ff"
     cursor_color = "#f5c2e7"

@@ -6,8 +6,8 @@ configuration {
   font: "JetBrainsMono Nerd Font 11";
   display-drun: " Apps";
   display-run: " Run";
-  display-window: " Ventanas";
-  display-combi: " Todo";
+  display-window: " Windows";
+  display-combi: " All";
   drun-display-format: "{name}";
   window-format: "{c}  {t}";
 }

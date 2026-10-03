@@ -2,18 +2,18 @@
 local wezterm = require 'wezterm'
 local config = wezterm.config_builder()
 
--- Tema y fuente (combinan con xmonad/polybar)
+-- Theme and font (matching xmonad/polybar)
 config.color_scheme = 'Catppuccin Mocha'
 config.font = wezterm.font('JetBrainsMono Nerd Font', { weight = 'Regular' })
 config.font_size = 11.0
 
--- Ventana: sin decoraciones (xmonad dibuja los bordes)
+-- Window: no decorations (xmonad draws the borders)
 config.window_decorations = 'NONE'
 config.window_padding = { left = 8, right = 8, top = 6, bottom = 6 }
-config.window_background_opacity = 0.95  -- picom hace la transparencia
+config.window_background_opacity = 0.95  -- picom does the transparency
 config.adjust_window_size_when_changing_font_size = false
 
--- Pestañas: barra simple abajo, oculta con una sola pestaña
+-- Tabs: simple bar at the bottom, hidden with a single tab
 config.use_fancy_tab_bar = false
 config.tab_bar_at_bottom = true
 config.hide_tab_bar_if_only_one_tab = true
@@ -28,10 +28,10 @@ config.colors = {
   },
 }
 
--- Cursor y comportamiento
+-- Cursor and behavior
 config.default_cursor_style = 'SteadyBar'
 config.scrollback_lines = 10000
 config.audible_bell = 'Disabled'
-config.check_for_updates = false  -- se actualiza con dnf (COPR)
+config.check_for_updates = false  -- updated through dnf (COPR)
 
 return config

@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Instala el tema Catppuccin Mocha con acento rosa (pink) para GTK, Qt,
-# íconos y cursor, todo en el home del usuario (sin tocar /usr).
+# Install the Catppuccin Mocha theme with the pink accent for GTK, Qt,
+# icons and cursor, all inside the user's home (without touching /usr).
 #
-# Paquetes necesarios:
+# Required packages:
 #   Fedora: sudo dnf install sassc gtk-murrine-engine kvantum qt5ct qt6ct xdg-desktop-portal-gtk unzip git curl
 #   Arch:   sudo pacman -S sassc gtk-engine-murrine kvantum qt5ct qt6ct xdg-desktop-portal-gtk unzip git curl
 #
-# Las configuraciones (gtk-3.0, gtk-4.0, qt6ct, Kvantum, .xprofile) están en
-# los paquetes de stow "gtk", "qt", "x11" y "copyq": stow --no-folding -t ~ gtk qt x11 copyq
+# The configs (gtk-3.0, gtk-4.0, qt6ct, Kvantum, .xprofile) live in the
+# stow packages "gtk", "qt", "x11" and "copyq": stow --no-folding -t ~ gtk qt x11 copyq
 set -euo pipefail
 
 ACCENT=pink
@@ -17,10 +17,10 @@ TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 mkdir -p "$ICONS" "$HOME/.config/Kvantum"
 
-echo "==> GTK: Catppuccin (Fausto-Korpsvart), acento $ACCENT, oscuro"
+echo "==> GTK: Catppuccin (Fausto-Korpsvart), accent $ACCENT, dark"
 git clone -q --depth 1 https://github.com/Fausto-Korpsvart/Catppuccin-GTK-Theme "$TMP/gtk"
 (cd "$TMP/gtk/themes" && BATCH_MODE=true ./install.sh -a "$ACCENT" -m dark >/dev/null </dev/null)
-# Las apps libadwaita (GTK4) solo leen ~/.config/gtk-4.0: se enlaza el tema ahí
+# libadwaita (GTK4) apps only read ~/.config/gtk-4.0, so the theme is linked there
 GTK4="$HOME/.themes/Catppuccin-${ACCENT^}-Dark/gtk-4.0"
 mkdir -p "$HOME/.config/gtk-4.0"
 for f in assets windows-assets gtk.css gtk-dark.css; do
@@ -32,7 +32,7 @@ git clone -q --depth 1 https://github.com/catppuccin/kvantum "$TMP/kvantum"
 rm -rf "$HOME/.config/Kvantum/catppuccin-$FLAVOR-$ACCENT"
 cp -r "$TMP/kvantum/themes/catppuccin-$FLAVOR-$ACCENT" "$HOME/.config/Kvantum/"
 
-echo "==> Íconos: Papirus-Dark con carpetas cat-$FLAVOR-$ACCENT"
+echo "==> Icons: Papirus-Dark with cat-$FLAVOR-$ACCENT folders"
 curl -fsSL https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-icon-theme/master/install.sh |
   DESTDIR="$ICONS" sh >/dev/null
 git clone -q --depth 1 https://github.com/catppuccin/papirus-folders "$TMP/folders"
@@ -46,11 +46,11 @@ curl -fsSL "https://github.com/catppuccin/cursors/releases/latest/download/catpp
   -o "$TMP/cursors.zip"
 rm -rf "$ICONS/catppuccin-$FLAVOR-$ACCENT-cursors"
 unzip -q "$TMP/cursors.zip" -d "$ICONS"
-# Cursor por defecto de X (lo usan las apps que no leen la config de GTK)
+# Default X cursor (for apps that do not read the GTK settings)
 mkdir -p "$ICONS/default"
 printf '[Icon Theme]\nInherits=catppuccin-%s-%s-cursors\n' "$FLAVOR" "$ACCENT" > "$ICONS/default/index.theme"
 
-echo "==> gsettings (GTK4/libadwaita y apps que leen dconf)"
+echo "==> gsettings (GTK4/libadwaita and apps that read dconf)"
 if command -v gsettings >/dev/null; then
   gsettings set org.gnome.desktop.interface gtk-theme "Catppuccin-Pink-Dark"
   gsettings set org.gnome.desktop.interface icon-theme "Papirus-Dark"
@@ -63,10 +63,10 @@ fi
 
 
 
-# CopyQ usa su propio sistema de temas (no el de Qt): se aplica si está corriendo
+# CopyQ has its own theme system (not Qt's): apply it if CopyQ is running
 if pgrep -u "$UID" -x copyq >/dev/null; then
   "$(dirname "$0")/../copyq/apply-theme.sh"
 else
-  echo "CopyQ no está corriendo: aplica su tema después con copyq/apply-theme.sh"
+  echo "CopyQ is not running: apply its theme later with copyq/apply-theme.sh"
 fi
-echo "Listo. Cierra sesión y vuelve a entrar para que todas las apps tomen el tema."
+echo "Done. Log out and back in so every app picks up the theme."

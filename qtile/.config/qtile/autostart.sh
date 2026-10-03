@@ -8,24 +8,24 @@ picom &
 
 #!/bin/sh
 
-# Habilitar DPMS (opcional pero recomendado)
+# Enable DPMS (optional but recommended)
 xset s off
 xset +dpms
 xset dpms 300 300 300
 
-# Evitar dobles lockers
+# Avoid duplicate lockers
 pkill -x xss-lock 2>/dev/null || true
 pkill -x xidlehook 2>/dev/null || true
 
-# Lock tras 4 minutos de inactividad
+# Lock after 4 minutes of inactivity
 xidlehook \
   # --not-when-fullscreen \
   # --timer 240 'i3lock-fancy' '' &
 
-# 4) Fondo de pantalla
+# 4) Wallpaper
 feh --bg-fill ~/Pictures/wallpaper.jpg &
 
-# 5) Red / Bluetooth
+# 5) Network / Bluetooth
 nm-applet &
 blueman-applet &
 
@@ -35,5 +35,5 @@ pasystray &
 # 7) Clipboard (Win+V)
 copyq --start-server &
 
-# 8) Notificaciones
+# 8) Notifications
 dunst &

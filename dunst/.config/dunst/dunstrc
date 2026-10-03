@@ -1,8 +1,8 @@
-# ~/.config/dunst/dunstrc — Catppuccin Mocha, acento rosa
-# (colores de catppuccin/dunst con el acento cambiado de azul a rosa)
+# ~/.config/dunst/dunstrc — Catppuccin Mocha, pink accent
+# (catppuccin/dunst colors with the accent changed from blue to pink)
 
 [global]
-    # Arriba a la derecha del monitor con foco (la barra está abajo)
+    # Top right of the focused monitor (the bar is at the bottom)
     follow = keyboard
     origin = top-right
     offset = (14, 14)

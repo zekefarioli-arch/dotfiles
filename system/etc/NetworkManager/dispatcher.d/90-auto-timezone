@@ -1,9 +1,9 @@
 #!/bin/bash
-# Zona horaria automática: al conectarse a una red, consulta la ubicación
-# por IP en el servicio de Fedora (el mismo que usa el instalador) y ajusta
-# la zona horaria si cambió (p. ej. al viajar a otro país).
-# Ojo: con una VPN activa se usa la ubicación del servidor VPN.
-# Instalar: sudo install -m 755 este archivo /etc/NetworkManager/dispatcher.d/
+# Automatic timezone: when a network connects, look up the location by IP
+# with Fedora's geoip service (the same one the installer uses) and switch
+# the timezone if it changed (e.g. when travelling to another country).
+# Note: with a VPN up, the VPN server's location is used.
+# Install: sudo install -m 755 this-file /etc/NetworkManager/dispatcher.d/
 #           sudo restorecon -v /etc/NetworkManager/dispatcher.d/90-auto-timezone
 case "$2" in
   up|connectivity-change) ;;
@@ -17,5 +17,5 @@ tz=$(curl -fsS --max-time 8 https://geoip.fedoraproject.org/city |
 current=$(timedatectl show -p Timezone --value)
 if [[ $current != "$tz" ]]; then
   timedatectl set-timezone "$tz"
-  logger -t auto-timezone "zona horaria: $current -> $tz"
+  logger -t auto-timezone "timezone: $current -> $tz"
 fi

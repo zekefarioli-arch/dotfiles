@@ -1,6 +1,6 @@
--- ~/.config/wezterm/dropterm.lua — terminal desplegable (Super+Ctrl+T)
--- Hereda wezterm.lua y aplica el tema de alto contraste que tenía terminator.
--- Manda Ctrl/Shift+Enter (CSI u) para que funcionen en Claude Code vía tmux.
+-- ~/.config/wezterm/dropterm.lua — dropdown terminal (alternative to terminator)
+-- Inherits wezterm.lua and applies terminator's high-contrast theme.
+-- Sends Ctrl/Shift+Enter (CSI u) so they work in Claude Code through tmux.
 local wezterm = require 'wezterm'
 local config = dofile(wezterm.config_dir .. '/wezterm.lua')
 

@@ -1,4 +1,4 @@
-// Catppuccin Mocha, acento rosa (paleta oficial de catppuccin/rofi)
+// Catppuccin Mocha, pink accent (official catppuccin/rofi palette)
 @import "catppuccin-mocha"
 
 * {
@@ -34,7 +34,7 @@ prompt {
 }
 
 entry {
-  placeholder:       "Buscar...";
+  placeholder:       "Search...";
   placeholder-color: @overlay0;
   cursor:            text;
 }
