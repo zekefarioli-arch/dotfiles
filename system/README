@@ -1,0 +1,2 @@
+# Archivos de sistema (fuera de $HOME): no se instalan con stow.
+# Cada archivo indica en su encabezado cómo instalarlo.
