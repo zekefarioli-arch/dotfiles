@@ -18,6 +18,8 @@ xset dpms 300 300 300
 pkill -x xss-lock 2>/dev/null || true
 xss-lock -- i3lock -n -c 1e1e2e &
 
+xsetroot -cursor_name left_ptr
+
 # 4) Fondo de pantalla
 if [ -f ~/Pictures/catpuccin/city-horizon.jpg ]; then
   feh --no-fehbg --bg-fill ~/Pictures/catpuccin/city-horizon.jpg ~/Pictures/catpuccin/flower.jpg &
