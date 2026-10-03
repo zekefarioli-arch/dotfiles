@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Bloquea la pantalla con i3lock sobre una imagen Catppuccin Mocha: candado
+# rosa centrado en cada monitor y "Bloqueada · desde HH:MM" debajo.
+# El anillo de i3lock (al escribir la contraseña) rodea el candado.
+# Lo usan Super+L y xss-lock (al suspender o cerrar la tapa).
+set -u
+
+BG='#1e1e2e'; ACCENT='#f5c2e7'; TEXT='#cdd6f4'; DIM='#6c7086'
+FONT="$HOME/.local/share/fonts/JetBrainsMonoNerd/JetBrainsMonoNerdFont-Regular.ttf"
+IMG="${XDG_RUNTIME_DIR:-/tmp}/lock-screen.png"
+LOCK_ICON=$'\U000F033E'   # nf-md-lock
+
+read -r W H < <(xdpyinfo | awk '/dimensions:/ {split($2, d, "x"); print d[1], d[2]; exit}')
+heads=$(xdpyinfo -ext XINERAMA 2>/dev/null |
+  awk '/head #[0-9]+:/ {split($3, s, "x"); split($5, p, ","); print s[1], s[2], p[1], p[2]}')
+[[ -z $heads ]] && heads="$W $H 0 0"
+
+args=()
+while read -r hw hh hx hy; do
+  cx=$(( hx + hw / 2 )); cy=$(( hy + hh / 2 ))
+  args+=( -fill "$ACCENT" -pointsize 72 -annotate "+$(( cx - W / 2 ))+$(( cy - H / 2 ))" "$LOCK_ICON"
+          -fill "$TEXT"   -pointsize 18 -annotate "+$(( cx - W / 2 ))+$(( cy - H / 2 + 135 ))" "Bloqueada"
+          -fill "$DIM"    -pointsize 13 -annotate "+$(( cx - W / 2 ))+$(( cy - H / 2 + 163 ))" "desde $(date +%H:%M)" )
+done <<<"$heads"
+
+magick -size "${W}x${H}" "xc:$BG" -font "$FONT" -gravity center "${args[@]}" "$IMG"
+
+# -n: no se desprende (lo necesita xss-lock); -e: ignora contraseñas vacías
+exec i3lock -n -e -i "$IMG" -c "${BG#\#}" "$@"

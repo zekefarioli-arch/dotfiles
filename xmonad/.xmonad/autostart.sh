@@ -16,7 +16,7 @@ xset dpms 300 300 300
 
 # Bloqueo al suspender / cerrar la tapa (xidlehook no está en Fedora)
 pkill -x xss-lock 2>/dev/null || true
-xss-lock -- i3lock -n -c 1e1e2e &
+xss-lock -- ~/.local/bin/lock-screen &
 
 xsetroot -cursor_name left_ptr
 

@@ -268,7 +268,7 @@ main = xmonad
         , ("M-t",        spawn "rofi -show window")
         , ("M-e",        spawn "thunar")
         , ("<Print>",    spawn "maim -s -u 2>/dev/null | xclip -selection clipboard -t image/png")
-        , ("M-l",        spawn "i3lock -c 1e1e2e")
+        , ("M-l",        spawn "~/.local/bin/lock-screen")
         , ("M-<Return>", spawn myTerminal)
         , ("M-q",        spawn "xmonad --recompile; xmonad --restart")
         , ("M-v",        spawn "copyq toggle")
