@@ -1,19 +1,54 @@
 #!/usr/bin/env bash
 # Show the keyboard shortcuts of this setup in rofi, grouped by category.
-# Data: ~/.xmonad/keybinds.tsv (category<TAB>keys<TAB>description).
+# Enter runs the selected row on the window that was active when the list
+# was opened (see the action column in ~/.xmonad/keybinds.tsv).
 FILE="$HOME/.xmonad/keybinds.tsv"
+WIN=$(xdotool getactivewindow 2>/dev/null)
 
-grep -v '^#' "$FILE" | awk -F'\t' '
+mapfile -t ROWS < <(grep -v '^#' "$FILE" | grep -v '^\s*$')
+
+choice=$(printf '%s\n' "${ROWS[@]}" | awk -F'\t' '
   function esc(s) { gsub(/&/, "\\&amp;", s); gsub(/</, "\\&lt;", s); gsub(/>/, "\\&gt;", s); return s }
-  NF == 3 {
+  {
     # The category is on every row so filtering by it works; only the first
     # row of each group is highlighted, the rest are dimmed.
-    if ($1 != last) cat = "<span foreground=\"#f5c2e7\"><b>" sprintf("%-12s", esc($1)) "</b></span>"
-    else            cat = "<span foreground=\"#45475a\">" sprintf("%-12s", esc($1)) "</span>"
+    if ($1 != last) cat = "<span foreground=\"#f5c2e7\"><b>" sprintf("%-14s", esc($1)) "</b></span>"
+    else            cat = "<span foreground=\"#45475a\">" sprintf("%-14s", esc($1)) "</span>"
     last = $1
-    printf "%s  <span foreground=\"#fab387\">%-36s</span>  %s\n", cat, esc($2), esc($3)
+    # Runnable rows get a pink play mark; informative rows are dimmed.
+    if ($4 != "") { mark = "<span foreground=\"#f5c2e7\"></span>"; desc = esc($3) }
+    else          { mark = " "; desc = "<span foreground=\"#7f849c\">" esc($3) "</span>" }
+    printf "%s %s  <span foreground=\"#fab387\">%-34s</span>  %s\n", mark, cat, esc($2), desc
   }' |
-  rofi -dmenu -i -markup-rows -no-custom -p " Shortcuts" \
-       -theme-str 'window { width: 72%; } listview { lines: 20; spacing: 0; }
+  rofi -dmenu -i -markup-rows -no-custom -format i -p " Shortcuts" \
+       -mesg "Enter runs the shortcut on the window you were using ( = runnable)" \
+       -theme-str 'window { width: 76%; } listview { lines: 20; spacing: 0; }
                    element { padding: 4px 12px; }
-                   element selected.normal { background-color: #313244; text-color: #cdd6f4; }' >/dev/null
+                   element selected.normal { background-color: #313244; text-color: #cdd6f4; }')
+
+[[ -z $choice ]] && exit 0
+IFS=$'\t' read -r _ keys desc action <<<"${ROWS[$choice]}"
+
+if [[ -z $action ]]; then
+  notify-send -a osd -u low -t 3000 "Not runnable from here" "$keys: $desc"
+  exit 0
+fi
+
+if [[ $action == !* ]]; then
+  action=${action#!}
+  confirm=$(printf 'No\nYes' | rofi -dmenu -i -no-custom -p "$desc?" -theme-str 'window { width: 20%; } listview { lines: 2; }')
+  [[ $confirm == Yes ]] || exit 0
+fi
+
+case $action in
+  key:*)
+    # Give focus back to the window that was active, then replay the keys
+    sleep 0.15
+    [[ -n $WIN ]] && xdotool windowactivate --sync "$WIN" 2>/dev/null
+    read -ra seq <<<"${action#key:}"
+    xdotool key --clearmodifiers --delay 60 "${seq[@]}"
+    ;;
+  cmd:*)
+    setsid -f sh -c "${action#cmd:}" >/dev/null 2>&1
+    ;;
+esac
