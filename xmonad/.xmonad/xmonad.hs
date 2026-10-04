@@ -9,6 +9,7 @@ import XMonad.Util.SpawnOnce (spawnOnce)
 import XMonad.Util.Loggers (logLayoutOnScreen)
 import XMonad.Util.NamedWindows (getName)
 import XMonad.Util.NamedScratchpad
+import XMonad.Util.Run (safeSpawn)
 import XMonad.Util.WorkspaceCompare (filterOutWs)
 
 import XMonad.Actions.CycleWS (nextScreen, prevScreen, shiftNextScreen, shiftPrevScreen)
@@ -23,12 +24,12 @@ import XMonad.ManageHook (doFloat, composeAll, (-->))
 
 import qualified XMonad.StackSet as W
 
-import Control.Monad (filterM, forM_, when)
+import Control.Monad (filterM, forM_, unless, when)
 
 import Data.Char (toLower)
 import Data.List (elemIndex, find, intercalate, isInfixOf)
 import qualified Data.Map as M
-import System.Directory (XdgDirectory (XdgCache), createDirectoryIfMissing, getXdgDirectory)
+import System.Directory (XdgDirectory (XdgCache), createDirectoryIfMissing, doesFileExist, getHomeDirectory, getXdgDirectory)
 import System.Exit (exitWith, ExitCode(ExitSuccess))
 import System.FilePath ((</>))
 
@@ -364,21 +365,58 @@ actions =
   where
     onScreen i f = screenWorkspace (S i) >>= flip whenJust (windows . f)
 
--- Keybindings built from the catalog (they replace xmonad's default keys)
-myKeys :: XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
-myKeys c = mkKeymap c [ (k, actRun a) | a <- actions, k <- actKeys a ]
+-- Shortcuts chosen by the user, read from ~/.xmonad/keys.conf at startup:
+-- "action-name shortcut shortcut ..." per line. An action missing from the
+-- file keeps its default shortcuts; an action listed alone has none.
+-- Changes apply with "xmonad --restart" (no recompile needed).
+type KeyOverrides = M.Map String [String]
 
--- Write the catalog for the shortcut editor and the cheat sheet:
--- category, name, description and current shortcuts, tab separated.
-exportActions :: X ()
-exportActions = io $ do
+loadKeys :: IO KeyOverrides
+loadKeys = do
+    file <- (</> ".xmonad/keys.conf") <$> getHomeDirectory
+    exists <- doesFileExist file
+    if not exists then pure M.empty else do
+        txt <- readFile file
+        let entries = [ (n, ks) | l <- lines txt, (n : ks) <- [words l], take 1 n /= "#" ]
+        length txt `seq` pure (M.fromList entries)
+
+actionKeys :: KeyOverrides -> Action -> [String]
+actionKeys o a = M.findWithDefault (actKeys a) (actName a) o
+
+-- Keybindings built from the catalog (they replace xmonad's default keys)
+myKeys :: KeyOverrides -> XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
+myKeys o c = mkKeymap c [ (k, actRun a) | a <- actions, k <- actionKeys o a ]
+
+-- Warn (without breaking anything) about unknown actions, invalid shortcuts
+-- and shortcuts assigned to more than one action in keys.conf.
+checkKeys :: KeyOverrides -> X ()
+checkKeys o = do
+    c <- asks config
+    let parse k = M.keys (mkKeymap c [(k, pure ())])
+        unknown = [ n | n <- M.keys o, n `notElem` map actName actions ]
+        invalid = [ k | a <- actions, k <- actionKeys o a, null (parse k) ]
+        owners  = M.fromListWith (++) [ (kc, [(k, actName a)]) | a <- actions, k <- actionKeys o a, kc <- parse k ]
+        dups    = [ fst (head us) ++ " is used by " ++ intercalate ", " (map snd us)
+                  | us <- M.elems owners, length us > 1 ]
+        problems = map ("unknown action: " ++) unknown ++ map ("invalid shortcut: " ++) invalid ++ dups
+    unless (null problems) $
+        safeSpawn "notify-send" ["-u", "critical", "xmonad: problems in keys.conf", unlines problems]
+
+-- Write the catalog for the shortcut editor and the cheat sheet, tab separated:
+-- category, name, description, current shortcuts, default shortcuts
+-- (shortcuts separated by spaces).
+exportActions :: KeyOverrides -> X ()
+exportActions o = io $ do
     dir <- getXdgDirectory XdgCache "xmonad"
     createDirectoryIfMissing True dir
     writeFile (dir </> "actions.tsv") $ unlines
-        [ intercalate "\t" ([actCategory a, actName a, actDesc a] ++ actKeys a) | a <- actions ]
+        [ intercalate "\t" [actCategory a, actName a, actDesc a, unwords (actionKeys o a), unwords (actKeys a)]
+        | a <- actions ]
 
 main :: IO ()
-main = xmonad
+main = do
+  keyOverrides <- loadKeys
+  xmonad
      . ewmhFullscreen
      . addEwmhWorkspaceSort (pure (filterOutWs [scratchpadWorkspaceTag]))
      . ewmh . docks
@@ -399,9 +437,9 @@ main = xmonad
                 ]
             <+> manageDocks
             <+> manageHook def
-        , startupHook        = spawnOnce "sh /home/zeke/.xmonad/autostart.sh" >> launchBars >> exportActions
+        , startupHook        = spawnOnce "sh /home/zeke/.xmonad/autostart.sh" >> launchBars >> exportActions keyOverrides >> checkKeys keyOverrides
         , logHook            = barsLogHook >> refocusLastLogHook >> nsHideOnFocusLoss scratchpads
-        , keys               = myKeys
+        , keys               = myKeys keyOverrides
         , borderWidth        = myBorderWidth
         , normalBorderColor  = myNormColor
         , focusedBorderColor = myFocusColor
