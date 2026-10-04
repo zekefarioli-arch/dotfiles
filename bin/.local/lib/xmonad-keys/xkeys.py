@@ -62,11 +62,11 @@ def canonical(ez):
 
 
 def to_pretty(ez):
-    mods, key = split(ez)
+    mods, key = split(canonical(ez))
     names = {m[0]: m[2] for m in MODIFIERS}
     k = key_name(key)
     k = PRETTY.get(k, k.upper() if len(k) == 1 else k)
-    return " + ".join([names[m] for m in canonical(ez).split("-")[:len(mods)]] + [k])
+    return " + ".join([names[m] for m in mods] + [k])
 
 
 def to_xdotool(ez):

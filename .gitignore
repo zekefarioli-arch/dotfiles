@@ -5,3 +5,4 @@ build-x86_64-linux/
 .stack-work/
 xmonad.errors
 erl_crash.dump
+__pycache__/
