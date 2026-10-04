@@ -14,6 +14,7 @@ import types
 import unittest
 from unittest import mock
 
+sys.dont_write_bytecode = True   # keep __pycache__ out of the stow packages
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BIN = os.path.join(REPO, "bin", ".local", "bin")
 sys.path.insert(0, os.path.join(REPO, "bin", ".local", "lib", "xmonad-keys"))
