@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Change the screen brightness and show an OSD (dunst notification with a
+# progress bar that replaces itself). Usage: osd-brightness up|down [step%]
+STEP="${2:-5}"
+case "$1" in
+  up)   brightnessctl -q set "${STEP}%+" ;;
+  down) brightnessctl -q --min-value=1% set "${STEP}%-" ;;   # never go fully dark
+esac
+
+pct=$(brightnessctl -m | cut -d, -f4 | tr -d %)
+if   (( pct >= 90 )); then icon=full
+elif (( pct >= 60 )); then icon=high
+elif (( pct >= 30 )); then icon=medium
+else                       icon=low
+fi
+
+# dunst only looks up icons in the system theme dirs, so pass the full path
+# of the user's Papirus-Dark icon when it exists.
+icon_path() {
+  local f="$HOME/.local/share/icons/Papirus-Dark/48x48/status/$1.svg"
+  [[ -e $f ]] && echo "$f" || echo "$1"
+}
+
+notify-send -a osd -u low -t 1500 \
+  -i "$(icon_path "notification-display-brightness-$icon")" \
+  -h string:x-dunst-stack-tag:osd-brightness \
+  -h "int:value:$pct" \
+  "Brightness" "${pct}%"

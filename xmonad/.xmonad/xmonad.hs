@@ -320,9 +320,10 @@ main = xmonad
         , ("M-C-S-m",    spawn "pkill -x kmag")
         -- Dropdown terminal (toggle): Ctrl + Win + T
         , ("M-C-t",      namedScratchpadAction scratchpads "drop")
-        , ("<XF86AudioRaiseVolume>",  spawn "wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+")
-        , ("<XF86AudioLowerVolume>",  spawn "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-")
-        , ("<XF86AudioMute>",         spawn "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle")
-        , ("<XF86MonBrightnessUp>",   spawn "brightnessctl set +10%")
-        , ("<XF86MonBrightnessDown>", spawn "brightnessctl set 10%-")
+        -- Volume and brightness keys show an OSD (dunst progress bar)
+        , ("<XF86AudioRaiseVolume>",  spawn "~/.local/bin/osd-volume up")
+        , ("<XF86AudioLowerVolume>",  spawn "~/.local/bin/osd-volume down")
+        , ("<XF86AudioMute>",         spawn "~/.local/bin/osd-volume mute")
+        , ("<XF86MonBrightnessUp>",   spawn "~/.local/bin/osd-brightness up")
+        , ("<XF86MonBrightnessDown>", spawn "~/.local/bin/osd-brightness down")
         ]

@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Change the output volume (PipeWire) and show an OSD (dunst notification with
+# a progress bar that replaces itself). Usage: osd-volume up|down|mute [step%]
+SINK=@DEFAULT_AUDIO_SINK@
+STEP="${2:-5}"
+case "$1" in
+  up)   wpctl set-mute "$SINK" 0; wpctl set-volume -l 1.0 "$SINK" "${STEP}%+" ;;
+  down) wpctl set-volume "$SINK" "${STEP}%-" ;;
+  mute) wpctl set-mute "$SINK" toggle ;;
+esac
+
+out=$(wpctl get-volume "$SINK")
+pct=$(awk '{printf "%d", $2 * 100 + 0.5}' <<<"$out")
+if [[ $out == *MUTED* ]]; then
+  icon=muted; body="Muted"
+else
+  if   (( pct == 0 )); then icon=off
+  elif (( pct >= 70 )); then icon=high
+  elif (( pct >= 35 )); then icon=medium
+  else                       icon=low
+  fi
+  body="${pct}%"
+fi
+
+# dunst only looks up icons in the system theme dirs, so pass the full path
+# of the user's Papirus-Dark icon when it exists.
+icon_path() {
+  local f="$HOME/.local/share/icons/Papirus-Dark/48x48/status/$1.svg"
+  [[ -e $f ]] && echo "$f" || echo "$1"
+}
+
+notify-send -a osd -u low -t 1500 \
+  -i "$(icon_path "notification-audio-volume-$icon")" \
+  -h string:x-dunst-stack-tag:osd-volume \
+  -h "int:value:$pct" \
+  "Volume" "$body"
