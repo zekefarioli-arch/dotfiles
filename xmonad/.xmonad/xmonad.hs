@@ -4,7 +4,7 @@
 {-# LANGUAGE MultiWayIf #-}
 
 import XMonad
-import XMonad.Util.EZConfig (additionalKeysP)
+import XMonad.Util.EZConfig (mkKeymap)
 import XMonad.Util.SpawnOnce (spawnOnce)
 import XMonad.Util.Loggers (logLayoutOnScreen)
 import XMonad.Util.NamedWindows (getName)
@@ -26,8 +26,11 @@ import qualified XMonad.StackSet as W
 import Control.Monad (filterM, forM_, when)
 
 import Data.Char (toLower)
-import Data.List (elemIndex, find, isInfixOf)
+import Data.List (elemIndex, find, intercalate, isInfixOf)
+import qualified Data.Map as M
+import System.Directory (XdgDirectory (XdgCache), createDirectoryIfMissing, getXdgDirectory)
 import System.Exit (exitWith, ExitCode(ExitSuccess))
+import System.FilePath ((</>))
 
 import XMonad.Layout.Grid
 import XMonad.Layout.ThreeColumns
@@ -272,6 +275,108 @@ myRescreen = def
 -- MAIN
 -- ==========================================================================
 
+-- ==========================================================================
+-- ACTIONS AND KEYBINDINGS
+-- ==========================================================================
+
+-- Every action xmonad can run, with or without a shortcut. The shortcut
+-- editor and the cheat sheet read this catalog from ~/.cache/xmonad/actions.tsv
+-- (written at startup by exportActions).
+data Action = Action
+    { actCategory :: String
+    , actName     :: String     -- stable id used in the keys file
+    , actDesc     :: String
+    , actKeys     :: [String]   -- default shortcuts (EZConfig syntax)
+    , actRun      :: X ()
+    }
+
+actions :: [Action]
+actions =
+    [ Action "Help" "show-shortcuts" "Show the shortcut list" ["M-<F1>", "M-/", "M-<XF86AudioMute>"] (hideDrop >> spawn "~/.local/bin/keybinds")
+
+    , Action "Apps" "terminal" "Terminal (Alacritty)" ["M-<Return>", "M-S-<Return>"] (hideDrop >> spawn myTerminal)
+    , Action "Apps" "dropdown-terminal" "Dropdown terminal with tmux" ["M-C-t"] (namedScratchpadAction scratchpads "drop")
+    , Action "Apps" "launcher" "Rofi: apps, commands and windows" ["M-r"] (hideDrop >> spawn "rofi -show combi -combi-modes 'drun,run,window'")
+    , Action "Apps" "run-command" "dmenu: run a command" ["M-p"] (spawn "dmenu_run")
+    , Action "Apps" "file-manager" "File manager (Thunar)" ["M-e"] (hideDrop >> spawn "thunar")
+    , Action "Apps" "clipboard" "Clipboard history (CopyQ)" ["M-v"] (spawn "copyq toggle")
+
+    , Action "Windows" "close-window" "Close the focused window" ["M-w", "M-S-c"] kill
+    , Action "Windows" "window-switcher" "Window switcher with icons (rofi)" ["M-<Tab>"] (hideDrop >> spawn "rofi -show window -show-icons")
+    , Action "Windows" "window-list" "Window list (rofi)" ["M-t"] (hideDrop >> spawn "rofi -show window")
+    , Action "Windows" "focus-next" "Focus the next window" ["M-j"] (windows W.focusDown)
+    , Action "Windows" "focus-previous" "Focus the previous window" ["M-k", "M-S-<Tab>"] (windows W.focusUp)
+    , Action "Windows" "focus-master" "Focus the master window" ["M-m"] (windows W.focusMaster)
+    , Action "Windows" "swap-next" "Swap with the next window" ["M-S-j"] (windows W.swapDown)
+    , Action "Windows" "swap-previous" "Swap with the previous window" ["M-S-k"] (windows W.swapUp)
+    , Action "Windows" "swap-master" "Swap with the master window" [] (windows W.swapMaster)
+    , Action "Windows" "sink-window" "Put a floating window back into the layout" ["M-S-t"] (withFocused $ windows . W.sink)
+    , Action "Windows" "refresh" "Resize windows to the current layout" ["M-n"] refresh
+
+    , Action "Layouts" "next-layout" "Next layout" ["M-<Space>", "M-C-<Tab>"] (sendMessage NextLayout)
+    , Action "Layouts" "reset-layout" "Reset to the first layout" ["M-S-<Space>"] (asks (layoutHook . config) >>= setLayout)
+    , Action "Layouts" "full-layout" "Full screen layout" ["M-f"] (sendMessage (JumpToLayout "Full"))
+    , Action "Layouts" "full-layout-no-bar" "Full screen layout and hide the bar" ["M-C-f"] (sendMessage ToggleStruts >> sendMessage (JumpToLayout "Full"))
+    , Action "Layouts" "toggle-gaps" "Let windows cover the bar / leave room for it" [] (sendMessage ToggleStruts)
+    , Action "Layouts" "shrink-master" "Shrink the master area" ["M-h"] (sendMessage Shrink)
+    , Action "Layouts" "expand-master" "Expand the master area" [] (sendMessage Expand)
+    , Action "Layouts" "more-master" "More windows in the master area" ["M-,"] (sendMessage (IncMasterN 1))
+    , Action "Layouts" "fewer-master" "Fewer windows in the master area" ["M-."] (sendMessage (IncMasterN (-1)))
+    ]
+    ++ concat
+    [ [ Action "Workspaces" ("view-workspace-" ++ n) ("Go to workspace " ++ n) ["M-" ++ n] (windows (W.greedyView ws))
+      , Action "Workspaces" ("move-to-workspace-" ++ n) ("Move the window to workspace " ++ n) ["M-S-" ++ n] (windows (W.shift ws))
+      , Action "Workspaces" ("move-and-follow-" ++ n) ("Move the window to workspace " ++ n ++ " and go there") [] (windows (W.greedyView ws . W.shift ws))
+      ]
+    | (n, ws) <- zip (map show [1 :: Int ..]) myWorkspaces ]
+    ++
+    [ Action "Monitors" "focus-previous-monitor" "Focus the previous monitor" ["M-S-,"] prevScreen
+    , Action "Monitors" "focus-next-monitor" "Focus the next monitor" ["M-S-."] nextScreen
+    , Action "Monitors" "move-to-previous-monitor" "Move the window to the previous monitor" ["M-C-,"] (shiftPrevScreen >> prevScreen)
+    , Action "Monitors" "move-to-next-monitor" "Move the window to the next monitor" ["M-C-."] (shiftNextScreen >> nextScreen)
+    ]
+    ++ concat
+    [ [ Action "Monitors" ("focus-monitor-" ++ show (i + 1)) ("Focus monitor " ++ show (i + 1)) [] (onScreen i W.view)
+      , Action "Monitors" ("move-to-monitor-" ++ show (i + 1)) ("Move the window to monitor " ++ show (i + 1)) ["M-S-" ++ [k]] (onScreen i W.shift)
+      ]
+    | (i, k) <- zip [0 ..] "wer" ]
+    ++
+    [ Action "Notifications" "show-last-notification" "Show the last notification again" ["M-S-n"] (spawn "dunstctl history-pop")
+    , Action "Notifications" "close-notifications" "Close all notifications" ["M-C-n"] (spawn "dunstctl close-all")
+
+    , Action "Bar" "toggle-main-bar" "Show / hide the main bar" ["M-b"] (spawn "~/.config/polybar/toggle-bar.sh main")
+    , Action "Bar" "toggle-secondary-bar" "Show / hide the secondary bar" ["M-C-b"] (spawn "~/.config/polybar/toggle-bar.sh second")
+    , Action "Bar" "toggle-all-bars" "Show / hide all bars" ["M-S-b"] (spawn "polybar-msg cmd toggle")
+
+    , Action "System" "lock-screen" "Lock the screen" ["M-l"] (spawn "~/.local/bin/lock-screen")
+    , Action "System" "restart-xmonad" "Recompile and restart xmonad (keeps windows)" ["M-q"] (spawn "xmonad --recompile; xmonad --restart")
+    , Action "System" "log-out" "Log out" ["M-C-q", "M-S-q"] (io (exitWith ExitSuccess))
+    , Action "System" "screenshot" "Screenshot of an area, copied to the clipboard" ["<Print>"] (spawn "maim -s -u 2>/dev/null | xclip -selection clipboard -t image/png")
+    , Action "System" "magnifier" "Magnifier on / off (KMag)" ["M-C-m"] (spawn "sh -c 'pgrep -x kmag >/dev/null && pkill -x kmag || kmag'")
+    , Action "System" "close-magnifier" "Close the magnifier" ["M-C-S-m"] (spawn "pkill -x kmag")
+
+    , Action "Media" "volume-up" "Volume +5% with on-screen indicator" ["<XF86AudioRaiseVolume>"] (spawn "~/.local/bin/osd-volume up")
+    , Action "Media" "volume-down" "Volume -5% with on-screen indicator" ["<XF86AudioLowerVolume>"] (spawn "~/.local/bin/osd-volume down")
+    , Action "Media" "volume-mute" "Mute / unmute" ["<XF86AudioMute>"] (spawn "~/.local/bin/osd-volume mute")
+    , Action "Media" "brightness-up" "Brightness +5% with on-screen indicator" ["<XF86MonBrightnessUp>"] (spawn "~/.local/bin/osd-brightness up")
+    , Action "Media" "brightness-down" "Brightness -5% with on-screen indicator" ["<XF86MonBrightnessDown>"] (spawn "~/.local/bin/osd-brightness down")
+    ]
+  where
+    onScreen i f = screenWorkspace (S i) >>= flip whenJust (windows . f)
+
+-- Keybindings built from the catalog (they replace xmonad's default keys)
+myKeys :: XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
+myKeys c = mkKeymap c [ (k, actRun a) | a <- actions, k <- actKeys a ]
+
+-- Write the catalog for the shortcut editor and the cheat sheet:
+-- category, name, description and current shortcuts, tab separated.
+exportActions :: X ()
+exportActions = io $ do
+    dir <- getXdgDirectory XdgCache "xmonad"
+    createDirectoryIfMissing True dir
+    writeFile (dir </> "actions.tsv") $ unlines
+        [ intercalate "\t" ([actCategory a, actName a, actDesc a] ++ actKeys a) | a <- actions ]
+
 main :: IO ()
 main = xmonad
      . ewmhFullscreen
@@ -294,52 +399,10 @@ main = xmonad
                 ]
             <+> manageDocks
             <+> manageHook def
-        , startupHook        = spawnOnce "sh /home/zeke/.xmonad/autostart.sh" >> launchBars
+        , startupHook        = spawnOnce "sh /home/zeke/.xmonad/autostart.sh" >> launchBars >> exportActions
         , logHook            = barsLogHook >> refocusLastLogHook >> nsHideOnFocusLoss scratchpads
+        , keys               = myKeys
         , borderWidth        = myBorderWidth
         , normalBorderColor  = myNormColor
         , focusedBorderColor = myFocusColor
         }
-        `additionalKeysP`
-        [ ("M-/",        hideDrop >> spawn "~/.local/bin/keybinds")    -- shortcut list
-        , ("M-<F1>",     hideDrop >> spawn "~/.local/bin/keybinds")
-        -- On the ThinkPad, F1 sends Mute unless Fn Lock (Fn+Esc) is on
-        , ("M-<XF86AudioMute>", hideDrop >> spawn "~/.local/bin/keybinds")
-        , ("M-r",        hideDrop >> spawn "rofi -show combi -combi-modes 'drun,run,window'")
-        , ("M-t",        hideDrop >> spawn "rofi -show window")
-        , ("M-e",        hideDrop >> spawn "thunar")
-        , ("<Print>",    spawn "maim -s -u 2>/dev/null | xclip -selection clipboard -t image/png")
-        , ("M-l",        spawn "~/.local/bin/lock-screen")
-        , ("M-<Return>", hideDrop >> spawn myTerminal)
-        , ("M-q",        spawn "xmonad --recompile; xmonad --restart")
-        , ("M-v",        spawn "copyq toggle")
-        , ("M-w",        kill)
-        , ("M-C-q",      io (exitWith ExitSuccess))
-        , ("M-<Tab>",    hideDrop >> spawn "rofi -show window -show-icons")
-        , ("M-C-<Tab>",  sendMessage NextLayout)
-        , ("M-S-b",      spawn "polybar-msg cmd toggle")
-        , ("M-b",        spawn "~/.config/polybar/toggle-bar.sh main")
-        , ("M-C-b",      spawn "~/.config/polybar/toggle-bar.sh second")
-        , ("M-f",        sendMessage (JumpToLayout "Full"))
-        , ("M-C-f",      sendMessage ToggleStruts >> sendMessage (JumpToLayout "Full"))
-        , ("M-C-m",      spawn "sh -c 'pgrep -x kmag >/dev/null && pkill -x kmag || kmag'")
-        , ("M-C-S-m",    spawn "pkill -x kmag")
-        -- Put a floating window back into the tiling layout
-        , ("M-S-t",      withFocused $ windows . W.sink)
-        -- Monitors: focus / move the window to the previous or next screen
-        , ("M-S-,",      prevScreen)
-        , ("M-S-.",      nextScreen)
-        , ("M-C-,",      shiftPrevScreen >> prevScreen)
-        , ("M-C-.",      shiftNextScreen >> nextScreen)
-        -- Notifications: show the last one again / close all
-        , ("M-S-n",      spawn "dunstctl history-pop")
-        , ("M-C-n",      spawn "dunstctl close-all")
-        -- Dropdown terminal (toggle): Ctrl + Win + T
-        , ("M-C-t",      namedScratchpadAction scratchpads "drop")
-        -- Volume and brightness keys show an OSD (dunst progress bar)
-        , ("<XF86AudioRaiseVolume>",  spawn "~/.local/bin/osd-volume up")
-        , ("<XF86AudioLowerVolume>",  spawn "~/.local/bin/osd-volume down")
-        , ("<XF86AudioMute>",         spawn "~/.local/bin/osd-volume mute")
-        , ("<XF86MonBrightnessUp>",   spawn "~/.local/bin/osd-brightness up")
-        , ("<XF86MonBrightnessDown>", spawn "~/.local/bin/osd-brightness down")
-        ]
