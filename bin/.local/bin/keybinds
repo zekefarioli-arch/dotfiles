@@ -1,54 +1,145 @@
-#!/usr/bin/env bash
-# Show the keyboard shortcuts of this setup in rofi, grouped by category.
-# Enter runs the selected row on the window that was active when the list
-# was opened (see the action column in ~/.xmonad/keybinds.tsv).
-FILE="$HOME/.xmonad/keybinds.tsv"
-WIN=$(xdotool getactivewindow 2>/dev/null)
+#!/usr/bin/env python3
+"""Show every keyboard shortcut of this setup in rofi, grouped by category.
 
-mapfile -t ROWS < <(grep -v '^#' "$FILE" | grep -v '^\s*$')
+xmonad shortcuts come from the action catalog (~/.cache/xmonad/actions.tsv)
+and ~/.xmonad/keys.conf, so changes made with the shortcut editor appear at
+once; other apps' shortcuts come from ~/.xmonad/app-keys.tsv.
 
-choice=$(printf '%s\n' "${ROWS[@]}" | awk -F'\t' '
-  function esc(s) { gsub(/&/, "\\&amp;", s); gsub(/</, "\\&lt;", s); gsub(/>/, "\\&gt;", s); return s }
-  {
-    # The category is on every row so filtering by it works; only the first
-    # row of each group is highlighted, the rest are dimmed.
-    if ($1 != last) cat = "<span foreground=\"#f5c2e7\"><b>" sprintf("%-14s", esc($1)) "</b></span>"
-    else            cat = "<span foreground=\"#45475a\">" sprintf("%-14s", esc($1)) "</span>"
-    last = $1
-    # Runnable rows get a pink play mark; informative rows are dimmed.
-    if ($4 != "") { mark = "<span foreground=\"#f5c2e7\"></span>"; desc = esc($3) }
-    else          { mark = " "; desc = "<span foreground=\"#7f849c\">" esc($3) "</span>" }
-    printf "%s %s  <span foreground=\"#fab387\">%-34s</span>  %s\n", mark, cat, esc($2), desc
-  }' |
-  rofi -dmenu -i -markup-rows -no-custom -format i -p " Shortcuts" \
-       -mesg "Enter runs the shortcut on the window you were using ( = runnable)" \
-       -theme-str 'window { width: 76%; } listview { lines: 20; spacing: 0; }
-                   element { padding: 4px 12px; }
-                   element selected.normal { background-color: #313244; text-color: #cdd6f4; }')
+Enter runs the selected row on the window that was active when the list was
+opened. An xmonad action without a shortcut opens the editor on it instead.
+"""
+import os
+import subprocess
+import sys
 
-[[ -z $choice ]] && exit 0
-IFS=$'\t' read -r _ keys desc action <<<"${ROWS[$choice]}"
+sys.path.insert(0, os.path.expanduser("~/.local/lib/xmonad-keys"))
+import xkeys  # noqa: E402
 
-if [[ -z $action ]]; then
-  notify-send -a osd -u low -t 3000 "Not runnable from here" "$keys: $desc"
-  exit 0
-fi
+ACTIONS_FILE = os.path.expanduser("~/.cache/xmonad/actions.tsv")
+KEYS_FILE = os.path.expanduser("~/.xmonad/keys.conf")
+APP_FILE = os.path.expanduser("~/.xmonad/app-keys.tsv")
+CONFIRM = {"log-out"}            # xmonad actions that ask before running
+NOT_RUNNABLE = {"show-shortcuts"}
+THEME = ("window { width: 80%; } listview { lines: 20; spacing: 0; } element { padding: 4px 12px; } "
+         "element selected.normal { background-color: #313244; text-color: #cdd6f4; }")
 
-if [[ $action == !* ]]; then
-  action=${action#!}
-  confirm=$(printf 'No\nYes' | rofi -dmenu -i -no-custom -p "$desc?" -theme-str 'window { width: 20%; } listview { lines: 2; }')
-  [[ $confirm == Yes ]] || exit 0
-fi
 
-case $action in
-  key:*)
-    # Give focus back to the window that was active, then replay the keys
-    sleep 0.15
-    [[ -n $WIN ]] && xdotool windowactivate --sync "$WIN" 2>/dev/null
-    read -ra seq <<<"${action#key:}"
-    xdotool key --clearmodifiers --delay 60 "${seq[@]}"
-    ;;
-  cmd:*)
-    setsid -f sh -c "${action#cmd:}" >/dev/null 2>&1
-    ;;
-esac
+def esc(s):
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def load_rows():
+    """Rows as dicts: category, keys (readable), desc, kind and target."""
+    overrides = {}
+    with open(KEYS_FILE, encoding="utf-8") as f:
+        for line in f:
+            w = line.split()
+            if w and not w[0].startswith("#"):
+                overrides[w[0]] = w[1:]
+    rows = []
+    with open(ACTIONS_FILE, encoding="utf-8") as f:
+        for line in f:
+            p = line.rstrip("\n").split("\t")
+            if len(p) != 5:
+                continue
+            cat, name, desc, _, default = p
+            keys = overrides.get(name, default.split())
+            rows.append({"cat": cat, "desc": desc, "name": name, "ez": keys,
+                         "keys": ", ".join(xkeys.to_pretty(k) for k in keys)})
+    with open(APP_FILE, encoding="utf-8") as f:
+        for line in f:
+            if line.startswith("#") or not line.strip():
+                continue
+            cat, keys, desc, action = (line.rstrip("\n").split("\t") + [""] * 4)[:4]
+            rows.append({"cat": cat, "desc": desc, "keys": keys, "action": action})
+    return rows
+
+
+def runnable(r):
+    if "name" in r:
+        return r["name"] not in NOT_RUNNABLE
+    return bool(r["action"])
+
+
+def render(rows):
+    out, last = [], None
+    for r in rows:
+        cat = (f"<span foreground='#f5c2e7'><b>{esc(r['cat']):<14}</b></span>" if r["cat"] != last
+               else f"<span foreground='#45475a'>{esc(r['cat']):<14}</span>")
+        last = r["cat"]
+        mark = "<span foreground='#f5c2e7'></span>" if runnable(r) else " "
+        keys = (f"<span foreground='#fab387'>{esc(r['keys']):<40}</span>" if r["keys"]
+                else f"<span foreground='#585b70'>{'(none)':<40}</span>")
+        desc = esc(r["desc"]) if runnable(r) else f"<span foreground='#7f849c'>{esc(r['desc'])}</span>"
+        out.append(f"{mark} {cat}  {keys}  {desc}")
+    return out
+
+
+def rofi(rows, prompt, mesg=None, theme=THEME):
+    cmd = ["rofi", "-dmenu", "-i", "-markup-rows", "-no-custom", "-format", "i", "-p", prompt,
+           "-theme-str", theme]
+    if mesg:
+        cmd += ["-mesg", mesg]
+    res = subprocess.run(cmd, input="\n".join(rows), capture_output=True, text=True)
+    out = res.stdout.strip()
+    return int(out) if res.returncode == 0 and out.isdigit() else None
+
+
+def confirm(question):
+    return rofi(["No", "Yes"], question, theme="window { width: 24%; } listview { lines: 2; }") == 1
+
+
+def notify(title, body):
+    subprocess.run(["notify-send", "-a", "osd", "-u", "low", "-t", "3000", title, body], check=False)
+
+
+def focus(win):
+    if win:
+        subprocess.run(["xdotool", "windowactivate", "--sync", win], check=False,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def run(r, win):
+    if "name" in r:  # xmonad action
+        if r["name"] == "edit-shortcuts":
+            subprocess.Popen(["keys-editor"], start_new_session=True)
+        elif not r["ez"]:
+            subprocess.Popen(["keys-editor", "edit", r["name"]], start_new_session=True)
+        elif r["name"] in CONFIRM and not confirm(f"{r['desc']}?"):
+            return
+        else:
+            focus(win)
+            xkeys.replay(r["ez"][0])
+        return
+    action = r["action"]
+    if not action:
+        notify("Not runnable from here", f"{r['keys']}: {r['desc']}")
+        return
+    if action.startswith("!"):
+        action = action[1:]
+        if not confirm(f"{r['desc']}?"):
+            return
+    if action.startswith("key:"):
+        focus(win)
+        subprocess.run(["xdotool", "key", "--clearmodifiers", "--delay", "60", *action[4:].split()],
+                       check=False)
+    elif action.startswith("cmd:"):
+        subprocess.Popen(["sh", "-c", action[4:]], start_new_session=True,
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def main():
+    win = subprocess.run(["xdotool", "getactivewindow"], capture_output=True, text=True).stdout.strip()
+    rows = load_rows()
+    sel = rofi(render(rows), " Shortcuts",
+               mesg="Enter runs it on the window you were using ( = runnable) · "
+                    "no shortcut opens the editor · Super+Shift+F1 edits shortcuts")
+    if sel is None:
+        return
+    # Let rofi release the keyboard and the previous window get focus back
+    subprocess.run(["sleep", "0.15"])
+    run(rows[sel], win)
+
+
+if __name__ == "__main__":
+    main()

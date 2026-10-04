@@ -1,0 +1,42 @@
+# Shortcuts that are not xmonad actions, shown by ~/.local/bin/keybinds (Super+F1)
+# after the xmonad ones (which come from the action catalog and keys.conf).
+# Format: category<TAB>keys<TAB>description<TAB>action
+# Action (optional): "key:<xdotool keys>" replays the keys on the window that was
+# active when the list was opened; "cmd:<shell command>" runs a command;
+# a leading "!" asks for confirmation; empty means the row is only informative.
+Mouse	Super + left drag	Move a window (makes it floating)	
+Mouse	Super + right drag	Resize a window (makes it floating)	
+Mouse	Super + middle click	Raise a window	
+Mouse	Click a workspace in the bar	Go to that workspace	
+tmux	Ctrl+B  then  C	New tmux window	key:ctrl+b c
+tmux	Ctrl+B  then  N	Next tmux window	key:ctrl+b n
+tmux	Ctrl+B  then  P	Previous tmux window	key:ctrl+b p
+tmux	Ctrl+B  then  %	Split the pane vertically	key:ctrl+b percent
+tmux	Ctrl+B  then  "	Split the pane horizontally	key:ctrl+b quotedbl
+tmux	Ctrl+B  then  D	Detach (everything keeps running)	key:ctrl+b d
+tmux	Ctrl+B  then  Ctrl+S	Save sessions now (also automatic every 5 min)	key:ctrl+b ctrl+s
+tmux	Ctrl+B  then  Ctrl+R	Restore saved sessions	key:ctrl+b ctrl+r
+tmux	Mouse select	Copy the selection to the clipboard	
+Terminal	Ctrl + Shift + C	Copy in Alacritty	key:ctrl+shift+c
+Terminal	Ctrl + Shift + V	Paste in Alacritty	key:ctrl+shift+v
+Claude Code	Shift + Enter	New line (also Ctrl + Enter, Alt + Enter and Ctrl + J)	key:shift+Return
+Claude Code	Esc	Cancel the current response	key:Escape
+Claude Code	Shift + Tab	Cycle permission mode	key:shift+Tab
+Neovim	Space  (wait)	Show every shortcut group (which-key)	key:space
+Neovim	Space Space	Find a file	key:space space
+Neovim	Space /	Search text in the project	key:space slash
+Neovim	Space E	File explorer	key:space e
+Neovim	gd	Go to definition	key:g d
+Neovim	gr	Go to references	key:g r
+Neovim	K	Show documentation	key:shift+k
+Neovim	Space C A	Code action	key:space c a
+Neovim	Space C R	Rename	key:space c r
+Neovim	Space G G	lazygit	key:space g g
+Neovim	] H	Next git change	key:bracketright h
+Neovim	[ H	Previous git change	key:bracketleft h
+Neovim	Space G V O	Diffview: all changes	key:space g v o
+Neovim	Space G V F	Diffview: file history	key:space g v f
+Neovim	Space T T	Run the tests in the file	key:space t t
+Phone	rofi → scrcpy	Phone screen on the laptop	cmd:scrcpy --window-title Phone
+Phone	phone accept	Accept a KDE Connect pairing request	cmd:notify-send "Phone" "$(~/.local/bin/phone accept 2>&1 || true)"
+Phone	SMS with a code	The code is copied to the clipboard automatically	

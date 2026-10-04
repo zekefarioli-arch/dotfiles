@@ -115,6 +115,10 @@ class _X:
         lib.XkbKeycodeToKeysym.argtypes = [ctypes.c_void_p, ctypes.c_ubyte, ctypes.c_int, ctypes.c_int]
         lib.XKeysymToString.restype = ctypes.c_char_p
         lib.XKeysymToString.argtypes = [ctypes.c_ulong]
+        lib.XStringToKeysym.restype = ctypes.c_ulong
+        lib.XStringToKeysym.argtypes = [ctypes.c_char_p]
+        lib.XKeysymToKeycode.restype = ctypes.c_ubyte
+        lib.XKeysymToKeycode.argtypes = [ctypes.c_void_p, ctypes.c_ulong]
         lib.XFlush.argtypes = [ctypes.c_void_p]
         lib.XCloseDisplay.argtypes = [ctypes.c_void_p]
         self.lib = lib
@@ -132,6 +136,41 @@ def _x():
     if _x_instance is None:
         _x_instance = _X()
     return _x_instance
+
+
+# Keycodes of the left modifier keys, pressed when replaying a shortcut
+MODIFIER_KEYSYM_NAMES = {"M": "Super_L", "C": "Control_L", "S": "Shift_L",
+                         "M1": "Alt_L", "M5": "ISO_Level3_Shift"}
+
+
+def to_keycodes(ez):
+    """Keycodes to press, in order, to replay an EZConfig shortcut. Replaying
+    by keycode avoids xdotool's keysym remapping, which adds Alt to F-keys
+    (Ctrl+F5 would become Ctrl+Alt+F5 and switch the virtual terminal)."""
+    x = _x()
+    dpy = x.lib.XOpenDisplay(None)
+    if not dpy:
+        raise RuntimeError("cannot open the X display")
+    try:
+        mods, key = split(canonical(ez))
+        k = key_name(key)
+        names = [MODIFIER_KEYSYM_NAMES[m] for m in mods]
+        names.append(x.keysym_name(ord(k)) if len(k) == 1 else EZ_TO_X.get(k, k))
+        codes = [x.lib.XKeysymToKeycode(dpy, x.lib.XStringToKeysym(n.encode())) for n in names]
+        if 0 in codes:
+            raise ValueError(f"no keycode for {ez}")
+        return codes
+    finally:
+        x.lib.XCloseDisplay(dpy)
+
+
+def replay(ez):
+    """Press and release an EZConfig shortcut with xdotool, by keycode."""
+    codes = to_keycodes(ez)
+    args = ["xdotool"]
+    args += [a for c in codes for a in ("keydown", str(c))]
+    args += [a for c in reversed(codes) for a in ("keyup", str(c))]
+    subprocess.run(args, check=False)
 
 
 def _ez_from_event(x, dpy, ev):

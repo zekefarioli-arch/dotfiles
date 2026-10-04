@@ -11,6 +11,7 @@ xmonad so the change applies at once (no recompile).
   keys-editor remove ACTION SLOT      remove shortcut SLOT
   keys-editor reset ACTION            go back to the default shortcuts
   keys-editor free [N]                print N free shortcut suggestions
+  keys-editor edit ACTION             open the rofi editor on one action
 """
 import os
 import re
@@ -296,6 +297,8 @@ def cli(args):
         a = find(actions, args[1])
         reset_keys(actions, a)
         print(f"{a.name}: {describe(a)}")
+    elif cmd == "edit" and len(args) == 2:
+        edit_action(actions, find(actions, args[1]))
     elif cmd == "free":
         print("\n".join(free_shortcuts(actions, int(args[1]) if len(args) > 1 else 12)))
     else:
