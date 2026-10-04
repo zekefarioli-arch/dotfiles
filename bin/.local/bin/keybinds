@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Show the keyboard shortcuts of this setup in rofi, grouped by category.
+# Data: ~/.xmonad/keybinds.tsv (category<TAB>keys<TAB>description).
+FILE="$HOME/.xmonad/keybinds.tsv"
+
+grep -v '^#' "$FILE" | awk -F'\t' '
+  function esc(s) { gsub(/&/, "\\&amp;", s); gsub(/</, "\\&lt;", s); gsub(/>/, "\\&gt;", s); return s }
+  NF == 3 {
+    # The category is on every row so filtering by it works; only the first
+    # row of each group is highlighted, the rest are dimmed.
+    if ($1 != last) cat = "<span foreground=\"#f5c2e7\"><b>" sprintf("%-12s", esc($1)) "</b></span>"
+    else            cat = "<span foreground=\"#45475a\">" sprintf("%-12s", esc($1)) "</span>"
+    last = $1
+    printf "%s  <span foreground=\"#fab387\">%-36s</span>  %s\n", cat, esc($2), esc($3)
+  }' |
+  rofi -dmenu -i -markup-rows -no-custom -p " Shortcuts" \
+       -theme-str 'window { width: 72%; } listview { lines: 20; spacing: 0; }
+                   element { padding: 4px 12px; }
+                   element selected.normal { background-color: #313244; text-color: #cdd6f4; }' >/dev/null

@@ -300,7 +300,9 @@ main = xmonad
         , focusedBorderColor = myFocusColor
         }
         `additionalKeysP`
-        [ ("M-r",        hideDrop >> spawn "rofi -show combi -combi-modes 'drun,run,window'")
+        [ ("M-/",        hideDrop >> spawn "~/.local/bin/keybinds")    -- shortcut list
+        , ("M-<F1>",     hideDrop >> spawn "~/.local/bin/keybinds")
+        , ("M-r",        hideDrop >> spawn "rofi -show combi -combi-modes 'drun,run,window'")
         , ("M-t",        hideDrop >> spawn "rofi -show window")
         , ("M-e",        hideDrop >> spawn "thunar")
         , ("<Print>",    spawn "maim -s -u 2>/dev/null | xclip -selection clipboard -t image/png")

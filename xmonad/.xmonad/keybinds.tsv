@@ -1,0 +1,67 @@
+# Keyboard shortcuts shown by ~/.local/bin/keybinds (Super+/ or Super+F1).
+# Format: category<TAB>keys<TAB>description. Keep it in sync with xmonad.hs.
+Help	Super + /  or  Super + F1	Show this list (type to filter)
+Apps	Super + Enter	Terminal (Alacritty)
+Apps	Super + Shift + Enter	Terminal (xmonad default)
+Apps	Super + Ctrl + T	Dropdown terminal with tmux (hides itself when another app opens)
+Apps	Super + R	Rofi: apps, commands and windows
+Apps	Super + P	dmenu: run a command
+Apps	Super + E	File manager (Thunar)
+Apps	Super + V	Clipboard history (CopyQ)
+Windows	Super + W	Close the focused window
+Windows	Super + Shift + C	Close the focused window (xmonad default)
+Windows	Super + J  /  Super + K	Focus next / previous window
+Windows	Super + Shift + J  /  K	Swap with next / previous window
+Windows	Super + M	Focus the master window
+Windows	Super + Tab	Window switcher with icons (rofi)
+Windows	Super + T	Window list (rofi)
+Windows	Super + Shift + Tab	Focus previous window
+Windows	Super + left drag	Move a window (makes it floating)
+Windows	Super + right drag	Resize a window (makes it floating)
+Windows	Super + middle click	Raise a window
+Windows	Super + N	Resize windows to the current layout
+Layouts	Super + Space	Next layout (F1, Tall, Mirror, Full, Grid, ThreeCol)
+Layouts	Super + Ctrl + Tab	Next layout
+Layouts	Super + Shift + Space	Reset to the first layout
+Layouts	Super + F	Full screen layout
+Layouts	Super + Ctrl + F	Full screen layout and hide the bar
+Layouts	Super + H	Shrink the master area
+Layouts	Super + ,  /  Super + .	More / fewer windows in the master area
+Workspaces	Super + 1 … 9	Go to workspace 1 … 9
+Workspaces	Super + Shift + 1 … 9	Move the window to workspace 1 … 9
+Workspaces	Click a workspace in the bar	Go to that workspace
+Bar	Super + B	Show / hide the main bar
+Bar	Super + Ctrl + B	Show / hide the secondary bar
+Bar	Super + Shift + B	Show / hide all bars
+System	Super + L	Lock the screen
+System	Super + Q	Recompile and restart xmonad (keeps windows)
+System	Super + Ctrl + Q	Log out
+System	Super + Shift + Q	Log out (xmonad default)
+System	Print	Screenshot of an area, copied to the clipboard
+System	Super + Ctrl + M	Magnifier on / off (KMag)
+System	Super + Ctrl + Shift + M	Close the magnifier
+Media	Volume up / down keys	Volume ±5% with on-screen indicator
+Media	Mute key	Mute / unmute
+Media	Brightness up / down keys	Brightness ±5% with on-screen indicator
+tmux	Ctrl+B  then  C	New tmux window
+tmux	Ctrl+B  then  N  /  P	Next / previous tmux window
+tmux	Ctrl+B  then  %  /  "	Split pane vertically / horizontally
+tmux	Ctrl+B  then  D	Detach (everything keeps running)
+tmux	Ctrl+B  then  Ctrl+S  /  Ctrl+R	Save / restore sessions now (also automatic every 5 min)
+tmux	Mouse select	Copy the selection to the clipboard
+Terminal	Ctrl + Shift + C  /  Ctrl + Shift + V	Copy / paste in Alacritty
+Claude Code	Shift + Enter  /  Ctrl + Enter	New line (Alt + Enter and Ctrl + J work too)
+Claude Code	Esc	Cancel the current response
+Claude Code	Shift + Tab	Cycle permission mode
+Neovim	Space  (wait)	Show every shortcut group (which-key)
+Neovim	Space Space  /  Space /	Find file / search text in the project
+Neovim	Space E	File explorer
+Neovim	gd  /  gr  /  K	Go to definition / references / documentation
+Neovim	Space C A  /  Space C R	Code action / rename
+Neovim	Space G G	lazygit
+Neovim	] H  /  [ H	Next / previous git change
+Neovim	Space G V O  /  Space G V F	Diffview: all changes / file history
+Neovim	Space T T	Run the tests in the file
+Phone	rofi → scrcpy	Phone screen on the laptop
+Phone	phone accept	Accept a KDE Connect pairing request (terminal)
+Phone	SMS with a code	The code is copied to the clipboard automatically
