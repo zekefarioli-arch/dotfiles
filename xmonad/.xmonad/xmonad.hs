@@ -11,6 +11,7 @@ import XMonad.Util.NamedWindows (getName)
 import XMonad.Util.NamedScratchpad
 import XMonad.Util.WorkspaceCompare (filterOutWs)
 
+import XMonad.Actions.CycleWS (nextScreen, prevScreen, shiftNextScreen, shiftPrevScreen)
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.EwmhDesktops (ewmh, ewmhFullscreen, addEwmhWorkspaceSort)
 import XMonad.Hooks.Rescreen
@@ -301,7 +302,7 @@ main = xmonad
         }
         `additionalKeysP`
         [ ("M-/",        hideDrop >> spawn "~/.local/bin/keybinds")    -- shortcut list
-        , ("M-<F1>",     hideDrop >> spawn "~/.local/bin/keybinds")
+        , ("<F1>",       hideDrop >> spawn "~/.local/bin/keybinds")    -- F1 alone: taken from every app
         , ("M-r",        hideDrop >> spawn "rofi -show combi -combi-modes 'drun,run,window'")
         , ("M-t",        hideDrop >> spawn "rofi -show window")
         , ("M-e",        hideDrop >> spawn "thunar")
@@ -321,6 +322,16 @@ main = xmonad
         , ("M-C-f",      sendMessage ToggleStruts >> sendMessage (JumpToLayout "Full"))
         , ("M-C-m",      spawn "sh -c 'pgrep -x kmag >/dev/null && pkill -x kmag || kmag'")
         , ("M-C-S-m",    spawn "pkill -x kmag")
+        -- Put a floating window back into the tiling layout
+        , ("M-S-t",      withFocused $ windows . W.sink)
+        -- Monitors: focus / move the window to the previous or next screen
+        , ("M-S-,",      prevScreen)
+        , ("M-S-.",      nextScreen)
+        , ("M-C-,",      shiftPrevScreen >> prevScreen)
+        , ("M-C-.",      shiftNextScreen >> nextScreen)
+        -- Notifications: show the last one again / close all
+        , ("M-S-n",      spawn "dunstctl history-pop")
+        , ("M-C-n",      spawn "dunstctl close-all")
         -- Dropdown terminal (toggle): Ctrl + Win + T
         , ("M-C-t",      namedScratchpadAction scratchpads "drop")
         -- Volume and brightness keys show an OSD (dunst progress bar)

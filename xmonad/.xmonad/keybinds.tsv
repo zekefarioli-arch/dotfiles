@@ -1,6 +1,6 @@
-# Keyboard shortcuts shown by ~/.local/bin/keybinds (Super+/ or Super+F1).
+# Keyboard shortcuts shown by ~/.local/bin/keybinds (F1 or Super+/).
 # Format: category<TAB>keys<TAB>description. Keep it in sync with xmonad.hs.
-Help	Super + /  or  Super + F1	Show this list (type to filter)
+Help	F1  or  Super + /	Show this list (type to filter)
 Apps	Super + Enter	Terminal (Alacritty)
 Apps	Super + Shift + Enter	Terminal (xmonad default)
 Apps	Super + Ctrl + T	Dropdown terminal with tmux (hides itself when another app opens)
@@ -20,6 +20,7 @@ Windows	Super + left drag	Move a window (makes it floating)
 Windows	Super + right drag	Resize a window (makes it floating)
 Windows	Super + middle click	Raise a window
 Windows	Super + N	Resize windows to the current layout
+Windows	Super + Shift + T	Put a floating window back into the layout
 Layouts	Super + Space	Next layout (F1, Tall, Mirror, Full, Grid, ThreeCol)
 Layouts	Super + Ctrl + Tab	Next layout
 Layouts	Super + Shift + Space	Reset to the first layout
@@ -30,6 +31,10 @@ Layouts	Super + ,  /  Super + .	More / fewer windows in the master area
 Workspaces	Super + 1 … 9	Go to workspace 1 … 9
 Workspaces	Super + Shift + 1 … 9	Move the window to workspace 1 … 9
 Workspaces	Click a workspace in the bar	Go to that workspace
+Monitors	Super + Shift + ,  /  .	Focus the previous / next monitor
+Monitors	Super + Ctrl + ,  /  .	Move the window to the previous / next monitor
+Notifications	Super + Shift + N	Show the last notification again
+Notifications	Super + Ctrl + N	Close all notifications
 Bar	Super + B	Show / hide the main bar
 Bar	Super + Ctrl + B	Show / hide the secondary bar
 Bar	Super + Shift + B	Show / hide all bars
