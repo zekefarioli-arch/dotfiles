@@ -1,0 +1,307 @@
+#!/usr/bin/env python3
+"""Shortcut editor for the xmonad actions (rofi UI and a small CLI).
+
+Reads the action catalog that xmonad exports at startup
+(~/.cache/xmonad/actions.tsv) and edits ~/.xmonad/keys.conf, then restarts
+xmonad so the change applies at once (no recompile).
+
+  keys-editor                         open the rofi editor (Super+Shift+F1)
+  keys-editor list                    print every action and its shortcuts
+  keys-editor set ACTION SLOT KEY     set shortcut SLOT (1 or 2) to KEY (EZConfig)
+  keys-editor remove ACTION SLOT      remove shortcut SLOT
+  keys-editor reset ACTION            go back to the default shortcuts
+  keys-editor free [N]                print N free shortcut suggestions
+"""
+import os
+import re
+import subprocess
+import sys
+
+sys.path.insert(0, os.path.expanduser("~/.local/lib/xmonad-keys"))
+import xkeys  # noqa: E402
+
+ACTIONS_FILE = os.path.expanduser("~/.cache/xmonad/actions.tsv")
+KEYS_FILE = os.path.expanduser("~/.xmonad/keys.conf")
+MAX_SLOTS = 2
+NAME_WIDTH = 24   # same column as the generated keys.conf
+
+
+class Action:
+    def __init__(self, category, name, desc, current, default):
+        self.category, self.name, self.desc = category, name, desc
+        self.keys = current.split()
+        self.default = default.split()
+
+
+def load_overrides():
+    """Shortcuts written in keys.conf: {action name: [shortcuts]}."""
+    overrides = {}
+    if os.path.exists(KEYS_FILE):
+        with open(KEYS_FILE, encoding="utf-8") as f:
+            for line in f:
+                words = line.split()
+                if words and not words[0].startswith("#"):
+                    overrides[words[0]] = words[1:]
+    return overrides
+
+
+def load_actions():
+    """The catalog (names, descriptions, defaults) comes from actions.tsv; the
+    current shortcuts come from keys.conf, which is the source of truth (the
+    current column of actions.tsv lags until xmonad has restarted)."""
+    overrides = load_overrides()
+    actions = []
+    with open(ACTIONS_FILE, encoding="utf-8") as f:
+        for line in f:
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) == 5:
+                a = Action(*parts)
+                a.keys = list(overrides.get(a.name, a.default))
+                actions.append(a)
+    return actions
+
+
+def find(actions, name):
+    for a in actions:
+        if a.name == name:
+            return a
+    sys.exit(f"keys-editor: unknown action '{name}'")
+
+
+def owner(actions, ez, skip=None):
+    """Action that already uses shortcut ez (ignoring action skip)."""
+    target = xkeys.canonical(ez)
+    for a in actions:
+        if a is not skip and any(xkeys.canonical(k) == target for k in a.keys):
+            return a
+    return None
+
+
+def free_shortcuts(actions, limit=12):
+    """Unused Super combinations, simplest first."""
+    used = {xkeys.canonical(k) for a in actions for k in a.keys}
+    keys = list("abcdfgiouyxzs") + [str(d) for d in range(10)] + list(";'#[]-=")
+    out = []
+    for mods in ("M", "M-S", "M-C", "M-M1", "M-C-S"):
+        for k in keys:
+            ez = xkeys.canonical(f"{mods}-{k}")
+            if ez not in used and ez not in out:
+                out.append(ez)
+                if len(out) >= limit:
+                    return out
+    return out
+
+
+# ---------------------------------------------------------------------------
+# keys.conf
+# ---------------------------------------------------------------------------
+
+def save(actions, changed):
+    """Rewrite the lines of the changed actions in keys.conf, keeping the
+    comments and layout; actions missing from the file are added under their
+    category header. Writes atomically through the stow symlink."""
+    path = os.path.realpath(KEYS_FILE)
+    with open(path, encoding="utf-8") as f:
+        lines = f.read().split("\n")
+    for a in changed:
+        new = f"{a.name:<{NAME_WIDTH}}  {'  '.join(a.keys)}".rstrip()
+        pattern = re.compile(rf"^{re.escape(a.name)}(\s|$)")
+        idx = next((i for i, l in enumerate(lines) if pattern.match(l)), None)
+        if idx is not None:
+            lines[idx] = new
+            continue
+        header = next((i for i, l in enumerate(lines) if l.strip() == f"# {a.category}"), None)
+        if header is None:
+            lines += ["", f"# {a.category}", new]
+        else:
+            end = header + 1
+            while end < len(lines) and lines[end].strip() and not lines[end].startswith("#"):
+                end += 1
+            lines.insert(end, new)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines).rstrip("\n") + "\n")
+    os.replace(tmp, path)
+    subprocess.run(["xmonad", "--restart"], check=False)
+
+
+def describe(a):
+    return ", ".join(xkeys.to_pretty(k) for k in a.keys) or "(none)"
+
+
+# ---------------------------------------------------------------------------
+# Operations shared by the CLI and the rofi UI
+# ---------------------------------------------------------------------------
+
+def set_key(actions, a, slot, ez, steal=False):
+    """Assign ez to slot (1-based). Returns the action that owned it, if any
+    and steal is False (nothing changed then)."""
+    ez = xkeys.canonical(ez)
+    other = owner(actions, ez, skip=a)
+    if other and not steal:
+        return other
+    changed = [a]
+    if other:
+        other.keys = [k for k in other.keys if xkeys.canonical(k) != ez]
+        changed.append(other)
+    keys = [k for k in a.keys if xkeys.canonical(k) != ez]
+    slot = min(slot, len(keys) + 1)
+    if slot <= len(keys):
+        keys[slot - 1] = ez
+    else:
+        keys.append(ez)
+    a.keys = keys
+    save(actions, changed)
+    return None
+
+
+def remove_key(actions, a, slot):
+    if 1 <= slot <= len(a.keys):
+        del a.keys[slot - 1]
+        save(actions, [a])
+
+
+def reset_keys(actions, a):
+    changed = [a]
+    for k in a.default:  # defaults may now belong to another action
+        other = owner(actions, k, skip=a)
+        if other:
+            other.keys = [x for x in other.keys if xkeys.canonical(x) != xkeys.canonical(k)]
+            changed.append(other)
+    a.keys = list(a.default)
+    save(actions, changed)
+
+
+# ---------------------------------------------------------------------------
+# rofi UI
+# ---------------------------------------------------------------------------
+
+THEME = ("window { width: 78%; } listview { lines: 18; spacing: 0; } element { padding: 4px 12px; } "
+         "element selected.normal { background-color: #313244; text-color: #cdd6f4; }")
+
+
+def esc(s):
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def rofi(rows, prompt, mesg=None, theme=THEME):
+    """Show rows (markup) and return the selected index, or None."""
+    cmd = ["rofi", "-dmenu", "-i", "-markup-rows", "-no-custom", "-format", "i",
+           "-p", prompt, "-theme-str", theme]
+    if mesg:
+        cmd += ["-mesg", mesg]
+    res = subprocess.run(cmd, input="\n".join(rows), capture_output=True, text=True)
+    out = res.stdout.strip()
+    return int(out) if res.returncode == 0 and out.isdigit() else None
+
+
+def confirm(question):
+    return rofi(["No", "Yes"], question, theme="window { width: 34%; } listview { lines: 2; }") == 1
+
+
+def notify(body):
+    subprocess.run(["notify-send", "-a", "osd", "-u", "low", "-t", "3000", "-i", "input-keyboard",
+                    "Shortcuts", body], check=False)
+
+
+def assign(actions, a, slot, ez):
+    _, key = xkeys.split(ez)
+    special = xkeys.key_name(key).startswith(("F", "XF86", "Print")) and len(xkeys.key_name(key)) > 1
+    if "-" not in ez and not special:
+        if not confirm(f"{xkeys.to_pretty(ez)} has no modifier: typing it anywhere runs the action. Use it?"):
+            return
+    other = set_key(actions, a, slot, ez)
+    if other:
+        if not confirm(f"{xkeys.to_pretty(ez)} is used by “{other.desc}”. Move it here?"):
+            return
+        set_key(actions, a, slot, ez, steal=True)
+    notify(f"{a.desc}: {describe(a)}")
+
+
+def edit_action(actions, a):
+    while True:
+        options, rows = [], []
+        for i, k in enumerate(a.keys, 1):
+            options += [("set", i), ("remove", i)]
+            rows += [f"Change shortcut {i}   <span foreground='#fab387'>{esc(xkeys.to_pretty(k))}</span>",
+                     f"Remove shortcut {i}"]
+        if len(a.keys) < MAX_SLOTS:
+            options.append(("set", len(a.keys) + 1))
+            rows.append(f"Add a shortcut   <span foreground='#7f849c'>(press it)</span>")
+            options.append(("free", len(a.keys) + 1))
+            rows.append("Pick a free shortcut")
+        if a.keys != a.default:
+            options.append(("reset", 0))
+            rows.append(f"Reset to default   <span foreground='#7f849c'>"
+                        f"{esc(', '.join(xkeys.to_pretty(k) for k in a.default) or '(none)')}</span>")
+        sel = rofi(rows, f" {a.desc}", mesg=f"Current: {esc(describe(a))}")
+        if sel is None:
+            return
+        op, slot = options[sel]
+        if op == "set":
+            ez = xkeys.capture()
+            if ez:
+                assign(actions, a, slot, ez)
+        elif op == "remove":
+            remove_key(actions, a, slot)
+            notify(f"{a.desc}: {describe(a)}")
+        elif op == "free":
+            free = free_shortcuts(actions)
+            pick = rofi([esc(xkeys.to_pretty(k)) for k in free], " Free shortcut")
+            if pick is not None:
+                assign(actions, a, slot, free[pick])
+        elif op == "reset":
+            reset_keys(actions, a)
+            notify(f"{a.desc}: {describe(a)}")
+
+
+def main_menu():
+    actions = load_actions()
+    while True:
+        rows, last = [], None
+        for a in actions:
+            cat = (f"<span foreground='#f5c2e7'><b>{esc(a.category):<14}</b></span>" if a.category != last
+                   else f"<span foreground='#45475a'>{esc(a.category):<14}</span>")
+            last = a.category
+            keys = (f"<span foreground='#fab387'>{esc(describe(a)):<44}</span>" if a.keys
+                    else f"<span foreground='#585b70'>{'(none)':<44}</span>")
+            rows.append(f"{cat}  {keys}  {esc(a.desc)}")
+        sel = rofi(rows, " Edit shortcuts", mesg="Pick an action to change its shortcuts (up to two each)")
+        if sel is None:
+            return
+        edit_action(actions, actions[sel])
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+def cli(args):
+    actions = load_actions()
+    cmd = args[0]
+    if cmd == "list":
+        for a in actions:
+            print(f"{a.category:<14} {a.name:<26} {describe(a)}")
+    elif cmd == "set" and len(args) == 4:
+        a = find(actions, args[1])
+        other = set_key(actions, a, int(args[2]), args[3], steal="--force" in sys.argv)
+        if other:
+            sys.exit(f"keys-editor: {args[3]} is used by '{other.name}' (add --force to move it)")
+        print(f"{a.name}: {describe(a)}")
+    elif cmd == "remove" and len(args) == 3:
+        a = find(actions, args[1])
+        remove_key(actions, a, int(args[2]))
+        print(f"{a.name}: {describe(a)}")
+    elif cmd == "reset" and len(args) == 2:
+        a = find(actions, args[1])
+        reset_keys(actions, a)
+        print(f"{a.name}: {describe(a)}")
+    elif cmd == "free":
+        print("\n".join(free_shortcuts(actions, int(args[1]) if len(args) > 1 else 12)))
+    else:
+        sys.exit(__doc__)
+
+
+if __name__ == "__main__":
+    argv = [a for a in sys.argv[1:] if a != "--force"]
+    cli(argv) if argv else main_menu()

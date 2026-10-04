@@ -29,7 +29,7 @@ import Control.Monad (filterM, forM_, unless, when)
 import Data.Char (toLower)
 import Data.List (elemIndex, find, intercalate, isInfixOf)
 import qualified Data.Map as M
-import System.Directory (XdgDirectory (XdgCache), createDirectoryIfMissing, doesFileExist, getHomeDirectory, getXdgDirectory)
+import System.Directory (XdgDirectory (XdgCache), createDirectoryIfMissing, doesFileExist, getHomeDirectory, getXdgDirectory, renameFile)
 import System.Exit (exitWith, ExitCode(ExitSuccess))
 import System.FilePath ((</>))
 
@@ -294,6 +294,7 @@ data Action = Action
 actions :: [Action]
 actions =
     [ Action "Help" "show-shortcuts" "Show the shortcut list" ["M-<F1>", "M-/", "M-<XF86AudioMute>"] (hideDrop >> spawn "~/.local/bin/keybinds")
+    , Action "Help" "edit-shortcuts" "Edit the shortcuts" ["M-S-<F1>", "M-S-/"] (hideDrop >> spawn "~/.local/bin/keys-editor")
 
     , Action "Apps" "terminal" "Terminal (Alacritty)" ["M-<Return>", "M-S-<Return>"] (hideDrop >> spawn myTerminal)
     , Action "Apps" "dropdown-terminal" "Dropdown terminal with tmux" ["M-C-t"] (namedScratchpadAction scratchpads "drop")
@@ -409,9 +410,12 @@ exportActions :: KeyOverrides -> X ()
 exportActions o = io $ do
     dir <- getXdgDirectory XdgCache "xmonad"
     createDirectoryIfMissing True dir
-    writeFile (dir </> "actions.tsv") $ unlines
+    -- Written to a temporary file and renamed, so readers never see it half written
+    let file = dir </> "actions.tsv"
+    writeFile (file ++ ".tmp") $ unlines
         [ intercalate "\t" [actCategory a, actName a, actDesc a, unwords (actionKeys o a), unwords (actKeys a)]
         | a <- actions ]
+    renameFile (file ++ ".tmp") file
 
 main :: IO ()
 main = do
