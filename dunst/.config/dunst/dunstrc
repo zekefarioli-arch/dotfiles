@@ -72,3 +72,8 @@
     highlight = "#f5c2e7"
     frame_color = "#313244"
     history_ignore = yes
+
+# Phone notifications (KDE Connect): copy one-time codes to the clipboard
+[phone-otp]
+    appname = "*KDE Connect*"
+    script = ~/.local/bin/otp-to-clipboard

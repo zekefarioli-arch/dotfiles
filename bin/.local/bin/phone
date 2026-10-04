@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Minimal KDE Connect control through D-Bus (only kdeconnectd is installed,
+# not the full kde-connect app).
+# Usage: phone list | accept | reject | pair <name> | unpair <name> | ring [name]
+BUS=org.kde.kdeconnect
+DAEMON=/modules/kdeconnect
+
+dcall() { gdbus call --session --dest "$BUS" "$@"; }
+ids() { dcall --object-path "$DAEMON" --method org.kde.kdeconnect.daemon.devices false false |
+          grep -oE "'[^']+'" | tr -d "'"; }
+prop() { dcall --object-path "$DAEMON/devices/$1" --method org.freedesktop.DBus.Properties.Get \
+           org.kde.kdeconnect.device "$2" | sed -E "s/^\(<'?//; s/'?>,\)$//"; }
+device() { dcall --object-path "$DAEMON/devices/$1" --method "org.kde.kdeconnect.device.$2" >/dev/null; }
+by_name() {
+  for id in $(ids); do
+    if [[ -z $1 || $(prop "$id" name) == "$1" ]]; then echo "$id"; return; fi
+  done
+  echo "phone: no device named '$1'" >&2; exit 1
+}
+
+case "$1" in
+  list)
+    for id in $(ids); do
+      printf '%-24s paired=%-5s reachable=%-5s pair-request=%s\n' "$(prop "$id" name)" \
+        "$(prop "$id" isPaired)" "$(prop "$id" isReachable)" "$(prop "$id" isPairRequestedByPeer)"
+    done ;;
+  accept|reject)
+    for id in $(ids); do
+      if [[ $(prop "$id" isPairRequestedByPeer) == true ]]; then
+        [[ $1 == accept ]] && device "$id" acceptPairing || device "$id" cancelPairing
+        echo "${1}ed pairing with $(prop "$id" name)"
+      fi
+    done ;;
+  pair)   device "$(by_name "$2")" requestPairing && echo "pairing requested: accept it on the phone" ;;
+  unpair) device "$(by_name "$2")" unpair && echo "unpaired $2" ;;
+  ring)   dcall --object-path "$DAEMON/devices/$(by_name "$2")/findmyphone" \
+            --method org.kde.kdeconnect.device.findmyphone.ring >/dev/null && echo "ringing" ;;
+  *) echo "usage: phone list | accept | reject | pair <name> | unpair <name> | ring [name]" >&2; exit 1 ;;
+esac

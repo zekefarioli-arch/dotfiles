@@ -36,4 +36,5 @@ nm-applet &
 blueman-applet &
 pasystray &
 copyq --start-server &
+kdeconnectd &        # phone integration (KDE Connect daemon only)
 dunst &

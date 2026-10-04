@@ -287,6 +287,7 @@ main = xmonad
             namedScratchpadManageHook scratchpads
             <+> composeAll
                 [ className =? "kmag"  --> doFloat
+                , className =? "scrcpy" --> doFloat    -- phone screen (scrcpy)
                 , className =? "KMag"  --> doFloat
                 , title     =? "KMag"  --> doFloat
                 ]

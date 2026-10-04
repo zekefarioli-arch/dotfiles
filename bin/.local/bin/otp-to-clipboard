@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# dunst script for phone notifications (KDE Connect): when the text looks like
+# a one-time code message, copy the code to the clipboard and confirm it.
+text="${DUNST_SUMMARY:-$2} ${DUNST_BODY:-$3}"
+shopt -s nocasematch
+[[ $text =~ (code|c[oó]digo|otp|pin|verif|passcode|token|2fa|log.?in|sign.?in|security) ]] || exit 0
+code=$(grep -oE '\b[0-9]{3}[- ][0-9]{3}\b|\b[0-9]{4,8}\b' <<<"$text" | head -1 | tr -d ' -')
+[[ -n $code ]] || exit 0
+printf %s "$code" | xclip -selection clipboard
+notify-send -a osd -u low -t 4000 -i edit-paste "Code copied" "$code"
