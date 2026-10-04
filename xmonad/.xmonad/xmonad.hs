@@ -302,7 +302,9 @@ main = xmonad
         }
         `additionalKeysP`
         [ ("M-/",        hideDrop >> spawn "~/.local/bin/keybinds")    -- shortcut list
-        , ("<F1>",       hideDrop >> spawn "~/.local/bin/keybinds")    -- F1 alone: taken from every app
+        , ("M-<F1>",     hideDrop >> spawn "~/.local/bin/keybinds")
+        -- On the ThinkPad, F1 sends Mute unless Fn Lock (Fn+Esc) is on
+        , ("M-<XF86AudioMute>", hideDrop >> spawn "~/.local/bin/keybinds")
         , ("M-r",        hideDrop >> spawn "rofi -show combi -combi-modes 'drun,run,window'")
         , ("M-t",        hideDrop >> spawn "rofi -show window")
         , ("M-e",        hideDrop >> spawn "thunar")
