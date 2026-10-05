@@ -14,6 +14,7 @@ import XMonad.Util.WorkspaceCompare (filterOutWs)
 
 import XMonad.Actions.CycleWS (nextScreen, prevScreen, shiftNextScreen, shiftPrevScreen)
 import XMonad.Hooks.ManageDocks
+import XMonad.Hooks.ManageHelpers (doFloatDep)
 import XMonad.Hooks.EwmhDesktops (ewmh, ewmhFullscreen, addEwmhWorkspaceSort)
 import XMonad.Hooks.Rescreen
 import XMonad.Hooks.RefocusLast (refocusLastLogHook)
@@ -126,6 +127,12 @@ scratchpads =
          isDrop
          (customFloating $ W.RationalRect 0 0 1 (1045 / 1080))
     ]
+
+-- Float a window in the bottom-right corner of its screen, keeping its own
+-- size: 10px from the right edge and 10px above the bar (35px of 1080).
+bottomRightCorner :: ManageHook
+bottomRightCorner = doFloatDep $ \(W.RationalRect _ _ w h) ->
+    W.RationalRect (1 - w - 10 / 1920) (1 - h - (35 + 10) / 1080) w h
 
 isDrop :: Query Bool
 isDrop = className =? "dropterm"
@@ -480,6 +487,7 @@ main = do
             <+> composeAll
                 [ className =? "kmag"  --> doFloat
                 , className =? "scrcpy" --> doFloat    -- phone screen (scrcpy)
+                , className =? "calendar-popup" --> bottomRightCorner  -- calendar from the bar's date
                 , className =? "KMag"  --> doFloat
                 , title     =? "KMag"  --> doFloat
                 ]
