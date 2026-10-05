@@ -1,25 +1,46 @@
 #!/usr/bin/env bash
-# Open Google Calendar in a new fullscreen Brave window, optionally on a day.
-# Usage: google-calendar [YYYY-MM-DD]
-# A normal window, not --app: app windows have no toolbar or side panel, so
-# the Claude extension (Ctrl+E) could not be opened there. --start-fullscreen
-# only works if Brave is not running yet, so the new window is made fullscreen
-# through the window manager (EWMH, no simulated keys).
+# Google Calendar as a web app: a separate Brave profile, only for the
+# calendar, that opens fullscreen in its own window (class CalendarApp) and
+# has its own extensions, such as Claude (Ctrl+E opens its side panel).
+# It is a normal browser window, not --app: app windows have no side panel,
+# so extensions like Claude could not be used there.
+#
+# Usage: google-calendar [YYYY-MM-DD]   open the calendar (on that day)
+#        google-calendar extensions     manage this profile's extensions
 set -u
 
+profile="${XDG_DATA_HOME:-$HOME/.local/share}/calendar-app"
 url=https://calendar.google.com/calendar/r
-if [[ ${1:-} =~ ^([0-9]{4})-0?([0-9]{1,2})-0?([0-9]{1,2})$ ]]; then
-  url+="/day/${BASH_REMATCH[1]}/${BASH_REMATCH[2]}/${BASH_REMATCH[3]}"
-fi
+store=https://chromewebstore.google.com/detail/fcoeoabgfenejglbffodgkkbkcdhcgfn
 
-before=" $(xdotool search --onlyvisible --class brave-browser 2>/dev/null | tr '\n' ' ') "
-brave-browser --new-window "$url" >/dev/null 2>&1 &
-for _ in $(seq 40); do
-  sleep 0.25
-  for w in $(xdotool search --onlyvisible --class brave-browser 2>/dev/null); do
-    [[ $before == *" $w "* ]] && continue
-    sleep 0.5
-    xdotool windowstate --add FULLSCREEN "$w"
-    exit 0
-  done
-done
+brave() {
+  setsid -f brave-browser --user-data-dir="$profile" --class=CalendarApp \
+    --no-first-run --no-default-browser-check "$@" >/dev/null 2>&1
+}
+
+case "${1:-}" in
+  extensions)
+    # A normal window with the extensions page and the Claude extension in the
+    # store, so it is easy to install on the first run
+    brave --new-window brave://extensions "$store"
+    ;;
+  *)
+    if [[ ${1:-} =~ ^([0-9]{4})-0?([0-9]{1,2})-0?([0-9]{1,2})$ ]]; then
+      url+="/day/${BASH_REMATCH[1]}/${BASH_REMATCH[2]}/${BASH_REMATCH[3]}"
+    fi
+    # --start-fullscreen applies when the profile is not running yet; if it is,
+    # the new window is made fullscreen through the window manager (EWMH)
+    before=" $(xdotool search --onlyvisible --class CalendarApp 2>/dev/null | tr '\n' ' ') "
+    brave --start-fullscreen --new-window "$url"
+    [[ $before == "  " ]] && exit 0
+    for _ in $(seq 40); do
+      sleep 0.25
+      for w in $(xdotool search --onlyvisible --class CalendarApp 2>/dev/null); do
+        [[ $before == *" $w "* ]] && continue
+        sleep 0.5
+        xdotool windowstate --add FULLSCREEN "$w"
+        exit 0
+      done
+    done
+    ;;
+esac
