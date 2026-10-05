@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Toggle a small calendar (yad, GTK, so it follows the Catppuccin theme). xmonad
+# Toggle the mini calendar (bin/mini-calendar, GTK 3, Catppuccin theme). xmonad
 # places it in the bottom-right corner of the screen, just above the bar
 # (class calendar-popup, see bottomRightCorner in xmonad.hs).
 # Weeks start on Sunday (US date conventions only for this window); the arrows
-# change month and year. Another click on the date closes it (not losing the
+# change month and year, and only today is highlighted. Another click on the date closes it (not losing the
 # focus: xmonad focuses whatever window the mouse moves over).
 # Polybar runs it on a click on the date.
 PIDFILE="${XDG_RUNTIME_DIR:-/tmp}/calendar-toggle.pid"
@@ -12,7 +12,5 @@ if [[ -r $PIDFILE ]] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
   kill "$(cat "$PIDFILE")"; rm -f "$PIDFILE"; exit 0
 fi
 
-LC_TIME=en_US.UTF-8 setsid yad --calendar --class=calendar-popup --title=Calendar \
-  --undecorated --no-buttons --skip-taskbar --on-top --fixed \
-  >/dev/null 2>&1 &
+LC_TIME=en_US.UTF-8 setsid ~/.local/bin/mini-calendar >/dev/null 2>&1 &
 echo $! > "$PIDFILE"

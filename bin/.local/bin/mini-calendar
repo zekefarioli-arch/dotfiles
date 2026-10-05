@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+"""Mini calendar for the bar (bin/calendar-toggle opens and closes it).
+
+A GTK 3 calendar, so it follows the Catppuccin GTK theme. Only today is
+highlighted: in other months no day is selected, and clicking a day does not
+leave it highlighted. Esc closes it. The week starts on Sunday because the
+launcher sets LC_TIME=en_US.UTF-8 for this window. xmonad floats it in the
+bottom-right corner (WM class calendar-popup).
+"""
+import datetime
+
+import gi
+
+gi.require_version("Gtk", "3.0")
+gi.require_version("Gdk", "3.0")
+from gi.repository import Gdk, Gtk  # noqa: E402
+
+
+class MiniCalendar(Gtk.Window):
+    def __init__(self):
+        super().__init__(title="Calendar")
+        self.set_wmclass("calendar-popup", "calendar-popup")
+        self.set_decorated(False)
+        self.set_skip_taskbar_hint(True)
+        self.set_keep_above(True)
+        self.set_resizable(False)
+        self.set_border_width(6)
+
+        self.calendar = Gtk.Calendar()
+        self.add(self.calendar)
+        self.updating = False
+        self.calendar.connect("month-changed", self.highlight_today)
+        self.calendar.connect("day-selected", self.highlight_today)
+        self.connect("key-press-event", self.on_key)
+        self.connect("destroy", Gtk.main_quit)
+        self.highlight_today()
+
+    def highlight_today(self, *_):
+        """Select today in the current month and nothing in other months."""
+        if self.updating:
+            return
+        self.updating = True
+        today = datetime.date.today()
+        year, month, _ = self.calendar.get_date()  # month is 0-based
+        self.calendar.select_day(today.day if (year, month + 1) == (today.year, today.month) else 0)
+        self.updating = False
+
+    def on_key(self, _widget, event):
+        if event.keyval == Gdk.KEY_Escape:
+            self.destroy()
+
+
+if __name__ == "__main__":
+    MiniCalendar().show_all()
+    Gtk.main()
