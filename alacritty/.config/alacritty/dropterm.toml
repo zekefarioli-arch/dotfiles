@@ -5,7 +5,7 @@
 import = ["~/.config/alacritty/alacritty.toml"]
 
 [window]
-opacity = 1.0
+opacity = 0.85                    # see what runs behind (picom blurs it)
 padding = { x = 4, y = 2 }
 
 [colors.primary]

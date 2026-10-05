@@ -7,7 +7,7 @@ autorandr --change --default horizontal
 
 # 2) Compositor (transparency and shadows)
 pkill -x picom
-picom --backend glx &
+picom &                # config: ~/.config/picom/picom.conf
 
 # 3) Power management and screen saver
 xset s off
