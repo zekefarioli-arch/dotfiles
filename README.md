@@ -23,7 +23,7 @@ stow --no-folding -t ~ xmonad polybar bin alacritty tmux nvim rofi dunst gtk qt 
 | `x11`, `xdg` | X session environment, default apps, user folders |
 | `system` | files outside `$HOME`; each one explains in its header how to install it |
 
-Two scripts set up the rest of a fresh Fedora install: `scripts/fedora-post-install.sh` (codecs, VA-API, snapshots, power profiles) and `scripts/install-themes.sh` (GTK, Qt, icons and cursor). The `qtile` package is my old setup; I keep it for reference, but it is not maintained.
+Three scripts set up the rest of a fresh Fedora install: `scripts/fedora-post-install.sh` (codecs, VA-API, snapshots, power profiles), `scripts/install-themes.sh` (GTK, Qt, icons and cursor) and `scripts/setup-printers.sh` (the home printers and the Brother scanner). The `qtile` package is my old setup; I keep it for reference, but it is not maintained.
 
 ## Shortcuts
 
