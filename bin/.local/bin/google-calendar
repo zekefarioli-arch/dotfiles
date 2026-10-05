@@ -48,7 +48,11 @@ case "${1:-}" in
     # it is, the new window is made fullscreen through the window manager
     # (EWMH state, not simulated keys)
     before=" $(xdotool search --onlyvisible --class CalendarApp 2>/dev/null | tr '\n' ' ') "
-    brave --start-fullscreen --new-window "$url"
+    # Through Google's login: without a session calendar.google.com shows the
+    # Workspace product page; with one, ServiceLogin goes straight to $url
+    login="https://accounts.google.com/ServiceLogin?service=cl&continue=$(
+      python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$url")"
+    brave --start-fullscreen --new-window "$login"
     [[ $before == "  " ]] && exit 0
     for _ in $(seq 40); do
       sleep 0.25
