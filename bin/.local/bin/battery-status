@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Battery for polybar: level icon in 10% steps (Catppuccin red / peach / green),
-# percentage and time left in short form, e.g. "18%/1h1m".
-#   on battery            icon 18%/1h1m   (time to empty)
-#   plugged in, charging  bolt+icon 35%/1h20m to full-icon   (time to full)
+# percentage and time left in short form, e.g. "18%|1h1m".
+#   on battery            icon 18%|1h1m   (time to empty)
+#   plugged in, charging  bolt+icon 35%|1h20m to full-icon   (time to full)
 #   plugged in, idle      plug 97%   (full, or held by the ThinkPad charge
 #                                     threshold: "Not charging")
 # Polybar's internal battery module treats "Not charging" as discharging, so it
@@ -16,7 +16,8 @@ BAT="${BAT:-/sys/class/power_supply/BAT0}"
 STATE="${STATE:-${XDG_RUNTIME_DIR:-/tmp}/battery-status.state}"
 TAU=120   # seconds
 AC="${AC:-/sys/class/power_supply/AC}"
-RED="#f38ba8"; PEACH="#fab387"; GREEN="#a6e3a1"
+RED="#f38ba8"; PEACH="#fab387"; GREEN="#a6e3a1"; GREY="#6c7086"
+SEP="%{F$GREY}|%{F-}"   # same grey separator as between the bar modules
 ICONS=(󰂎 󰁺 󰁻 󰁼 󰁽 󰁾 󰁿 󰂀 󰂁 󰂂 󰁹)
 
 read_or() { cat "$1" 2>/dev/null || echo "$2"; }
@@ -61,11 +62,11 @@ short_time() {  # minutes -> "2h5m" or "45m" (nothing if unknown)
 if [[ $status == Charging ]]; then
   t=$(( rate > 0 ? (full - now) * 60 / rate : 0 ))
   t=$(short_time "$t")
-  echo "%{F$GREEN}󱐋%{F-}$icon ${pct}%${t:+/$t to %{F$GREEN\}󰁹%{F-\}}"
+  echo "%{F$GREEN}󱐋%{F-}$icon ${pct}%${t:+$SEP$t to %{F$GREEN\}󰁹%{F-\}}"
 elif [[ $online == 1 ]]; then
   echo "%{F$GREEN}󰚥%{F-} ${pct}%"
 else
   t=$(( rate > 0 ? now * 60 / rate : 0 ))
   t=$(short_time "$t")
-  echo "$icon ${pct}%${t:+/$t}"
+  echo "$icon ${pct}%${t:+$SEP$t}"
 fi
