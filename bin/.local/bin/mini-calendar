@@ -3,17 +3,35 @@
 
 A GTK 3 calendar, so it follows the Catppuccin GTK theme. Only today is
 highlighted: in other months no day is selected, and clicking a day does not
-leave it highlighted. Esc closes it. The week starts on Sunday because the
-launcher sets LC_TIME=en_US.UTF-8 for this window. xmonad floats it in the
-bottom-right corner (WM class calendar-popup).
+leave it highlighted. Days with Google Calendar events are marked, and the
+list below shows the events of today or of the clicked day (calevents reads
+the iCal addresses in ~/.config/mini-calendar/ics-url and refreshes them in
+the background). "Open Google Calendar" or a double click opens that day in
+Brave. Esc closes it. The week starts on Sunday because the launcher sets
+LC_TIME=en_US.UTF-8 for this window. xmonad floats it in the bottom-right
+corner (WM class calendar-popup).
 """
-import datetime
+import datetime as dt
+import os
+import subprocess
+import sys
+import threading
 
 import gi
 
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
-from gi.repository import Gdk, Gtk  # noqa: E402
+from gi.repository import Gdk, GLib, Gtk, Pango  # noqa: E402
+
+sys.path.insert(0, os.path.expanduser("~/.local/lib/mini-calendar"))
+import calevents  # noqa: E402
+
+LIST_HEIGHT = 120
+GREY = "#7f849c"
+
+
+def esc(text):
+    return GLib.markup_escape_text(text)
 
 
 class MiniCalendar(Gtk.Window):
@@ -26,28 +44,108 @@ class MiniCalendar(Gtk.Window):
         self.set_resizable(False)
         self.set_border_width(6)
 
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        self.add(box)
         self.calendar = Gtk.Calendar()
-        self.add(self.calendar)
+        box.pack_start(self.calendar, False, False, 0)
+
+        self.heading = Gtk.Label(xalign=0)
+        box.pack_start(self.heading, False, False, 0)
+        self.events_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scroll.set_size_request(-1, LIST_HEIGHT)
+        scroll.add(self.events_box)
+        box.pack_start(scroll, False, False, 0)
+        button = Gtk.Button(label="Open Google Calendar")
+        button.connect("clicked", lambda _b: self.open_google(self.shown_day))
+        box.pack_start(button, False, False, 0)
+
+        today = dt.date.today()
+        self.month = (today.year, today.month)
+        self.shown_day = today
         self.updating = False
-        self.calendar.connect("month-changed", self.highlight_today)
-        self.calendar.connect("day-selected", self.highlight_today)
+        self.calendar.connect("day-selected", self.on_day_selected)
+        self.calendar.connect("day-selected-double-click", lambda _c: self.open_google(self.shown_day))
         self.connect("key-press-event", self.on_key)
         self.connect("destroy", Gtk.main_quit)
         self.highlight_today()
+        self.refresh_view()
+        # Show the cached events at once and update them in the background
+        threading.Thread(target=self.update_feeds, daemon=True).start()
 
-    def highlight_today(self, *_):
-        """Select today in the current month and nothing in other months."""
+    # --- calendar behaviour -------------------------------------------------
+
+    def on_day_selected(self, _calendar):
         if self.updating:
             return
+        year, month, day = self.calendar.get_date()
+        month += 1                                   # GTK months are 0-based
+        if (year, month) != self.month:              # arrows: another month
+            self.month = (year, month)
+            today = dt.date.today()
+            self.shown_day = today if (year, month) == (today.year, today.month) else None
+        elif day:                                    # a click on a day
+            self.shown_day = dt.date(year, month, day)
+        self.highlight_today()
+        self.refresh_view()
+
+    def highlight_today(self):
+        """Select today in the current month and nothing in other months."""
         self.updating = True
-        today = datetime.date.today()
-        year, month, _ = self.calendar.get_date()  # month is 0-based
+        today = dt.date.today()
+        year, month, _ = self.calendar.get_date()
         self.calendar.select_day(today.day if (year, month + 1) == (today.year, today.month) else 0)
         self.updating = False
 
     def on_key(self, _widget, event):
         if event.keyval == Gdk.KEY_Escape:
             self.destroy()
+
+    # --- events ---------------------------------------------------------------
+
+    def update_feeds(self):
+        if calevents.refresh():
+            GLib.idle_add(self.refresh_view)
+
+    def refresh_view(self):
+        self.calendar.clear_marks()
+        for day in calevents.days_with_events(*self.month):
+            self.calendar.mark_day(day)
+        for child in self.events_box.get_children():
+            self.events_box.remove(child)
+        if not calevents.sources():
+            self.heading.set_markup(f"<span foreground='{GREY}'>No calendars yet</span>")
+            self.add_line(f"<span foreground='{GREY}'>Add your Google Calendar iCal\n"
+                          f"address to ~/.config/mini-calendar/ics-url</span>")
+        elif self.shown_day is None:
+            self.heading.set_markup(f"<span foreground='{GREY}'>Pick a day to see its events</span>")
+        else:
+            label = "Today" if self.shown_day == dt.date.today() else self.shown_day.strftime("%a %-d %b")
+            self.heading.set_markup(f"<b>{esc(label)}</b>")
+            events = calevents.events_between(self.shown_day, self.shown_day)
+            if not events:
+                self.add_line(f"<span foreground='{GREY}'>No events</span>")
+            for ev in events:
+                when = "All day" if ev.all_day else ev.start.strftime("%H:%M")
+                self.add_line(f"<span foreground='{ev.color}'>●</span> "
+                              f"<span foreground='{GREY}'>{when}</span>  {esc(ev.summary)}")
+        self.events_box.show_all()
+        return False
+
+    def add_line(self, markup):
+        label = Gtk.Label(xalign=0)
+        label.set_markup(markup)
+        label.set_ellipsize(Pango.EllipsizeMode.END)
+        label.set_max_width_chars(28)
+        self.events_box.pack_start(label, False, False, 0)
+
+    def open_google(self, day):
+        day = day or dt.date(*self.month, 1)
+        url = f"https://calendar.google.com/calendar/r/day/{day.year}/{day.month}/{day.day}"
+        subprocess.Popen(["brave-browser", f"--app={url}"], start_new_session=True,
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.destroy()
 
 
 if __name__ == "__main__":
