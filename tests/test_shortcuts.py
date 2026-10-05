@@ -90,6 +90,22 @@ class ConversionTests(unittest.TestCase):
         self.assertEqual(xkeys.to_xdotool("C-<Page_Up>"), "ctrl+Prior")
         self.assertEqual(xkeys.to_xdotool("M-1"), "super+1")
 
+    def test_parse_typed(self):
+        cases = {
+            "Super+Shift+X": "M-S-x", "super + shift + x": "M-S-x", "ctrl+alt+k": "C-M1-k",
+            "Shift+Super+x": "M-S-x", "super+enter": "M-<Return>", "Alt+F4": "M1-<F4>",
+            "super+mute": "M-<XF86AudioMute>", "super+comma": "M-,", "Super+,": "M-,",
+            "ctrl+PageUp": "C-<Page_Up>", "super+space": "M-<Space>", "Print": "<Print>",
+            "M-S-x": "M-S-x", "S-M-X": "M-S-x", "M-<Return>": "M-<Return>",
+            "super+XF86AudioPlay": "M-<XF86AudioPlay>",
+        }
+        for typed, ez in cases.items():
+            self.assertEqual(xkeys.parse_typed(typed), ez, typed)
+
+    def test_parse_typed_rejects_invalid(self):
+        for typed in ["", "super+", "hyper+x", "super+notakey", "M-<NotAKey>", "super++"]:
+            self.assertIsNone(xkeys.parse_typed(typed), typed)
+
     @unittest.skipUnless(os.environ.get("DISPLAY"), "needs the X display")
     def test_keycodes_use_real_f_keys_without_alt(self):
         codes = xkeys.to_keycodes("C-<F5>")

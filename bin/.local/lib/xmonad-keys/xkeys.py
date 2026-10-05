@@ -6,6 +6,7 @@ xdotool syntax ("super+shift+x"), and captures a real key combination by
 grabbing the keyboard through libX11 (ctypes, no extra packages).
 """
 import ctypes
+import re
 import ctypes.util
 import select
 import subprocess
@@ -78,6 +79,63 @@ def to_xdotool(ez):
     else:
         k = EZ_TO_X.get(k, k)
     return "+".join([names[m] for m in mods] + [k])
+
+
+# Words accepted when a shortcut is typed ("Super+Shift+X", "ctrl + alt + k")
+MOD_WORDS = {"super": "M", "win": "M", "windows": "M", "mod4": "M", "mod": "M",
+             "ctrl": "C", "control": "C", "shift": "S", "alt": "M1", "meta": "M1", "altgr": "M5"}
+KEY_WORDS = {"enter": "Return", "return": "Return", "space": "Space", "spacebar": "Space",
+             "tab": "Tab", "esc": "Escape", "escape": "Escape", "backspace": "Backspace",
+             "del": "Delete", "delete": "Delete", "ins": "Insert", "insert": "Insert",
+             "home": "Home", "end": "End", "pageup": "Page_Up", "pgup": "Page_Up",
+             "pagedown": "Page_Down", "pgdn": "Page_Down", "up": "Up", "down": "Down",
+             "left": "Left", "right": "Right", "print": "Print", "printscreen": "Print",
+             "prtsc": "Print", "mute": "XF86AudioMute", "volumeup": "XF86AudioRaiseVolume",
+             "volumedown": "XF86AudioLowerVolume", "brightnessup": "XF86MonBrightnessUp",
+             "brightnessdown": "XF86MonBrightnessDown", "comma": ",", "period": ".",
+             "dot": ".", "slash": "/", "minus": "-", "equal": "=", "semicolon": ";"}
+EZ_PATTERN = re.compile(r"((M|C|S|M1|M5)-)*(<[A-Za-z0-9_]+>|[!-~])")
+
+
+def _valid_named(name):
+    """True if name is a key xmonad can bind (an X keysym name)."""
+    return bool(_x().lib.XStringToKeysym(EZ_TO_X.get(name, name).encode()))
+
+
+def parse_typed(text):
+    """EZConfig shortcut for a typed one ("Super+Shift+X", "ctrl+alt+k",
+    "alt+F4", "M-S-x"), or None if it is not a valid shortcut."""
+    t = text.strip()
+    if not t:
+        return None
+    if EZ_PATTERN.fullmatch(t):  # already EZConfig syntax
+        mods, key = split(t)
+        if key.startswith("<"):
+            if not _valid_named(key[1:-1]):
+                return None
+        elif key.isalpha():
+            key = key.lower()  # xmonad matches the unshifted keysym
+        return canonical("-".join(mods + [key]))
+    *mods, key = [p.strip() for p in t.split("+")]
+    if not key or any(not m for m in mods):
+        return None
+    try:
+        ez = [MOD_WORDS[m.lower()] for m in mods]
+    except KeyError:
+        return None
+    word = key.lower().replace(" ", "")
+    if len(key) == 1 and key.isprintable() and key != " ":
+        k = key.lower()
+    elif word in KEY_WORDS:
+        v = KEY_WORDS[word]
+        k = v if len(v) == 1 else f"<{v}>"
+    elif re.fullmatch(r"f([1-9]|1[0-9]|2[0-4])", word):
+        k = f"<F{word[1:]}>"
+    elif _valid_named(key):
+        k = f"<{key}>"
+    else:
+        return None
+    return canonical("-".join(ez + [k]))
 
 
 # ---------------------------------------------------------------------------

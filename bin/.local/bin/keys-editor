@@ -181,23 +181,32 @@ THEME = ("window { width: 78%; } listview { lines: 18; spacing: 0; } element { p
          "element selected.normal { background-color: #313244; text-color: #cdd6f4; }")
 
 
+SMALL = "window { width: 34%; } listview { lines: 3; }"
+
+
 def esc(s):
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def rofi(rows, prompt, mesg=None, theme=THEME):
-    """Show rows (markup) and return the selected index, or None."""
-    cmd = ["rofi", "-dmenu", "-i", "-markup-rows", "-no-custom", "-format", "i",
-           "-p", prompt, "-theme-str", theme]
+def rofi(rows, prompt, mesg=None, theme=THEME, custom=False):
+    """Show rows (markup) and return the selected index, or None. With
+    custom=True, typed text that matches no row is returned as a string."""
+    cmd = ["rofi", "-dmenu", "-i", "-markup-rows", "-format", "i:f", "-p", prompt, "-theme-str", theme]
+    if not custom:
+        cmd.append("-no-custom")
     if mesg:
         cmd += ["-mesg", mesg]
     res = subprocess.run(cmd, input="\n".join(rows), capture_output=True, text=True)
-    out = res.stdout.strip()
-    return int(out) if res.returncode == 0 and out.isdigit() else None
+    if res.returncode != 0 or ":" not in res.stdout:
+        return None
+    index, typed = res.stdout.rstrip("\n").split(":", 1)
+    if index == "-1":
+        return typed if custom and typed.strip() else None
+    return int(index)
 
 
 def confirm(question):
-    return rofi(["No", "Yes"], question, theme="window { width: 34%; } listview { lines: 2; }") == 1
+    return rofi(["No", "Yes"], question, theme=SMALL) == 1
 
 
 def notify(body):
@@ -229,8 +238,8 @@ def edit_action(actions, a):
         if len(a.keys) < MAX_SLOTS:
             options.append(("set", len(a.keys) + 1))
             rows.append(f"Add a shortcut   <span foreground='#7f849c'>(press it)</span>")
-            options.append(("free", len(a.keys) + 1))
-            rows.append("Pick a free shortcut")
+        options.append(("free", len(a.keys) + 1))
+        rows.append(f"Pick or type a shortcut   <span foreground='#7f849c'>(e.g. Super+Shift+X)</span>")
         if a.keys != a.default:
             options.append(("reset", 0))
             rows.append(f"Reset to default   <span foreground='#7f849c'>"
@@ -247,10 +256,23 @@ def edit_action(actions, a):
             remove_key(actions, a, slot)
             notify(f"{a.desc}: {describe(a)}")
         elif op == "free":
+            if slot > MAX_SLOTS:  # both slots taken: choose which one to replace
+                slot = rofi([f"Replace shortcut {i}   <span foreground='#fab387'>{esc(xkeys.to_pretty(k))}</span>"
+                             for i, k in enumerate(a.keys, 1)], " Replace", theme=SMALL)
+                if slot is None:
+                    continue
+                slot += 1
             free = free_shortcuts(actions)
-            pick = rofi([esc(xkeys.to_pretty(k)) for k in free], " Free shortcut")
-            if pick is not None:
+            pick = rofi([esc(xkeys.to_pretty(k)) for k in free], " Shortcut", custom=True,
+                        mesg="Pick a free one, or type your own (Super+Shift+X, ctrl+alt+k, M-S-x) and press Enter")
+            if isinstance(pick, int):
                 assign(actions, a, slot, free[pick])
+            elif isinstance(pick, str):
+                ez = xkeys.parse_typed(pick)
+                if ez:
+                    assign(actions, a, slot, ez)
+                else:
+                    notify(f"Not a valid shortcut: {pick}")
         elif op == "reset":
             reset_keys(actions, a)
             notify(f"{a.desc}: {describe(a)}")
