@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Open Google Calendar in a new fullscreen Brave window, optionally on a day.
+# Usage: google-calendar [YYYY-MM-DD]
+# A normal window, not --app: app windows have no toolbar or side panel, so
+# the Claude extension (Ctrl+E) could not be opened there. --start-fullscreen
+# only works if Brave is not running yet, so the new window is made fullscreen
+# through the window manager (EWMH, no simulated keys).
+set -u
+
+url=https://calendar.google.com/calendar/r
+if [[ ${1:-} =~ ^([0-9]{4})-0?([0-9]{1,2})-0?([0-9]{1,2})$ ]]; then
+  url+="/day/${BASH_REMATCH[1]}/${BASH_REMATCH[2]}/${BASH_REMATCH[3]}"
+fi
+
+before=" $(xdotool search --onlyvisible --class brave-browser 2>/dev/null | tr '\n' ' ') "
+brave-browser --new-window "$url" >/dev/null 2>&1 &
+for _ in $(seq 40); do
+  sleep 0.25
+  for w in $(xdotool search --onlyvisible --class brave-browser 2>/dev/null); do
+    [[ $before == *" $w "* ]] && continue
+    sleep 0.5
+    xdotool windowstate --add FULLSCREEN "$w"
+    exit 0
+  done
+done
