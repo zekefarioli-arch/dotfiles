@@ -7,7 +7,14 @@
 #                                     threshold: "Not charging")
 # Polybar's internal battery module treats "Not charging" as discharging, so it
 # would show a meaningless time while plugged in.
+# The power reading jumps with every burst of load, so the time uses an
+# exponential moving average of it with a ~2 minute time constant, kept in
+# $XDG_RUNTIME_DIR between runs (polybar runs this every 5 s). The average
+# restarts when switching between charging and discharging, or after a gap
+# longer than a minute (e.g. a suspend).
 BAT="${BAT:-/sys/class/power_supply/BAT0}"
+STATE="${STATE:-${XDG_RUNTIME_DIR:-/tmp}/battery-status.state}"
+TAU=120   # seconds
 AC="${AC:-/sys/class/power_supply/AC}"
 RED="#f38ba8"; PEACH="#fab387"; GREEN="#a6e3a1"
 ICONS=(󰂎 󰁺 󰁻 󰁼 󰁽 󰁾 󰁿 󰂀 󰂁 󰂂 󰁹)
@@ -21,6 +28,20 @@ online=$(read_or "$AC/online" 0)
 now=$(read_or "$BAT/energy_now" "$(read_or "$BAT/charge_now" 0)")
 full=$(read_or "$BAT/energy_full" "$(read_or "$BAT/charge_full" 0)")
 rate=$(read_or "$BAT/power_now" "$(read_or "$BAT/current_now" 0)")
+
+if   [[ $status == Charging ]]; then mode=charging
+elif [[ $online == 1 ]];        then mode=idle
+else                                 mode=discharging
+fi
+now_s="${NOW:-$(date +%s)}"
+avg=$rate
+if [[ -r $STATE ]] && read -r pmode pavg pts < "$STATE" && (( rate > 0 )) &&
+   [[ $pmode == "$mode" ]] && (( pavg > 0 && now_s > pts && now_s - pts <= 60 )); then
+  avg=$(awk -v a="$pavg" -v r="$rate" -v dt=$(( now_s - pts )) -v tau=$TAU \
+        'BEGIN { printf "%d", a + dt / (tau + dt) * (r - a) }')
+fi
+echo "$mode $avg $now_s" > "$STATE"
+rate=$avg
 
 level=$(( pct >= 100 ? 10 : pct / 10 ))
 if   (( pct < 30 )); then color=$RED
