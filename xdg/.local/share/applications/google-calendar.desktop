@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Google Calendar
+Comment=Google Calendar in its own fullscreen Brave profile, with Claude (Ctrl+E)
+Exec=google-calendar
+Icon=gnome-calendar
+StartupWMClass=CalendarApp
+Categories=Office;Calendar;
+Actions=extensions;
+
+[Desktop Action extensions]
+Name=Extensions and theme
+Exec=google-calendar extensions

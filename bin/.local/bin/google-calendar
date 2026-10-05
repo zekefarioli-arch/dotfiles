@@ -1,35 +1,52 @@
 #!/usr/bin/env bash
-# Google Calendar as a web app: a separate Brave profile, only for the
-# calendar, that opens fullscreen in its own window (class CalendarApp) and
-# has its own extensions, such as Claude (Ctrl+E opens its side panel).
-# It is a normal browser window, not --app: app windows have no side panel,
-# so extensions like Claude could not be used there.
+# Google Calendar as its own app, with the Claude browser extension.
+#
+# What it is: a Brave profile used only for the calendar
+# (~/.local/share/calendar-app). It runs as a separate browser process with
+# its own window class (CalendarApp), its own extensions, its own Google login
+# and its own theme, and it opens fullscreen, where Brave hides its tab strip
+# and address bar. The launcher is xdg/.local/share/applications/
+# google-calendar.desktop (shown in rofi), and Super+Shift+C runs it.
+#
+# Why not a real app window (brave --app=URL, or tools such as Web App Hub,
+# which do the same): app windows have no side panel, and the Claude extension
+# also needs normal windows for its tab groups, so it cannot work there.
+#
+# First run (Super+Ctrl+C opens all of it):
+#   1. accept Brave's welcome screen;
+#   2. install Claude and the Catppuccin Mocha theme from the Chrome Web Store;
+#   3. sign in to Google and to the Claude extension;
+#   4. in Google Calendar: Settings > Appearance > Dark.
+# Then Ctrl+E opens and closes Claude next to the calendar (if not, set the
+# shortcut in brave://extensions/shortcuts inside this profile).
 #
 # Usage: google-calendar [YYYY-MM-DD]   open the calendar (on that day)
-#        google-calendar extensions     manage this profile's extensions
+#        google-calendar extensions     extensions page plus Claude and theme
 set -u
 
 profile="${XDG_DATA_HOME:-$HOME/.local/share}/calendar-app"
 url=https://calendar.google.com/calendar/r
-store=https://chromewebstore.google.com/detail/fcoeoabgfenejglbffodgkkbkcdhcgfn
+store=https://chromewebstore.google.com/detail
+claude="$store/fcoeoabgfenejglbffodgkkbkcdhcgfn"   # Claude (Anthropic)
+theme="$store/bkkmolkhemgaeaeggcmfbghljjjoofoh"    # Catppuccin Chrome Theme - Mocha
 
 brave() {
+  # --force-dark-mode: dark browser UI (menus, dialogs, side panel frame)
   setsid -f brave-browser --user-data-dir="$profile" --class=CalendarApp \
-    --no-first-run --no-default-browser-check "$@" >/dev/null 2>&1
+    --no-first-run --no-default-browser-check --force-dark-mode "$@" >/dev/null 2>&1
 }
 
 case "${1:-}" in
   extensions)
-    # A normal window with the extensions page and the Claude extension in the
-    # store, so it is easy to install on the first run
-    brave --new-window brave://extensions "$store"
+    brave --new-window brave://extensions "$claude" "$theme"
     ;;
   *)
     if [[ ${1:-} =~ ^([0-9]{4})-0?([0-9]{1,2})-0?([0-9]{1,2})$ ]]; then
       url+="/day/${BASH_REMATCH[1]}/${BASH_REMATCH[2]}/${BASH_REMATCH[3]}"
     fi
-    # --start-fullscreen applies when the profile is not running yet; if it is,
-    # the new window is made fullscreen through the window manager (EWMH)
+    # --start-fullscreen only applies when the profile is not running yet; if
+    # it is, the new window is made fullscreen through the window manager
+    # (EWMH state, not simulated keys)
     before=" $(xdotool search --onlyvisible --class CalendarApp 2>/dev/null | tr '\n' ' ') "
     brave --start-fullscreen --new-window "$url"
     [[ $before == "  " ]] && exit 0

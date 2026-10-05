@@ -70,3 +70,21 @@ xmonad starts the bars itself. At startup and whenever a monitor is connected or
 Each bar reads its own screen's text, which xmonad publishes in the `_XMONAD_LOG_N` root property. It shows the focused-monitor block (hidden with a single monitor), the workspaces, the layout, the focused window and an orange badge while the dropdown terminal covers the screen. `Super + B`, `Super + Ctrl + B` and `Super + Shift + B` hide the main bar, the secondary bar and all bars.
 
 I have only tested the hot-plugging with simulated monitors so far, so my next step is to confirm it with a real external monitor.
+
+## Calendar
+
+Clicking the date on the bar toggles a small calendar in the bottom-right corner (`mini-calendar`, GTK 3 with Catppuccin CSS). The week starts on Sunday, the arrows change month and only today is highlighted. Days with events are bold and carry a pink dot, and the events of the selected day are listed below the month.
+
+The events come from Google Calendar's secret iCal addresses, which I keep outside the repository in `~/.config/mini-calendar/ics-url` (mode 600), because anyone with one of those addresses can read the calendar. `calevents.py` downloads them at most every 15 minutes and expands recurring events with `python3-icalendar` and `dateutil`.
+
+To add or change events, I type in the **Ask Claude…** box, for example "Dentist Friday 3pm". The calendar starts a headless Claude Code session as soon as the box gets the focus, because claude.ai connectors connect a few seconds after the session starts, and then sends the request. The session can only use the Google Calendar connector tools. Claude's one-line answer appears in the window and as a notification, and the feeds are refreshed so the new event shows up at once.
+
+For the full calendar I use a separate Brave profile that works as its own app (`google-calendar`, launcher `Google Calendar` in rofi):
+
+| Keys | What it does |
+|---|---|
+| `Super + Shift + C` | Opens Google Calendar fullscreen in that profile (also the mini calendar's button) |
+| `Super + Ctrl + C` | Opens that profile's extensions, with Claude and the Catppuccin Mocha theme in the Chrome Web Store |
+| `Ctrl + E` | Inside the calendar, opens or closes the Claude extension in a side panel |
+
+The profile has its own window class, extensions, theme and Google login, and in fullscreen Brave hides the tabs and the address bar, so it looks like an app. I first tried a real app window (`brave --app`, which is also what tools such as Web App Hub create), but app windows have no side panel, and the Claude extension needs normal windows for its tab groups, so it cannot run there. The script's header lists the first-run steps.
