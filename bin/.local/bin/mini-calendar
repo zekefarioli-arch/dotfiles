@@ -7,8 +7,12 @@ events are bold with a pink dot under them; days of the next and previous
 months are grey. The arrows change month and year. The list below shows the
 events of today or of the clicked day (calevents reads the iCal addresses in
 ~/.config/mini-calendar/ics-url and refreshes them in the background).
-"Open Google Calendar" or a double click on a day opens it in Brave. Esc
-closes the window. xmonad floats it in the bottom-right corner (WM class
+"Open Google Calendar" or a double click on a day opens it in Brave. The
+"Ask Claude" box sends a request in plain words ("Dentist Friday 3pm", "move
+gym to Thursday", "what do I have tomorrow?") to Claude Code in print mode,
+allowed to use only the Google Calendar tools; its one-line answer shows in
+the list and as a notification, and the events are reloaded. Esc closes the
+window. xmonad floats it in the bottom-right corner (WM class
 calendar-popup).
 
 GtkCalendar is not used because it always keeps a day selected and, with
@@ -16,10 +20,12 @@ day details shown, draws a line under every day number.
 """
 import calendar
 import datetime as dt
+import json
 import os
 import subprocess
 import sys
 import threading
+import time
 
 import gi
 
@@ -31,6 +37,17 @@ sys.path.insert(0, os.path.expanduser("~/.local/lib/mini-calendar"))
 import calevents  # noqa: E402
 
 LIST_HEIGHT = 120
+CLAUDE_MODEL = "sonnet"     # reliable with relative dates; "haiku" is faster
+CALENDAR_TOOLS = ["mcp__claude_ai_Google_Calendar__" + t for t in (
+    "list_calendars", "list_events", "search_events", "get_event",
+    "create_event", "update_event", "delete_event", "suggest_time")]
+# Built-in tools are disabled (--tools ""); in print mode any tool that is not
+# pre-approved here (Gmail, Drive, ...) is denied, since nobody can approve it.
+# claude.ai connectors connect asynchronously and are not ready on the first
+# turn of a fresh "claude -p", so Claude starts (warms up) when the Ask box gets
+# the focus and the request is sent once the connector has had WARMUP seconds;
+# the init event is checked and the session restarted if the tools are missing.
+WARMUP = 8
 PINK, BASE, TEXT, GREY, DIM = "#f5c2e7", "#1e1e2e", "#cdd6f4", "#7f849c", "#585b70"
 CSS = f"""
 .mc-day, .mc-nav {{ background: none; border: none; box-shadow: none; padding: 0; }}
@@ -76,6 +93,15 @@ class MiniCalendar(Gtk.Window):
         scroll.set_size_request(-1, LIST_HEIGHT)
         scroll.add(self.events_box)
         box.pack_start(scroll, False, False, 0)
+        self.ask = Gtk.Entry()
+        self.ask.set_placeholder_text("Ask Claude…  e.g. Dentist Friday 3pm")
+        self.ask.connect("activate", self.on_ask)
+        self.ask.connect("focus-in-event", lambda *_: self.start_claude())
+        self.claude = None            # warm "claude -p" process (stream-json)
+        self.claude_started = 0.0
+        self.claude_ready = False     # calendar tools confirmed in the init event
+        self.claude_lock = threading.Lock()
+        box.pack_start(self.ask, False, False, 0)
         button = Gtk.Button(label="Open Google Calendar")
         button.connect("clicked", lambda _b: self.open_google(self.shown_day))
         box.pack_start(button, False, False, 0)
@@ -85,7 +111,7 @@ class MiniCalendar(Gtk.Window):
         self.shown_day = today
         self.event_days = set()
         self.connect("key-press-event", self.on_key)
-        self.connect("destroy", Gtk.main_quit)
+        self.connect("destroy", self.on_destroy)
         self.refresh_view()
         # Show the cached events at once and update them in the background
         threading.Thread(target=self.update_feeds, daemon=True).start()
@@ -210,6 +236,97 @@ class MiniCalendar(Gtk.Window):
         label.set_ellipsize(Pango.EllipsizeMode.END)
         label.set_max_width_chars(28)
         self.events_box.pack_start(label, False, False, 0)
+
+    # --- Claude -----------------------------------------------------------------
+
+    def on_ask(self, entry):
+        request = entry.get_text().strip()
+        if not request:
+            return
+        entry.set_sensitive(False)
+        entry.set_text("Asking Claude…")
+        threading.Thread(target=self.run_claude, args=(request,), daemon=True).start()
+
+    def start_claude(self):
+        """Start a Claude Code session in the background (no request yet, so
+        nothing is spent) to give the Google Calendar connector time to connect."""
+        if self.claude and self.claude.poll() is None:
+            return
+        cmd = ["claude", "-p", "--model", CLAUDE_MODEL, "--tools", "", "--input-format", "stream-json",
+               "--output-format", "stream-json", "--verbose", "--allowedTools", *CALENDAR_TOOLS]
+        try:
+            self.claude = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                           stderr=subprocess.DEVNULL, text=True, cwd=os.path.expanduser("~"))
+        except FileNotFoundError:
+            self.claude = None
+        self.claude_started = time.monotonic()
+        self.claude_ready = False
+
+    def ask_claude(self, prompt):
+        """Send one request to the warm session and return Claude's answer."""
+        for attempt in range(3):
+            if not self.claude or self.claude.poll() is not None:
+                self.start_claude()
+                if not self.claude:
+                    return "Claude Code (claude) is not installed"
+            wait = WARMUP + 4 * attempt - (time.monotonic() - self.claude_started)
+            if not self.claude_ready and wait > 0:
+                time.sleep(wait)
+            msg = {"type": "user", "message": {"role": "user", "content": prompt}}
+            self.claude.stdin.write(json.dumps(msg) + "\n")
+            self.claude.stdin.flush()
+            for line in self.claude.stdout:
+                try:
+                    event = json.loads(line)
+                except ValueError:
+                    continue
+                if event.get("type") == "system" and event.get("subtype") == "init":
+                    if not any("Google_Calendar" in t for t in event.get("tools", [])):
+                        self.claude.kill()            # connector not ready: retry, longer wait
+                        self.claude = None
+                        break
+                    self.claude_ready = True
+                elif event.get("type") == "result":
+                    return (event.get("result") or "No answer").strip().splitlines()[-1]
+            else:
+                return "Claude stopped without answering"
+        return "Google Calendar is not available to Claude right now, try again"
+
+    def on_destroy(self, *_):
+        if self.claude and self.claude.poll() is None:
+            self.claude.terminate()
+        Gtk.main_quit()
+
+    def run_claude(self, request):
+        now = dt.datetime.now().astimezone()
+        prompt = (
+            f"Today is {now:%A %d %B %Y}, the local time is {now:%H:%M} ({now.tzname()}, "
+            f"UTC{now:%z}).\n"
+            "You manage the user's Google Calendar with the calendar tools. Use the primary "
+            "calendar unless the request names another one. Create, change or answer as asked; "
+            "delete an event only if the request explicitly asks for it.\n"
+            "The request is typed quickly: fix obvious typos and missing letters, and give "
+            "events a clean, capitalized title in the request's language (\"de r a trabajar\" "
+            "means \"Ir a trabajar\").\n"
+            "Reply with ONE short sentence (under 100 characters) saying what you did or the "
+            "answer. No markdown.\n\n"
+            f"Request: {request}")
+        with self.claude_lock:
+            try:
+                answer = self.ask_claude(prompt)
+            except (OSError, ValueError) as error:
+                answer = f"Claude failed: {error}"
+        calevents.refresh(force=True)
+        GLib.idle_add(self.show_answer, answer)
+
+    def show_answer(self, answer):
+        subprocess.Popen(["notify-send", "-a", "calendar", "-i", "x-office-calendar", "Claude", answer])
+        self.ask.set_text("")
+        self.ask.set_sensitive(True)
+        self.refresh_view()
+        self.add_line(f"<span foreground='{PINK}'>Claude:</span> {esc(answer)}")
+        self.events_box.show_all()
+        return False
 
     def open_google(self, day):
         day = day or dt.date(*self.month, 1)
