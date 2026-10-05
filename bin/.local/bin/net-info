@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Show the current network in a notification: full Wi-Fi name (the bar cuts
-# it to 20 characters), signal, IP address and gateway. Polybar runs it on a
+# it to 12 characters), signal, IP address and gateway. Polybar runs it on a
 # left click on the Wi-Fi module.
 wifi=$(nmcli -t -f ACTIVE,SSID,SIGNAL,SECURITY device wifi 2>/dev/null | grep '^yes:' | head -1)
 dev=$(nmcli -t -f DEVICE,TYPE,STATE device | awk -F: '$3=="connected" && ($2=="wifi" || $2=="ethernet") {print $1; exit}')
