@@ -40,9 +40,9 @@ def load_rows():
     with open(ACTIONS_FILE, encoding="utf-8") as f:
         for line in f:
             p = line.rstrip("\n").split("\t")
-            if len(p) != 5:
+            if len(p) < 5:
                 continue
-            cat, name, desc, _, default = p
+            cat, name, desc, _, default = p[:5]
             keys = overrides.get(name, default.split())
             rows.append({"cat": cat, "desc": desc, "name": name, "ez": keys,
                          "keys": ", ".join(xkeys.to_pretty(k) for k in keys)})

@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Take a screenshot, copy it to the clipboard and save it in ~/Pictures/Screenshots.
+# Usage: screenshot area | window | monitor | full
+#   area     select a region with the mouse (Esc cancels)
+#   window   the active window
+#   monitor  the monitor under the mouse pointer
+#   full     every monitor
+set -u
+DIR="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")/Screenshots"
+mkdir -p "$DIR"
+FILE="$DIR/$(date +%Y-%m-%d_%H-%M-%S).png"
+
+monitor_geometry() {
+  # Xinerama head that contains the mouse pointer, as WxH+X+Y
+  eval "$(xdotool getmouselocation --shell)"
+  xdpyinfo -ext XINERAMA 2>/dev/null | awk -v px="$X" -v py="$Y" '
+    /head #[0-9]+:/ {
+      split($3, s, "x"); split($5, p, ",")
+      if (px >= p[1] && px < p[1] + s[1] && py >= p[2] && py < p[2] + s[2]) {
+        printf "%sx%s+%s+%s\n", s[1], s[2], p[1], p[2]; exit
+      }
+    }'
+}
+
+case "${1:-}" in
+  area)    maim -s -u "$FILE" 2>/dev/null || exit 0 ;;
+  window)  maim -u -i "$(xdotool getactivewindow)" "$FILE" ;;
+  monitor) geom=$(monitor_geometry); maim -u ${geom:+-g "$geom"} "$FILE" ;;
+  full)    maim -u "$FILE" ;;
+  *)       echo "usage: screenshot area|window|monitor|full" >&2; exit 1 ;;
+esac || exit 1
+
+xclip -selection clipboard -t image/png -i "$FILE"
+notify-send -a screenshot -u low -t 4000 -i "$FILE" "Screenshot ($1)" \
+  "Copied to the clipboard and saved as $(basename "$FILE")"

@@ -125,9 +125,13 @@ class EditorTests(unittest.TestCase):
         with open(self.real_keys, "w") as f:
             f.write(KEYS_CONF)
         os.symlink(self.real_keys, self.keys_link)
+        self.custom_file = os.path.join(d, "actions.conf")
+        with open(self.custom_file, "w") as f:
+            f.write("# header comment\n#\nCustom\tcustom-hello\tSay hello\tnotify-send hello\n")
         self.patches = [
             mock.patch.object(editor, "ACTIONS_FILE", self.actions_file),
             mock.patch.object(editor, "KEYS_FILE", self.keys_link),
+            mock.patch.object(editor, "CUSTOM_FILE", self.custom_file),
             mock.patch.object(editor.subprocess, "run"),   # no xmonad --restart
         ]
         for p in self.patches:
@@ -213,6 +217,48 @@ class EditorTests(unittest.TestCase):
         editor.set_key(self.actions, editor.find(self.actions, "swap-master"), 1, "M-S-m")
         self.assertTrue(os.path.islink(self.keys_link))
         self.assertFalse(os.path.exists(self.real_keys + ".tmp"))
+
+    def custom_lines(self):
+        with open(self.custom_file) as f:
+            return [l.rstrip("\n") for l in f if l.strip() and not l.startswith("#")]
+
+    def test_new_custom_action(self):
+        a = editor.new_custom(self.actions, "Open Spotify", "flatpak run com.spotify.Client", "Apps")
+        self.assertEqual(a.name, "custom-open-spotify")
+        self.assertTrue(a.custom)
+        self.assertIn("Apps\tcustom-open-spotify\tOpen Spotify\tflatpak run com.spotify.Client",
+                      self.custom_lines())
+        with open(self.custom_file) as f:
+            self.assertTrue(f.read().startswith("# header comment\n#\n"))   # header kept
+
+    def test_hand_added_custom_actions_are_kept(self):
+        # custom-hello is in actions.conf but not in the catalog the editor read
+        editor.new_custom(self.actions, "Open Spotify", "spotify", "Apps")
+        self.assertIn("Custom\tcustom-hello\tSay hello\tnotify-send hello", self.custom_lines())
+
+    def test_custom_names_are_unique_and_fields_have_no_tabs(self):
+        a = editor.new_custom(self.actions, "Open Spotify", "cmd one", "Apps")
+        b = editor.new_custom(self.actions, "Open  Spotify!", "cmd\ttwo", "Apps")
+        self.assertEqual((a.name, b.name), ("custom-open-spotify", "custom-open-spotify-2"))
+        self.assertIn("Apps\tcustom-open-spotify-2\tOpen Spotify!\tcmd two", self.custom_lines())
+
+    def test_delete_custom_action_removes_it_everywhere(self):
+        a = editor.new_custom(self.actions, "Open Spotify", "spotify", "Apps")
+        editor.set_key(self.actions, a, 1, "M-S-o")
+        self.assertIn("custom-open-spotify", self.conf())
+        before_new_section = self.conf()
+        editor.delete_custom(self.actions, a)
+        self.assertNotIn("custom-open-spotify", self.conf())
+        self.assertNotIn("custom-open-spotify", "\n".join(self.custom_lines()))
+
+    def test_new_category_section_is_removed_with_its_last_action(self):
+        before = self.conf()
+        a = editor.new_custom(self.actions, "Open Spotify", "spotify", "Music")
+        editor.set_key(self.actions, a, 1, "M-S-o")
+        self.assertIn("\n\n# Music\n", self.conf())        # one blank line before it
+        self.assertNotIn("\n\n\n# Music", self.conf())
+        editor.delete_custom(self.actions, a)
+        self.assertEqual(self.conf(), before)
 
     def test_free_shortcuts_are_unused(self):
         used = {xkeys.canonical(k) for a in self.actions for k in a.keys}

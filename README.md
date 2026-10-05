@@ -51,7 +51,9 @@ The editor captures the combination by grabbing the keyboard through libX11, so 
 
 When the cheat sheet runs an xmonad shortcut, it replays it by keycode. I learnt this the hard way: simulating `Ctrl + F5` with `xdotool key` added Alt, sent `Ctrl + Alt + F5` and switched me to a text console.
 
-To add a new action, I add an `Action` line to the catalog in `xmonad.hs` and recompile with `Super + Q`; after that, the editor and the cheat sheet show it automatically.
+Besides the window manager actions, the catalog has screenshots of an area, the active window, the monitor under the mouse or every monitor. Each screenshot is copied to the clipboard and saved in `~/Pictures/Screenshots`, and there are a few utilities as well, such as suspend, the browser, the phone screen and the microphone. For anything else, the editor's **+ New action** asks for a description and a shell command and saves it in `~/.xmonad/actions.conf`. For instance, an action that runs `flatpak run com.spotify.Client` then gets a shortcut like any built-in one, and it can be renamed, changed or deleted from the editor.
+
+To add a built-in action, I add an `Action` line to the catalog in `xmonad.hs` and recompile with `Super + Q`; after that, the editor and the cheat sheet show it automatically.
 
 The shared Python code lives in `bin/.local/lib/xmonad-keys/xkeys.py`, and the tests cover the conversions, the editor's changes to `keys.conf` and the cheat sheet rows. They only use the standard library and temporary files:
 

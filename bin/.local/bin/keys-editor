@@ -12,6 +12,8 @@ xmonad so the change applies at once (no recompile).
   keys-editor reset ACTION            go back to the default shortcuts
   keys-editor free [N]                print N free shortcut suggestions
   keys-editor edit ACTION             open the rofi editor on one action
+  keys-editor new DESC COMMAND [CAT]  add a custom action that runs COMMAND
+  keys-editor delete ACTION           delete a custom action
 """
 import os
 import re
@@ -23,15 +25,18 @@ import xkeys  # noqa: E402
 
 ACTIONS_FILE = os.path.expanduser("~/.cache/xmonad/actions.tsv")
 KEYS_FILE = os.path.expanduser("~/.xmonad/keys.conf")
+CUSTOM_FILE = os.path.expanduser("~/.xmonad/actions.conf")
 MAX_SLOTS = 2
 NAME_WIDTH = 24   # same column as the generated keys.conf
 
 
 class Action:
-    def __init__(self, category, name, desc, current, default):
+    def __init__(self, category, name, desc, current, default, kind="", command=""):
         self.category, self.name, self.desc = category, name, desc
         self.keys = current.split()
         self.default = default.split()
+        self.custom = kind == "custom"
+        self.command = command
 
 
 def load_overrides():
@@ -55,8 +60,8 @@ def load_actions():
     with open(ACTIONS_FILE, encoding="utf-8") as f:
         for line in f:
             parts = line.rstrip("\n").split("\t")
-            if len(parts) == 5:
-                a = Action(*parts)
+            if len(parts) >= 5:
+                a = Action(*parts[:7])
                 a.keys = list(overrides.get(a.name, a.default))
                 actions.append(a)
     return actions
@@ -113,6 +118,8 @@ def save(actions, changed):
             continue
         header = next((i for i, l in enumerate(lines) if l.strip() == f"# {a.category}"), None)
         if header is None:
+            while lines and not lines[-1].strip():
+                lines.pop()
             lines += ["", f"# {a.category}", new]
         else:
             end = header + 1
@@ -124,6 +131,80 @@ def save(actions, changed):
         f.write("\n".join(lines).rstrip("\n") + "\n")
     os.replace(tmp, path)
     subprocess.run(["xmonad", "--restart"], check=False)
+
+
+def save_custom(actions, deleted=None, restart=True):
+    """Update actions.conf from the editor's custom actions. Lines the editor
+    does not know about (e.g. added by hand since xmonad last restarted) and
+    the comment header are kept as they are; deleted names are dropped.
+    Writes atomically through the stow symlink."""
+    path = os.path.realpath(CUSTOM_FILE) if os.path.exists(CUSTOM_FILE) else CUSTOM_FILE
+    clean = lambda t: " ".join(t.split())   # no tabs or newlines inside a field
+    mine = {a.name: f"{clean(a.category)}\t{a.name}\t{clean(a.desc)}\t{clean(a.command)}"
+            for a in actions if a.custom}
+    out, written = [], set()
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            for line in f.read().split("\n"):
+                fields = line.split("\t")
+                name = fields[1] if len(fields) >= 4 and not line.startswith("#") else None
+                if name is None:
+                    out.append(line)
+                elif name == deleted:
+                    continue
+                elif name in mine:
+                    out.append(mine[name])
+                    written.add(name)
+                else:
+                    out.append(line)
+    out += [line for name, line in mine.items() if name not in written]
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        f.write("\n".join(out).strip("\n") + "\n")
+    os.replace(tmp, path)
+    if restart:
+        subprocess.run(["xmonad", "--restart"], check=False)
+
+
+def slug(text):
+    s = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+    return s[:40] or "action"
+
+
+def new_custom(actions, desc, command, category):
+    """Add a custom action and return it."""
+    base = "custom-" + slug(desc)
+    name, n = base, 2
+    while any(a.name == name for a in actions):
+        name, n = f"{base}-{n}", n + 1
+    a = Action(category or "Custom", name, desc, "", "", "custom", command)
+    actions.append(a)
+    save_custom(actions)
+    return a
+
+
+def delete_custom(actions, a):
+    actions.remove(a)
+    a.keys = []
+    save(actions, [a])          # leaves "name" alone in keys.conf ...
+    path = os.path.realpath(KEYS_FILE)
+    with open(path, encoding="utf-8") as f:
+        lines = [l for l in f.read().split("\n") if not re.match(rf"^{re.escape(a.name)}(\s|$)", l)]
+    # Drop the category header if that section is now empty
+    header = f"# {a.category}"
+    if header in lines:
+        i = lines.index(header)
+        rest = lines[i + 1:]
+        nxt = next((l for l in rest if l.strip()), None)
+        if nxt is None or nxt.startswith("#"):
+            del lines[i]
+            while i > 0 and i <= len(lines) and not lines[i - 1].strip() and (i == len(lines) or not lines[i].strip()):
+                del lines[i - 1]
+                i -= 1
+    with open(path + ".tmp", "w", encoding="utf-8") as f:
+        f.write("\n".join(lines).rstrip("\n") + "\n")
+    os.replace(path + ".tmp", path)  # ... so drop the line completely
+    save_custom(actions, deleted=a.name)
 
 
 def describe(a):
@@ -240,6 +321,10 @@ def edit_action(actions, a):
             rows.append(f"Add a shortcut   <span foreground='#7f849c'>(press it)</span>")
         options.append(("free", len(a.keys) + 1))
         rows.append(f"Pick or type a shortcut   <span foreground='#7f849c'>(e.g. Super+Shift+X)</span>")
+        if a.custom:
+            options += [("command", 0), ("rename", 0), ("delete", 0)]
+            rows += [f"Change the command   <span foreground='#7f849c'>{esc(a.command)}</span>",
+                     "Change the description", "Delete this action"]
         if a.keys != a.default:
             options.append(("reset", 0))
             rows.append(f"Reset to default   <span foreground='#7f849c'>"
@@ -276,23 +361,62 @@ def edit_action(actions, a):
         elif op == "reset":
             reset_keys(actions, a)
             notify(f"{a.desc}: {describe(a)}")
+        elif op == "command":
+            cmd = rofi([], " Command", custom=True, mesg=f"Current: {esc(a.command)}")
+            if isinstance(cmd, str):
+                a.command = cmd.strip()
+                save_custom(actions)
+        elif op == "rename":
+            desc = rofi([], " Description", custom=True, mesg=f"Current: {esc(a.desc)}")
+            if isinstance(desc, str):
+                a.desc = desc.strip()
+                save_custom(actions)
+        elif op == "delete":
+            if confirm(f"Delete \u201c{a.desc}\u201d?"):
+                delete_custom(actions, a)
+                notify(f"Deleted: {a.desc}")
+                return
+
+
+def ask_new_action(actions):
+    desc = rofi([], " New action", custom=True,
+                mesg="Describe what it does, e.g. <i>Open Spotify</i>, and press Enter")
+    if not isinstance(desc, str):
+        return None
+    cmd = rofi([], " Command", custom=True,
+               mesg=f"Shell command for \u201c{esc(desc.strip())}\u201d, e.g. <i>flatpak run com.spotify.Client</i>")
+    if not isinstance(cmd, str):
+        return None
+    cats = list(dict.fromkeys(["Custom"] + [x.category for x in actions]))
+    pick = rofi([esc(c) for c in cats], " Category", custom=True, theme=SMALL.replace("3", "8"),
+                mesg="Pick a category or type a new one")
+    category = cats[pick] if isinstance(pick, int) else (pick.strip() if isinstance(pick, str) else "Custom")
+    a = new_custom(actions, desc.strip(), cmd.strip(), category)
+    notify(f"New action: {a.desc}")
+    return a
 
 
 def main_menu():
     actions = load_actions()
     while True:
-        rows, last = [], None
+        rows, last = ["<span foreground='#a6e3a1'><b>+ New action</b></span>   (run a command)"], None
         for a in actions:
             cat = (f"<span foreground='#f5c2e7'><b>{esc(a.category):<14}</b></span>" if a.category != last
                    else f"<span foreground='#45475a'>{esc(a.category):<14}</span>")
             last = a.category
             keys = (f"<span foreground='#fab387'>{esc(describe(a)):<44}</span>" if a.keys
                     else f"<span foreground='#585b70'>{'(none)':<44}</span>")
-            rows.append(f"{cat}  {keys}  {esc(a.desc)}")
+            mark = " <span foreground='#a6e3a1'>(custom)</span>" if a.custom else ""
+            rows.append(f"{cat}  {keys}  {esc(a.desc)}{mark}")
         sel = rofi(rows, " Edit shortcuts", mesg="Pick an action to change its shortcuts (up to two each)")
-        if sel is None:
+        if sel is None or isinstance(sel, str):
             return
-        edit_action(actions, actions[sel])
+        if sel == 0:
+            a = ask_new_action(actions)
+            if a:
+                edit_action(actions, a)
+            continue
+        edit_action(actions, actions[sel - 1])
 
 
 # ---------------------------------------------------------------------------
@@ -319,6 +443,15 @@ def cli(args):
         a = find(actions, args[1])
         reset_keys(actions, a)
         print(f"{a.name}: {describe(a)}")
+    elif cmd == "new" and len(args) >= 3:
+        a = new_custom(actions, args[1], args[2], args[3] if len(args) > 3 else "Custom")
+        print(a.name)
+    elif cmd == "delete" and len(args) == 2:
+        a = find(actions, args[1])
+        if not a.custom:
+            sys.exit(f"keys-editor: '{a.name}' is a built-in action")
+        delete_custom(actions, a)
+        print(f"deleted {a.name}")
     elif cmd == "edit" and len(args) == 2:
         edit_action(actions, find(actions, args[1]))
     elif cmd == "free":

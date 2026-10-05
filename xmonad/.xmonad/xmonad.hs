@@ -291,8 +291,8 @@ data Action = Action
     , actRun      :: X ()
     }
 
-actions :: [Action]
-actions =
+builtinActions :: [Action]
+builtinActions =
     [ Action "Help" "show-shortcuts" "Show the shortcut list" ["M-<F1>", "M-/", "M-<XF86AudioMute>"] (hideDrop >> spawn "~/.local/bin/keybinds")
     , Action "Help" "edit-shortcuts" "Edit the shortcuts" ["M-S-<F1>", "M-S-/"] (hideDrop >> spawn "~/.local/bin/keys-editor")
 
@@ -302,6 +302,8 @@ actions =
     , Action "Apps" "run-command" "dmenu: run a command" ["M-p"] (spawn "dmenu_run")
     , Action "Apps" "file-manager" "File manager (Thunar)" ["M-e"] (hideDrop >> spawn "thunar")
     , Action "Apps" "clipboard" "Clipboard history (CopyQ)" ["M-v"] (spawn "copyq toggle")
+    , Action "Apps" "browser" "Web browser (Brave)" [] (spawn "brave-browser")
+    , Action "Apps" "phone-screen" "Phone screen on the laptop (scrcpy)" [] (spawn "scrcpy --window-title Phone")
 
     , Action "Windows" "close-window" "Close the focused window" ["M-w", "M-S-c"] kill
     , Action "Windows" "window-switcher" "Window switcher with icons (rofi)" ["M-<Tab>"] (hideDrop >> spawn "rofi -show window -show-icons")
@@ -353,18 +355,52 @@ actions =
     , Action "System" "lock-screen" "Lock the screen" ["M-l"] (spawn "~/.local/bin/lock-screen")
     , Action "System" "restart-xmonad" "Recompile and restart xmonad (keeps windows)" ["M-q"] (spawn "xmonad --recompile; xmonad --restart")
     , Action "System" "log-out" "Log out" ["M-C-q", "M-S-q"] (io (exitWith ExitSuccess))
-    , Action "System" "screenshot" "Screenshot of an area, copied to the clipboard" ["<Print>"] (spawn "maim -s -u 2>/dev/null | xclip -selection clipboard -t image/png")
+    , Action "System" "screenshot" "Screenshot of an area (clipboard + ~/Pictures/Screenshots)" ["<Print>"] (spawn "~/.local/bin/screenshot area")
+    , Action "System" "screenshot-window" "Screenshot of the active window" ["M1-<Print>"] (spawn "~/.local/bin/screenshot window")
+    , Action "System" "screenshot-monitor" "Screenshot of the monitor under the mouse" ["S-<Print>"] (spawn "~/.local/bin/screenshot monitor")
+    , Action "System" "screenshot-full" "Screenshot of every monitor" ["C-<Print>"] (spawn "~/.local/bin/screenshot full")
+    , Action "System" "suspend" "Suspend (sleep)" [] (spawn "systemctl suspend")
+    , Action "System" "caffeine" "Caffeine on / off (keep the screen awake)" [] (spawn "~/.config/polybar/scripts/caffeine_toggle.sh")
     , Action "System" "magnifier" "Magnifier on / off (KMag)" ["M-C-m"] (spawn "sh -c 'pgrep -x kmag >/dev/null && pkill -x kmag || kmag'")
     , Action "System" "close-magnifier" "Close the magnifier" ["M-C-S-m"] (spawn "pkill -x kmag")
 
     , Action "Media" "volume-up" "Volume +5% with on-screen indicator" ["<XF86AudioRaiseVolume>"] (spawn "~/.local/bin/osd-volume up")
     , Action "Media" "volume-down" "Volume -5% with on-screen indicator" ["<XF86AudioLowerVolume>"] (spawn "~/.local/bin/osd-volume down")
     , Action "Media" "volume-mute" "Mute / unmute" ["<XF86AudioMute>"] (spawn "~/.local/bin/osd-volume mute")
+    , Action "Media" "mic-mute" "Mute / unmute the microphone" [] (spawn "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle")
     , Action "Media" "brightness-up" "Brightness +5% with on-screen indicator" ["<XF86MonBrightnessUp>"] (spawn "~/.local/bin/osd-brightness up")
     , Action "Media" "brightness-down" "Brightness -5% with on-screen indicator" ["<XF86MonBrightnessDown>"] (spawn "~/.local/bin/osd-brightness down")
     ]
   where
     onScreen i f = screenWorkspace (S i) >>= flip whenJust (windows . f)
+
+-- Custom actions added by the user (shortcut editor or by hand), read from
+-- ~/.xmonad/actions.conf at startup: "category<TAB>name<TAB>description<TAB>command"
+-- per line. They run a shell command and get shortcuts like any other action.
+customActionsFile :: IO FilePath
+customActionsFile = (</> ".xmonad/actions.conf") <$> getHomeDirectory
+
+data CustomAction = CustomAction { caAction :: Action, caCommand :: String }
+
+loadCustomActions :: IO [CustomAction]
+loadCustomActions = do
+    file <- customActionsFile
+    exists <- doesFileExist file
+    if not exists then pure [] else do
+        txt <- readFile file
+        let parse l = case splitTabs l of
+                [cat, name, desc, cmd] | not (null name) && take 1 cat /= "#" ->
+                    [CustomAction (Action cat name desc [] (spawn cmd)) cmd]
+                _ -> []
+        length txt `seq` pure (concatMap parse (lines txt))
+  where
+    splitTabs l = case break (== '\t') l of
+        (a, []) -> [a]
+        (a, _ : rest) -> a : splitTabs rest
+
+-- Built-in actions first; a custom action cannot replace a built-in one
+allActions :: [CustomAction] -> [Action]
+allActions cs = builtinActions ++ [ caAction c | c <- cs, actName (caAction c) `notElem` map actName builtinActions ]
 
 -- Shortcuts chosen by the user, read from ~/.xmonad/keys.conf at startup:
 -- "action-name shortcut shortcut ..." per line. An action missing from the
@@ -385,41 +421,49 @@ actionKeys :: KeyOverrides -> Action -> [String]
 actionKeys o a = M.findWithDefault (actKeys a) (actName a) o
 
 -- Keybindings built from the catalog (they replace xmonad's default keys)
-myKeys :: KeyOverrides -> XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
-myKeys o c = mkKeymap c [ (k, actRun a) | a <- actions, k <- actionKeys o a ]
+myKeys :: [Action] -> KeyOverrides -> XConfig Layout -> M.Map (KeyMask, KeySym) (X ())
+myKeys acts o c = mkKeymap c [ (k, actRun a) | a <- acts, k <- actionKeys o a ]
 
 -- Warn (without breaking anything) about unknown actions, invalid shortcuts
 -- and shortcuts assigned to more than one action in keys.conf.
-checkKeys :: KeyOverrides -> X ()
-checkKeys o = do
+checkKeys :: [CustomAction] -> KeyOverrides -> X ()
+checkKeys cs o = do
     c <- asks config
     let parse k = M.keys (mkKeymap c [(k, pure ())])
-        unknown = [ n | n <- M.keys o, n `notElem` map actName actions ]
-        invalid = [ k | a <- actions, k <- actionKeys o a, null (parse k) ]
-        owners  = M.fromListWith (++) [ (kc, [(k, actName a)]) | a <- actions, k <- actionKeys o a, kc <- parse k ]
+        acts    = allActions cs
+        unknown = [ n | n <- M.keys o, n `notElem` map actName acts ]
+        clashes = [ actName (caAction ca) | ca <- cs, actName (caAction ca) `elem` map actName builtinActions ]
+        invalid = [ k | a <- acts, k <- actionKeys o a, null (parse k) ]
+        owners  = M.fromListWith (++) [ (kc, [(k, actName a)]) | a <- acts, k <- actionKeys o a, kc <- parse k ]
         dups    = [ fst (head us) ++ " is used by " ++ intercalate ", " (map snd us)
                   | us <- M.elems owners, length us > 1 ]
-        problems = map ("unknown action: " ++) unknown ++ map ("invalid shortcut: " ++) invalid ++ dups
+        problems = map ("unknown action: " ++) unknown
+                ++ map ("custom action has a built-in name: " ++) clashes
+                ++ map ("invalid shortcut: " ++) invalid ++ dups
     unless (null problems) $
         safeSpawn "notify-send" ["-u", "critical", "xmonad: problems in keys.conf", unlines problems]
 
 -- Write the catalog for the shortcut editor and the cheat sheet, tab separated:
 -- category, name, description, current shortcuts, default shortcuts
--- (shortcuts separated by spaces).
-exportActions :: KeyOverrides -> X ()
-exportActions o = io $ do
+-- (shortcuts separated by spaces), "custom" for custom actions and their command.
+exportActions :: [CustomAction] -> KeyOverrides -> X ()
+exportActions cs o = io $ do
     dir <- getXdgDirectory XdgCache "xmonad"
     createDirectoryIfMissing True dir
     -- Written to a temporary file and renamed, so readers never see it half written
     let file = dir </> "actions.tsv"
     writeFile (file ++ ".tmp") $ unlines
-        [ intercalate "\t" [actCategory a, actName a, actDesc a, unwords (actionKeys o a), unwords (actKeys a)]
-        | a <- actions ]
+        [ intercalate "\t" ([actCategory a, actName a, actDesc a, unwords (actionKeys o a), unwords (actKeys a)]
+                             ++ maybe [] (\c -> ["custom", c]) (lookup (actName a) commands))
+        | a <- allActions cs ]
     renameFile (file ++ ".tmp") file
+  where
+    commands = [ (actName (caAction c), caCommand c) | c <- cs ]
 
 main :: IO ()
 main = do
   keyOverrides <- loadKeys
+  customActions <- loadCustomActions
   xmonad
      . ewmhFullscreen
      . addEwmhWorkspaceSort (pure (filterOutWs [scratchpadWorkspaceTag]))
@@ -441,9 +485,9 @@ main = do
                 ]
             <+> manageDocks
             <+> manageHook def
-        , startupHook        = spawnOnce "sh /home/zeke/.xmonad/autostart.sh" >> launchBars >> exportActions keyOverrides >> checkKeys keyOverrides
+        , startupHook        = spawnOnce "sh /home/zeke/.xmonad/autostart.sh" >> launchBars >> exportActions customActions keyOverrides >> checkKeys customActions keyOverrides
         , logHook            = barsLogHook >> refocusLastLogHook >> nsHideOnFocusLoss scratchpads
-        , keys               = myKeys keyOverrides
+        , keys               = myKeys (allActions customActions) keyOverrides
         , borderWidth        = myBorderWidth
         , normalBorderColor  = myNormColor
         , focusedBorderColor = myFocusColor

@@ -37,6 +37,5 @@ Neovim	[ H	Previous git change	key:bracketleft h
 Neovim	Space G V O	Diffview: all changes	key:space g v o
 Neovim	Space G V F	Diffview: file history	key:space g v f
 Neovim	Space T T	Run the tests in the file	key:space t t
-Phone	rofi → scrcpy	Phone screen on the laptop	cmd:scrcpy --window-title Phone
 Phone	phone accept	Accept a KDE Connect pairing request	cmd:notify-send "Phone" "$(~/.local/bin/phone accept 2>&1 || true)"
 Phone	SMS with a code	The code is copied to the clipboard automatically	
