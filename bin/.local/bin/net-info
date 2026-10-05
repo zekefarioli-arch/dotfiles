@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Show the current network in a notification: full Wi-Fi name (the bar cuts
+# it to 20 characters), signal, IP address and gateway. Polybar runs it on a
+# left click on the Wi-Fi module.
+wifi=$(nmcli -t -f ACTIVE,SSID,SIGNAL,SECURITY device wifi 2>/dev/null | grep '^yes:' | head -1)
+dev=$(nmcli -t -f DEVICE,TYPE,STATE device | awk -F: '$3=="connected" && ($2=="wifi" || $2=="ethernet") {print $1; exit}')
+ip=$(ip -4 -o addr show dev "$dev" 2>/dev/null | awk '{print $4}' | head -1)
+gw=$(ip route show default dev "$dev" 2>/dev/null | awk '{print $3; exit}')
+
+if [[ -n $wifi ]]; then
+  IFS=: read -r _ ssid signal security <<<"$wifi"
+  title="$ssid"
+  body="Signal ${signal}%  ·  ${security:-open}"
+else
+  title="${dev:-No connection}"
+  body=""
+fi
+[[ -n $ip ]] && body+="${body:+\n}IP ${ip%/*}  via ${gw:--}"
+notify-send -a network -u low -t 5000 -i network-wireless -h string:x-dunst-stack-tag:net-info \
+  "$title" "$(printf '%b' "${body:-Not connected}")"
