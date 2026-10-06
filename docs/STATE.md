@@ -48,7 +48,8 @@ _Last updated: 2026-10-06_
   /etc/sane.d/airscan.conf. Setup: scripts/setup-printers.sh.
 
 ## Claude Code
-- Sessions run from ~ and start with `claude-new` (fedora_desktopNNN).
+- Sessions run from ~ and start with `claude-new` (fedora_desktopNNN);
+  how to start and continue them: docs/SESSIONS.md.
 - ~/CLAUDE.md (dotfiles package `claude`) holds the standing instructions;
   Claude's own memory is in ~/.claude/projects/-home-zeke/memory/.
 
