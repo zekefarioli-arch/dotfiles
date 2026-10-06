@@ -115,3 +115,13 @@ mine without them landing in the repository.
 ## 2026-10-03 · Bars relaunched from scratch on monitor changes
 Decided: kill all bars and start one per connected monitor each time.
 Why: no state to get wrong; no bar is left behind for a monitor that is gone.
+
+## 2026-10-06: web apps with a small script, no keyring
+- Decided: `webapp` script, `brave --app=URL` in one shared profile with
+  `--password-store=basic`.
+- Why: I do not want the keyring password prompt, and I want nothing new
+  installed. Basic store keeps cookies in the profile instead of the keyring.
+- Considered: webapp-manager (GUI, pulls GTK/Python deps), Nativefier/Electron
+  (a Chromium per app, ~200 MB each), unlocking the keyring at login (needs
+  PAM setup, the behaviour I want to avoid). Google Calendar stays a separate
+  profile because it needs the Claude extension (see its script header).

@@ -32,8 +32,10 @@ theme="$store/bkkmolkhemgaeaeggcmfbghljjjoofoh"    # Catppuccin Chrome Theme - M
 
 brave() {
   # --force-dark-mode: dark browser UI (menus, dialogs, side panel frame)
+  # --password-store=basic: no GNOME keyring prompt (see bin/webapp)
   setsid -f brave-browser --user-data-dir="$profile" --class=CalendarApp \
-    --no-first-run --no-default-browser-check --force-dark-mode "$@" >/dev/null 2>&1
+    --password-store=basic --no-first-run --no-default-browser-check \
+    --force-dark-mode "$@" >/dev/null 2>&1
 }
 
 case "${1:-}" in

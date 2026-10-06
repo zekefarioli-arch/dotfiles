@@ -1,0 +1,132 @@
+#!/usr/bin/env bash
+# Turn any website into an app: its own window and a launcher in rofi.
+#
+# Two modes:
+#  - app (default): `brave --app=URL` in ONE shared profile
+#    (~/.local/share/webapps), so a Google login is done once for YouTube,
+#    Drive, etc. No tabs, no address bar, no side panel.
+#  - panel (`--panel`): its own Brave profile (~/.local/share/webapp-<name>)
+#    and a fullscreen window kept in xmonad's layout, like google-calendar. App windows have no
+#    side panel and the Claude extension needs normal windows, so this is the
+#    mode for sites that need Claude (Ctrl+E). The profile needs the Claude
+#    extension installed once: `webapp extensions <name>`.
+# Each app gets its own window class (WebApp-<name>).
+#
+# --password-store=basic: Brave stores cookies and passwords in a plain
+# profile file instead of the GNOME keyring / KWallet, so it never asks for
+# the keyring password. Rejected: unlocking the keyring at login (needs the
+# login manager to cooperate, and it is exactly what I do not want).
+#
+# Launchers are written to ~/dotfiles/xdg (stow package) and linked with stow.
+#
+# Usage: webapp add <name> <url> [icon] [--panel]   create the app and launcher
+#        webapp run <name>                open it (what the launcher does)
+#        webapp remove <name>             delete the launcher
+#        webapp list                      list the apps
+#        webapp extensions [name]         normal window of the shared profile
+#                                         (or the panel app's): extensions
+#                                         page plus Claude and FireShot
+set -euo pipefail
+
+data="${XDG_DATA_HOME:-$HOME/.local/share}"
+shared="$data/webapps"
+dotfiles="${DOTFILES:-$HOME/dotfiles}"
+apps="$dotfiles/xdg/.local/share/applications"
+store=https://chromewebstore.google.com
+claude="$store/detail/fcoeoabgfenejglbffodgkkbkcdhcgfn"   # Claude (Anthropic)
+theme="$store/detail/bkkmolkhemgaeaeggcmfbghljjjoofoh"    # Catppuccin Chrome Theme - Mocha
+fireshot="$store/search/FireShot"                         # whole page to PDF/PNG
+
+slug() { tr '[:upper:]' '[:lower:]' <<<"$1" | tr -c 'a-z0-9\n' '-' | sed 's/^-*//; s/-*$//'; }
+field() { sed -n "s/^$2=//p" "$apps/webapp-$1.desktop" | head -n1; }
+
+brave() {  # brave <profile> <class> args...
+  local p=$1 c=$2; shift 2
+  setsid -f brave-browser --user-data-dir="$p" --class="$c" \
+    --password-store=basic --no-first-run --no-default-browser-check \
+    --force-dark-mode "$@" >/dev/null 2>&1
+}
+
+case "${1:-}" in
+  add)
+    shift; panel=no; args=()
+    for a in "$@"; do [[ $a == --panel ]] && panel=yes || args+=("$a"); done
+    [[ ${#args[@]} -ge 2 ]] || { echo "usage: webapp add <name> <url> [icon] [--panel]" >&2; exit 1; }
+    name=${args[0]} url=${args[1]} icon=${args[2]:-brave-browser}
+    [[ $url == http* ]] || url=https://$url
+    id=$(slug "$name")
+    mkdir -p "$apps"
+    cat >"$apps/webapp-$id.desktop" <<DESKTOP
+[Desktop Entry]
+Type=Application
+Name=$name
+Comment=$url as an app
+Exec=webapp run $id
+Icon=$icon
+StartupWMClass=WebApp-$id
+Categories=Network;
+X-WebApp-URL=$url
+X-WebApp-Panel=$panel
+DESKTOP
+    [[ $panel == yes ]] && printf 'Actions=extensions;\n\n[Desktop Action extensions]\nName=Extensions and theme\nExec=webapp extensions %s\n' "$id" >>"$apps/webapp-$id.desktop"
+    stow --no-folding -d "$dotfiles" -t "$HOME" xdg
+    echo "Created '$name' ($url). It is in rofi now."
+    [[ $panel == yes ]] && echo "First run: webapp extensions $id (install Claude, sign in)."
+    ;;
+  run)
+    id=$(slug "${2:?name}")
+    [[ -f $apps/webapp-$id.desktop ]] || { echo "no such app: $id" >&2; exit 1; }
+    url=$(field "$id" X-WebApp-URL)
+    if [[ $(field "$id" X-WebApp-Panel) != yes ]]; then
+      mkdir -p "$shared"
+      brave "$shared" "WebApp-$id" --app="$url"
+      exit 0
+    fi
+    # Panel mode: fullscreen so Brave hides its tabs and menus. xmonad.hs
+    # (webappTiled) keeps WebApp-* windows in the layout, so the bar stays and
+    # Super+f maximizes. --start-fullscreen only applies when the profile is
+    # not running yet; if it is, the new window is made fullscreen through the
+    # window manager (EWMH state, not simulated keys).
+    # (|| true: xdotool exits 1 when there is no window, and set -e would stop here)
+    before=" $(xdotool search --onlyvisible --class "WebApp-$id" 2>/dev/null | tr '\n' ' ' || true) "
+    brave "$data/webapp-$id" "WebApp-$id" --start-fullscreen --new-window "$url"
+    [[ $before == "  " ]] && exit 0
+    for _ in $(seq 40); do
+      sleep 0.25
+      for w in $(xdotool search --onlyvisible --class "WebApp-$id" 2>/dev/null); do
+        [[ $before == *" $w "* ]] && continue
+        sleep 0.5
+        xdotool windowstate --add FULLSCREEN "$w"
+        exit 0
+      done
+    done
+    ;;
+  extensions)
+    # App windows have no toolbar, so extensions are installed from a normal
+    # window and then used through their keyboard shortcut (set it in
+    # brave://extensions/shortcuts).
+    if [[ -n ${2:-} ]]; then
+      id=$(slug "$2")
+      brave "$data/webapp-$id" "WebApp-$id" --new-window brave://extensions "$claude" "$theme"
+    else
+      mkdir -p "$shared"
+      brave "$shared" WebApps --new-window brave://extensions "$fireshot"
+    fi
+    ;;
+  remove)
+    id=$(slug "${2:?name}")
+    rm -f "$HOME/.local/share/applications/webapp-$id.desktop" "$apps/webapp-$id.desktop"
+    ;;
+  list)
+    for f in "$apps"/webapp-*.desktop; do
+      [[ -e $f ]] || continue
+      id=${f##*/webapp-}; id=${id%.desktop}
+      printf '%s\t%s\t%s\n' "$(field "$id" Name)" "$(field "$id" X-WebApp-URL)" \
+        "$([[ $(field "$id" X-WebApp-Panel) == yes ]] && echo panel || echo app)"
+    done
+    ;;
+  *)
+    sed -n '/^# Usage/,/^set /p' "$0" | sed '$d; s/^# \?//' >&2
+    exit 1
+    ;;
+esac

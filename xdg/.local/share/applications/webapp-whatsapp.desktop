@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=WhatsApp
+Comment=https://web.whatsapp.com as an app
+Exec=webapp run whatsapp
+Icon=whatsapp-desktop
+StartupWMClass=WebApp-whatsapp
+Categories=Network;
+X-WebApp-URL=https://web.whatsapp.com
+X-WebApp-Panel=yes
+Actions=extensions;
+
+[Desktop Action extensions]
+Name=Extensions and theme
+Exec=webapp extensions whatsapp

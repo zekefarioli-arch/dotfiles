@@ -28,7 +28,8 @@ import qualified XMonad.StackSet as W
 import Control.Monad (filterM, forM_, unless, when)
 
 import Data.Char (toLower)
-import Data.List (elemIndex, find, intercalate, isInfixOf)
+import Data.Monoid (All (..))
+import Data.List (elemIndex, find, intercalate, isInfixOf, isPrefixOf)
 import qualified Data.Map as M
 import System.Directory (XdgDirectory (XdgCache), createDirectoryIfMissing, doesFileExist, getHomeDirectory, getXdgDirectory, renameFile)
 import System.Exit (exitWith, ExitCode(ExitSuccess))
@@ -467,11 +468,31 @@ exportActions cs o = io $ do
   where
     commands = [ (actName (caAction c), caCommand c) | c <- cs ]
 
+-- WEB APPS WITH THE CLAUDE PANEL
+-- `webapp --panel` windows ask for fullscreen so Brave hides its tabs and menus,
+-- but ewmhFullscreen then floats them over the bar and every other window.
+-- This hook runs after it: the window keeps the fullscreen state (Brave keeps
+-- its UI hidden) and goes back into the layout, so the bar stays and Super+f
+-- maximizes it. Rejected: not handling fullscreen for these windows at all
+-- (Brave only hides its UI once the _NET_WM_STATE property is set).
+webappTiled :: XConfig a -> XConfig a
+webappTiled c = c { handleEventHook = handleEventHook c <> hook }
+  where
+    hook ClientMessageEvent { ev_window = w, ev_message_type = t, ev_data = _ : d } = do
+      wmState <- getAtom "_NET_WM_STATE"
+      full    <- getAtom "_NET_WM_STATE_FULLSCREEN"
+      isApp   <- runQuery (fmap ("WebApp-" `isPrefixOf`) className) w
+      when (t == wmState && fromIntegral full `elem` take 2 d && isApp) $
+        windows (W.sink w)
+      return (All True)
+    hook _ = return (All True)
+
 main :: IO ()
 main = do
   keyOverrides <- loadKeys
   customActions <- loadCustomActions
   xmonad
+     . webappTiled
      . ewmhFullscreen
      . addEwmhWorkspaceSort (pure (filterOutWs [scratchpadWorkspaceTag]))
      . ewmh . docks

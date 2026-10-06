@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=YouTube
+Comment=https://youtube.com as an app
+Exec=webapp run youtube
+Icon=youtube
+StartupWMClass=WebApp-youtube
+Categories=Network;
+X-WebApp-URL=https://youtube.com

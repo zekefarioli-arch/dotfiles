@@ -33,6 +33,14 @@ _Last updated: 2026-10-06_
   (terminal editor with normal shortcuts), CopyQ,
   KDE Connect and scrcpy for the phone, simple-scan.
 
+## Web apps
+- `webapp add <name> <url>` makes a site an app (Brave `--app`, one shared
+  profile ~/.local/share/webapps, `--password-store=basic` so the keyring
+  never asks for a password). Launchers: xdg/ package, shown in rofi.
+- `--panel` apps (WhatsApp) have their own profile ~/.local/share/webapp-<name>
+  and a fullscreen window kept in the layout by xmonad.hs (webappTiled; Super+f maximizes) so the Claude side panel works; the Claude
+  extension must be installed once per profile (`webapp extensions <name>`).
+
 ## Calendar
 - Click on the bar's date: `mini-calendar` (GTK) with Google Calendar events
   from secret iCal addresses in ~/.config/mini-calendar/ics-url (private,

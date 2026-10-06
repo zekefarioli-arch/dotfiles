@@ -5,6 +5,14 @@ to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
 ## 2026-10-06
+- picom no longer blurs the screenshot area selector (slop window), so the
+  screen stays sharp while choosing the area.
+- `webapp add ... --panel`: own Brave profile, fullscreen window kept in xmonad's layout
+  (bar stays visible) with the Claude side panel (Ctrl+E), like Calendar. WhatsApp uses it.
+- `webapp`: turn any website into an app window with a rofi launcher (Brave
+  `--app`, shared profile, no keyring prompts); google-calendar also skips
+  the keyring now; `webapp extensions` opens the shared profile to install
+  FireShot (full-page PDF/PNG).
 - Mousepad as the default text editor, with Catppuccin Mocha colours (it
   was LibreOffice Writer for plain text).
 - micro, a terminal editor with Ctrl+S/C/V shortcuts, Catppuccin Mocha.
