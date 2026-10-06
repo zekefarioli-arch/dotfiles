@@ -64,6 +64,15 @@ _Last updated: 2026-10-06_
   available. Needs the charger plugged in: `sudo fwupdmgr update`.
 - Passwordless sudo (/etc/sudoers.d/zeke-nopasswd) was added for the setup;
   remove it when the setup is done.
+- Claude sessions: `claude-new` (per folder, <machine>_<folder>_NNN) was only
+  tested with a stub `claude`; check it in the first real session (name shows
+  as d36e_home_001, and a second run offers to continue it). The older
+  fedora_desktop003 is not matched by it; open it with `claude -r`.
+- Claude sessions: no way yet to delete old ones (to do later).
+- Arch desktop: needs its own docs/STATE-arch.md linked as
+  ~/.claude/STATE.local.md, `stow --no-folding -t ~ bin claude`, and
+  ~/.config/printers.env if it prints; setup-printers.sh uses dnf, so it
+  needs a pacman version there.
 - Calendar: creating and editing events from the mini calendar itself
   (OAuth) is deferred; for now the Ask Claude box does it.
 - Polybar hot-plugging was only tested with simulated monitors; confirm with
