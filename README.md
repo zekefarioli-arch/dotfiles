@@ -9,7 +9,7 @@ Each top-level folder is a [GNU Stow](https://www.gnu.org/software/stow/) packag
 ```sh
 git clone https://github.com/zekefarioli-arch/dotfiles.git ~/dotfiles
 cd ~/dotfiles
-stow --no-folding -t ~ xmonad polybar bin alacritty tmux nvim rofi dunst gtk qt x11 xdg claude
+stow --no-folding -t ~ xmonad polybar bin alacritty tmux nvim rofi dunst gtk qt x11 xdg claude micro
 ```
 
 | Package | What it configures |
@@ -19,6 +19,7 @@ stow --no-folding -t ~ xmonad polybar bin alacritty tmux nvim rofi dunst gtk qt 
 | `bin` | scripts in `~/.local/bin` (shortcut tools, lock screen, OSD, phone) |
 | `alacritty`, `tmux`, `starship`, `bash` | terminal, dropdown session and prompt |
 | `nvim` | LazyVim for Java, Erlang, Elixir, TypeScript and front end |
+| `micro` | quick terminal editor with normal shortcuts, Catppuccin Mocha |
 | `rofi`, `dunst`, `gtk`, `qt`, `copyq` | launcher, notifications and Catppuccin theming |
 | `x11`, `xdg` | X session environment, default apps, user folders |
 | `claude` | `~/CLAUDE.md`, the instructions Claude Code reads in every session (started with `claude-new`) |

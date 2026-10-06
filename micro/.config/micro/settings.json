@@ -1,0 +1,9 @@
+{
+    "colorscheme": "catppuccin-mocha",
+    "clipboard": "external",
+    "cursorline": true,
+    "mkparents": true,
+    "savecursor": true,
+    "tabsize": 4,
+    "tabstospaces": true
+}

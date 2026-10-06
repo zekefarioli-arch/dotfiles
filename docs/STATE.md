@@ -29,7 +29,8 @@ _Last updated: 2026-10-06_
 - Theme: Catppuccin Mocha with a pink accent in GTK, Qt, rofi, dunst, CopyQ,
   alacritty, tmux, Neovim, Polybar; Papirus-Dark icons.
 - Apps: Brave (default browser), Thunar, Atril, Neovim (LazyVim),
-  Mousepad (default for text files, Catppuccin Mocha colours), CopyQ,
+  Mousepad (default for text files, Catppuccin Mocha colours), micro
+  (terminal editor with normal shortcuts), CopyQ,
   KDE Connect and scrcpy for the phone, simple-scan.
 
 ## Calendar
