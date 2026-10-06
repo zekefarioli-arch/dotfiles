@@ -9,6 +9,10 @@ I can read in a minute. Add a line in the same commit as the change.
   was LibreOffice Writer for plain text).
 - micro, a terminal editor with Ctrl+S/C/V shortcuts, Catppuccin Mocha.
 - Numbered Claude Code sessions (`claude-new`) and ~/CLAUDE.md.
+- Printer addresses moved out of the public repo to ~/.config/printers.env;
+  Claude's state file is per machine (~/.claude/STATE.local.md).
+- `claude-new` works per folder (`claude-new [folder]`, named <machine>_<folder>_NNN):
+  it shows the last session there and asks to continue it or start the next.
 - docs/: system state, changelog and decision log.
 
 ## 2026-10-05

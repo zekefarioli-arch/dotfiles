@@ -1,18 +1,26 @@
-# Zeke's Fedora laptop
+# Zeke's computers
 
-ThinkPad X13 Gen 1 (AMD), minimal Fedora 44 with xmonad, Polybar, picom and
-Catppuccin Mocha with a pink accent everywhere. Sessions run from ~ and are
-started with `claude-new` (named fedora_desktopNNN).
+Two computers share this account and the dotfiles repo: a ThinkPad X13 Gen 1
+(AMD) laptop with minimal Fedora 44, and an Arch desktop. Both use xmonad,
+Polybar, picom and Catppuccin Mocha with a pink accent. Sessions run from ~
+or from a project folder and are started with `claude-new`, which names them
+<machine>_<folder>_NNN (folder is `home` in ~).
 
-## Read first: the system state
-@~/dotfiles/docs/STATE.md
+## Read first: the system state of this machine
+@~/.claude/STATE.local.md
 
-That file is imported above so it is in every session. Trust the system over
-it: if something you check disagrees with it, say so and fix the file.
+Each machine has its own state file in ~/dotfiles/docs/ (STATE.md is the
+Fedora laptop's) and a local symlink ~/.claude/STATE.local.md pointing to
+it, which is imported above so it is in every session. If that import is
+empty, this machine has no link yet: say so and offer to create it
+(`ln -s ~/dotfiles/docs/<its file> ~/.claude/STATE.local.md`, and start the
+file from STATE.md's layout). Trust the system over the file: if something
+you check disagrees with it, say so and fix the file.
 
 ## Keep the docs current
 In the same commit as each change, update what it touches:
-- `docs/STATE.md`: what is installed, configured, pending or broken now
+- The state file of the machine you are on (`docs/STATE.md` for the Fedora
+  laptop): what is installed, configured, pending or broken now
   (and its "Last updated" date).
 - `docs/CHANGELOG.md`: one line under today's date for changes that matter
   to the user.

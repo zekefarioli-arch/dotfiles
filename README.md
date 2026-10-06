@@ -22,10 +22,10 @@ stow --no-folding -t ~ xmonad polybar bin alacritty tmux nvim rofi dunst gtk qt 
 | `micro` | quick terminal editor with normal shortcuts, Catppuccin Mocha |
 | `rofi`, `dunst`, `gtk`, `qt`, `copyq` | launcher, notifications and Catppuccin theming |
 | `x11`, `xdg` | X session environment, default apps, user folders |
-| `claude` | `~/CLAUDE.md`, the instructions Claude Code reads in every session (started with `claude-new`) |
+| `claude` | `~/CLAUDE.md`, the instructions Claude Code reads in every session (sessions start with `claude-new`, per folder: `claude-new [folder]`) |
 | `system` | files outside `$HOME`; each one explains in its header how to install it |
 
-Three scripts set up the rest of a fresh Fedora install: `scripts/fedora-post-install.sh` (codecs, VA-API, snapshots, power profiles), `scripts/install-themes.sh` (GTK, Qt, icons and cursor) and `scripts/setup-printers.sh` (the home printers and the Brother scanner). The `qtile` package is my old setup; I keep it for reference, but it is not maintained.
+Three scripts set up the rest of a fresh Fedora install: `scripts/fedora-post-install.sh` (codecs, VA-API, snapshots, power profiles), `scripts/install-themes.sh` (GTK, Qt, icons and cursor) and `scripts/setup-printers.sh` (the home printers and the Brother scanner; their addresses are read from `~/.config/printers.env`, which is not in the repo because it is public). The `qtile` package is my old setup; I keep it for reference, but it is not maintained.
 
 `docs/` keeps three living documents: `STATE.md` (what the system has now, what is pending and what is broken), `CHANGELOG.md` (what changed, by date) and `DECISIONS.md` (choices between alternatives and why). Claude Code reads the state file in every session through `~/CLAUDE.md`.
 

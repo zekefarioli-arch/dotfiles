@@ -12,7 +12,7 @@ _Last updated: 2026-10-06_
 - Lenovo ThinkPad X13 Gen 1 AMD (20UGS2Q500), 30 GiB RAM, 236 GB NVMe.
 - BIOS R1CET79W (1.48).
 - Fedora 44, kernel 7.2.x, btrfs root with snapper snapshots.
-- Wi-Fi only (192.168.0.0/24 at home); timezone Europe/London, set
+- Wi-Fi only; timezone Europe/London, set
   automatically by a NetworkManager dispatcher script.
 - User `zeke`; LightDM starts the xmonad session.
 
@@ -44,15 +44,19 @@ _Last updated: 2026-10-06_
 
 ## Printing and scanning
 - CUPS with two queues; cups-browsed is disabled.
-  - Brother_MFC_L2700DN (default): driverless IPP at 192.168.0.11, two-sided.
-  - Canon_iX6800: through the CUPS server hs-media-srv (192.168.0.137), USB.
+  - Brother_MFC_L2700DN (default): driverless IPP, two-sided.
+  - Canon_iX6800: through the CUPS server it is plugged into (USB).
+  - Addresses are not in the repo: ~/.config/printers.env (BROTHER, SERVER).
 - Scanner: Brother MFC-L2700DN through sane-airscan (WSD), pinned in
   /etc/sane.d/airscan.conf. Setup: scripts/setup-printers.sh.
 
 ## Claude Code
-- Sessions run from ~ and start with `claude-new` (fedora_desktopNNN);
-  how to start and continue them: docs/SESSIONS.md.
-- ~/CLAUDE.md (dotfiles package `claude`) holds the standing instructions;
+- Sessions start with `claude-new` in the folder being worked on (named
+  <machine>_<folder>_NNN, machine = first 4 of /etc/machine-id); it offers to continue the last one
+  there. How to start and continue them: docs/SESSIONS.md.
+- ~/CLAUDE.md (dotfiles package `claude`) holds the standing instructions and
+  imports ~/.claude/STATE.local.md, a per-machine symlink to this file (the
+  laptop) or to the desktop's own state file; the link is not in the repo.
   Claude's own memory is in ~/.claude/projects/-home-zeke/memory/.
 
 ## Pending

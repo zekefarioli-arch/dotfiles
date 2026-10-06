@@ -6,6 +6,28 @@ was considered, why. Small choices inside a file are explained in a comment
 next to the code instead; this file is for choices that shape the system.
 If a decision is reversed, add a new entry and mark the old one "Replaced".
 
+## 2026-10-06 · Private and per-machine values stay out of the repo
+Decided: printer addresses live in ~/.config/printers.env (not in the repo);
+each machine has its own state file, linked as ~/.claude/STATE.local.md,
+which ~/CLAUDE.md imports. Considered: keeping the addresses as defaults in
+the script (still public); one STATE.md for both computers (describes the
+wrong hardware on one of them); a `.env` committed encrypted (more tooling
+than the problem needs). Why: the repo is public and the two computers
+differ. The old addresses stay in git history; they are private LAN
+addresses, so the history was not rewritten.
+
+## 2026-10-06 · Session names per folder, numbered from the saved sessions
+Decided: `claude-new` names a session <machine>_<folder>_NNN (folder is
+`home` in ~) and takes the next number from the sessions Claude already saved for that
+folder; if one exists it shows the last and asks to continue or start a new
+one. Considered: a global counter file (the first version), which ignores
+what the folder is and cannot be shared between computers without Git
+conflicts. The machine part is the first 4 characters of /etc/machine-id
+(unique per install, where hostnames may repeat), or the text of
+~/.config/claude-new/machine for a readable name such as "arch".
+Why: most work happens in a code project, and the folder is what tells
+sessions apart. Sessions are stored per machine and never shared; what travels is dotfiles, the docs and the projects on GitHub.
+
 ## 2026-10-06 · Fresh Claude Code sessions with a state file
 Decided: start a new numbered session (`claude-new`) every so often, with
 ~/CLAUDE.md, docs/STATE.md and Claude's memory carrying the context.
