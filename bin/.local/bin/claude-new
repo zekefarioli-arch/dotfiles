@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Start a fresh Claude Code session in ~ named fedora_desktopNNN, numbered one
+# after the last one (fedora_desktop001, 002, ...). Extra arguments go to
+# claude. A new session starts with an empty context, so answers stay fast
+# and focused; ~/CLAUDE.md and Claude's memory carry what matters across.
+#   claude-new          next session
+#   claude -c           continue the last session
+#   claude -r           pick an older session by name
+set -eu
+
+state="${XDG_STATE_HOME:-$HOME/.local/state}/claude-new"
+mkdir -p "$state"
+n=$(( $(cat "$state/last" 2>/dev/null || echo 0) + 1 ))
+echo "$n" > "$state/last"
+name=$(printf 'fedora_desktop%03d' "$n")
+cd ~
+exec claude -n "$name" "$@"

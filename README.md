@@ -9,7 +9,7 @@ Each top-level folder is a [GNU Stow](https://www.gnu.org/software/stow/) packag
 ```sh
 git clone https://github.com/zekefarioli-arch/dotfiles.git ~/dotfiles
 cd ~/dotfiles
-stow --no-folding -t ~ xmonad polybar bin alacritty tmux nvim rofi dunst gtk qt x11 xdg
+stow --no-folding -t ~ xmonad polybar bin alacritty tmux nvim rofi dunst gtk qt x11 xdg claude
 ```
 
 | Package | What it configures |
@@ -21,6 +21,7 @@ stow --no-folding -t ~ xmonad polybar bin alacritty tmux nvim rofi dunst gtk qt 
 | `nvim` | LazyVim for Java, Erlang, Elixir, TypeScript and front end |
 | `rofi`, `dunst`, `gtk`, `qt`, `copyq` | launcher, notifications and Catppuccin theming |
 | `x11`, `xdg` | X session environment, default apps, user folders |
+| `claude` | `~/CLAUDE.md`, the instructions Claude Code reads in every session (started with `claude-new`) |
 | `system` | files outside `$HOME`; each one explains in its header how to install it |
 
 Three scripts set up the rest of a fresh Fedora install: `scripts/fedora-post-install.sh` (codecs, VA-API, snapshots, power profiles), `scripts/install-themes.sh` (GTK, Qt, icons and cursor) and `scripts/setup-printers.sh` (the home printers and the Brother scanner). The `qtile` package is my old setup; I keep it for reference, but it is not maintained.
