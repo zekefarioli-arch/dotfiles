@@ -26,6 +26,8 @@ stow --no-folding -t ~ xmonad polybar bin alacritty tmux nvim rofi dunst gtk qt 
 
 Three scripts set up the rest of a fresh Fedora install: `scripts/fedora-post-install.sh` (codecs, VA-API, snapshots, power profiles), `scripts/install-themes.sh` (GTK, Qt, icons and cursor) and `scripts/setup-printers.sh` (the home printers and the Brother scanner). The `qtile` package is my old setup; I keep it for reference, but it is not maintained.
 
+`docs/` keeps three living documents: `STATE.md` (what the system has now, what is pending and what is broken), `CHANGELOG.md` (what changed, by date) and `DECISIONS.md` (choices between alternatives and why). Claude Code reads the state file in every session through `~/CLAUDE.md`.
+
 ## Shortcuts
 
 I wanted to see every shortcut in one place, run them from that list and change them without editing Haskell. For this reason, xmonad's bindings are split into three parts.

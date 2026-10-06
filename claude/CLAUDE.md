@@ -4,6 +4,26 @@ ThinkPad X13 Gen 1 (AMD), minimal Fedora 44 with xmonad, Polybar, picom and
 Catppuccin Mocha with a pink accent everywhere. Sessions run from ~ and are
 started with `claude-new` (named fedora_desktopNNN).
 
+## Read first: the system state
+@~/dotfiles/docs/STATE.md
+
+That file is imported above so it is in every session. Trust the system over
+it: if something you check disagrees with it, say so and fix the file.
+
+## Keep the docs current
+In the same commit as each change, update what it touches:
+- `docs/STATE.md`: what is installed, configured, pending or broken now
+  (and its "Last updated" date).
+- `docs/CHANGELOG.md`: one line under today's date for changes that matter
+  to the user.
+- `docs/DECISIONS.md`: when we choose between alternatives that shape the
+  system, an entry with what was decided, what else was considered and why.
+  Read it before proposing to undo or redo something; if a decision is
+  reversed, add a new entry instead of deleting the old one.
+- In code and configs, a short comment next to a non-obvious choice saying
+  why (and what was rejected, if it matters), like the existing scripts do.
+- README.md when the behaviour or the shortcuts change.
+
 ## How I work
 - Chat in Spanish; everything written to files (code, configs, comments,
   READMEs, commit messages) in English.
