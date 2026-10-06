@@ -59,6 +59,17 @@ if command -v gsettings >/dev/null; then
   gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
   gsettings set org.gnome.desktop.interface font-name "Noto Sans 10"
   gsettings set org.gnome.desktop.interface monospace-font-name "JetBrainsMono Nerd Font 10"
+
+  # Mousepad: Catppuccin Mocha editor colours (gtk package, gtksourceview-4
+  # styles), the monospace font, line numbers and the current line highlighted
+  if gsettings list-schemas | grep -qx org.xfce.mousepad.preferences.view; then
+    v=org.xfce.mousepad.preferences.view
+    gsettings set $v color-scheme "catppuccin-mocha"
+    gsettings set $v use-default-monospace-font true
+    gsettings set $v show-line-numbers true
+    gsettings set $v highlight-current-line true
+    gsettings set $v match-braces true
+  fi
 fi
 
 

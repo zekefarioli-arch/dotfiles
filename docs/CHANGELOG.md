@@ -5,6 +5,8 @@ to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
 ## 2026-10-06
+- Mousepad as the default text editor, with Catppuccin Mocha colours (it
+  was LibreOffice Writer for plain text).
 - Numbered Claude Code sessions (`claude-new`) and ~/CLAUDE.md.
 - docs/: system state, changelog and decision log.
 

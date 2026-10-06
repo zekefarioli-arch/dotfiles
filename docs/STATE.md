@@ -28,7 +28,8 @@ _Last updated: 2026-10-06_
 - Lock: i3lock through `lock-screen`; Super+L and xss-lock (suspend, lid).
 - Theme: Catppuccin Mocha with a pink accent in GTK, Qt, rofi, dunst, CopyQ,
   alacritty, tmux, Neovim, Polybar; Papirus-Dark icons.
-- Apps: Brave (default browser), Thunar, Atril, Neovim (LazyVim), CopyQ,
+- Apps: Brave (default browser), Thunar, Atril, Neovim (LazyVim),
+  Mousepad (default for text files, Catppuccin Mocha colours), CopyQ,
   KDE Connect and scrcpy for the phone, simple-scan.
 
 ## Calendar

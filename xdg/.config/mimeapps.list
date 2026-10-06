@@ -1,5 +1,18 @@
 
 [Default Applications]
+text/csv=org.xfce.mousepad.desktop
+application/x-yaml=org.xfce.mousepad.desktop
+text/x-yaml=org.xfce.mousepad.desktop
+application/toml=org.xfce.mousepad.desktop
+text/x-chdr=org.xfce.mousepad.desktop
+text/x-csrc=org.xfce.mousepad.desktop
+application/xml=org.xfce.mousepad.desktop
+application/json=org.xfce.mousepad.desktop
+text/x-python=org.xfce.mousepad.desktop
+application/x-shellscript=org.xfce.mousepad.desktop
+text/x-log=org.xfce.mousepad.desktop
+text/markdown=org.xfce.mousepad.desktop
+text/plain=org.xfce.mousepad.desktop
 text/html=brave-browser.desktop
 x-scheme-handler/http=brave-browser.desktop
 x-scheme-handler/https=brave-browser.desktop
