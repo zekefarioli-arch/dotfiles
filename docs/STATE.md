@@ -142,9 +142,12 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
    commits each that are on the hub but not yet on GitHub; a `git push` in each clone
    sends them to both.
 8. NEXT, ideas to design (not built; give options for one step at a time):
-   a) Decide where the hub itself is backed up (it has no backup, and one repo,
-      mock-oclock/private, exists only on two disks), and commit the uncommitted work that
-      six clones have, since only committed work reaches the hub.
+   a) Commit the uncommitted work that six clones have, since only committed work reaches
+      the hub. (The hub and the two home servers now have nightly restic backups, crossed
+      between the servers, set up and verified on 2026-10-07 with a restore drill; and
+      mock-oclock/private has a third copy in a private GitLab project. Details and the
+      commands to check them are in the private repo home-infra. Still open there: an alert
+      when a night fails, and an encrypted off-site copy.)
    b) Bring the Arch dotfiles up to date: they are 85 commits behind with 3 uncommitted
       files that conflict (xmonad.hs, autostart.sh, launch-polybar.sh), and its xmonad.hs is
       an older, simpler design. Either merge keeping the local edits, or split the
