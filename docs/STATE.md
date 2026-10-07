@@ -37,7 +37,7 @@ _Last updated: 2026-10-06_
 - `webapp add <name> <url>` makes a site an app (Brave `--app`, one shared
   profile ~/.local/share/webapps, `--password-store=basic` so the keyring
   never asks for a password). Launchers: xdg/ package, shown in rofi.
-- `--panel` apps (WhatsApp) have their own profile ~/.local/share/webapp-<name>
+- `--panel` apps (WhatsApp, Google Messages) have their own profile ~/.local/share/webapp-<name>
   and a normal tiled window (xmonad.hs WebAppCrop pushes Brave's tab strip and
   toolbar off the top of the screen, `webappChromePx`) so the Claude side panel works; the Claude
   extension must be installed once per profile (`webapp extensions <name>`).

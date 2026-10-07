@@ -5,6 +5,16 @@ to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
 ## 2026-10-07
+- Panel web apps and Calendar start on a new tab and no longer restore the
+  previous session (`webapp fresh`): Brave restored one tab and the launcher
+  added another, so WhatsApp asked "use here".
+- The toolbar crop of panel web apps works in any tile position (not only at
+  the top edge): such windows are stacked below the others.
+- Opening a panel web app (or Calendar) that is already running now raises
+  its window instead of opening another tab; extra WhatsApp/Messages tabs
+  made the site ask "use here".
+- Google Messages is a `webapp --panel` app (own profile, Claude side panel);
+  it replaces the old brave --app launcher.
 - Google Calendar is a tiled `WebPanel-calendar` window like the panel web
   apps (Brave's toolbar pushed off the screen by xmonad) instead of fullscreen.
 

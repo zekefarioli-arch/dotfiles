@@ -28,7 +28,7 @@ import qualified XMonad.StackSet as W
 import Control.Monad (filterM, forM_, unless, when)
 
 import Data.Char (toLower)
-import Data.List (elemIndex, find, intercalate, isInfixOf, isPrefixOf)
+import Data.List (elemIndex, find, intercalate, isInfixOf, isPrefixOf, sortOn)
 import qualified Data.Map as M
 import System.Directory (XdgDirectory (XdgCache), createDirectoryIfMissing, doesFileExist, getHomeDirectory, getXdgDirectory, renameFile)
 import System.Exit (exitWith, ExitCode(ExitSuccess))
@@ -471,33 +471,38 @@ exportActions cs o = io $ do
 -- WEB APPS WITH THE CLAUDE PANEL
 -- `webapp --panel` windows are normal Brave windows (the Claude side panel does
 -- not exist in --app windows), so Brave shows its tab strip and toolbar. Brave
--- cannot hide them, but the layout can push them off the screen: a WebPanel-*
--- window that sits at the top edge of its area gets its rectangle extended
--- upwards by webappChromePx, so only the page (and the side panel) is seen.
+-- cannot hide them, but the layout can push them out of sight: the rectangle of
+-- every WebPanel-* window is extended upwards by webappChromePx, so only the
+-- page (and the side panel) is seen. At the top edge of the screen the toolbar
+-- falls off the screen; anywhere else it falls under the window above, because
+-- these windows are put at the bottom of the stacking order (xmonad stacks the
+-- layout's list from top to bottom, so they go last, upper ones first).
 -- The window stays tiled with the other windows of the workspace.
 -- Rejected: fullscreen state (Brave hides its UI, but ewmhFullscreen covers the
 -- bar and the other windows; a hook that sank the window again was a hack
 -- around two EWMH handlers) and floating windows (they leave the layout).
--- Tune it to the height of Brave's tab strip + toolbar (with the bookmarks bar
--- hidden); a window that is not at the top edge is left as it is.
+-- A first version only cropped windows at the top edge: a web app in the second
+-- row of the layout showed its toolbar again.
+-- Tune webappChromePx to the height of Brave's tab strip + toolbar (with the
+-- bookmarks bar hidden).
 webappChromePx :: Dimension
 webappChromePx = 86
 
 data WebAppCrop a = WebAppCrop deriving (Show, Read)
 
 instance LayoutModifier WebAppCrop Window where
-  redoLayout WebAppCrop area _ wrs = do
-    wrs' <- mapM crop wrs
-    return (wrs', Nothing)
+  redoLayout WebAppCrop _ _ wrs = do
+    tagged <- mapM tag wrs
+    let others = [wr | (False, wr) <- tagged]
+        panels = sortOn (rect_y . snd) [wr | (True, wr) <- tagged]
+    return (others ++ map crop panels, Nothing)
     where
-      crop (w, r)
-        | rect_y r == rect_y area = do
-            isApp <- runQuery (fmap ("WebPanel-" `isPrefixOf`) className) w
-            return (w, if isApp
-                         then r { rect_y = rect_y r - fromIntegral webappChromePx
-                                , rect_height = rect_height r + webappChromePx }
-                         else r)
-        | otherwise = return (w, r)
+      tag wr@(w, _) = do
+        isPanel <- runQuery (fmap ("WebPanel-" `isPrefixOf`) className) w
+        return (isPanel, wr)
+      crop (w, r) = ( w
+                    , r { rect_y = rect_y r - fromIntegral webappChromePx
+                        , rect_height = rect_height r + webappChromePx } )
 
 main :: IO ()
 main = do

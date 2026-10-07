@@ -95,6 +95,26 @@ The profile has its own window class, extensions, theme and Google login, and xm
 
 ## Web apps
 
-`webapp add <name> <url>` turns a website into an app: its own window without tabs or address bar, and a launcher in rofi (`webapp list`, `webapp remove <name>`). It runs `brave --app` in one shared profile (`~/.local/share/webapps`), so one Google login serves YouTube, Drive and the rest. It uses `--password-store=basic`, so Brave never asks for the keyring password. Google Calendar is separate because it needs the Claude extension. `webapp extensions` opens that profile in a normal window with the Chrome Web Store searching FireShot (whole page to PDF or image); app windows have no toolbar, so set the extension's shortcut in `brave://extensions/shortcuts`.
+`webapp` turns a website into an app with a launcher in rofi. There are two kinds, and the difference is the Claude side panel:
 
-`webapp add <name> <url> --panel` makes the Calendar kind of app instead: its own Brave profile and a normal tiled window, so the Claude extension and its side panel (`Ctrl+E`) work. After creating it, run `webapp extensions <name>` once to install Claude and sign in. WhatsApp is made this way. Brave's tab strip and toolbar are pushed above the top of the screen by xmonad (`WebAppCrop` in `xmonad.hs`, height `webappChromePx`), so only the page and the Claude panel are visible while the window stays in the layout.
+| | `webapp add <name> <url>` | `webapp add <name> <url> --panel` |
+|---|---|---|
+| Window | `brave --app`: no tabs, no address bar | normal tiled Brave window, its toolbar pushed out of sight by xmonad |
+| Claude side panel | not possible (app windows have no side panel) | yes, `Ctrl+E` |
+| Profile | one shared (`~/.local/share/webapps`): one Google login for all | its own (`~/.local/share/webapp-<name>`), so a separate login |
+| Window class | `WebApp-<name>` | `WebPanel-<name>` |
+| Examples | YouTube | WhatsApp, Google Messages (and Calendar, with its own script) |
+
+Both use `--password-store=basic`, so Brave never asks for the keyring password. `webapp list` and `webapp remove <name>` manage them.
+
+### How to make a web app with the Claude panel
+
+1. **Create it:** `webapp add "Gmail" mail.google.com gmail --panel` (the last word is an optional Papirus icon name). It writes the launcher into `xdg/` and links it with stow, so it shows in rofi at once.
+2. **Install Claude in its profile, once:** `webapp extensions gmail` (or right click the launcher in rofi, "Extensions and theme"). It opens that profile with the Chrome Web Store: install **Claude** (and the Catppuccin Mocha theme if you like) and sign in to the extension. Each `--panel` app has its own profile, so this is needed for every one.
+3. **Open it from rofi and sign in to the site.** Opening it again while it runs raises the existing window instead of opening another tab (a second tab of WhatsApp or Messages makes the site say "use here").
+4. **Use the panel:** `Ctrl+E` opens and closes Claude next to the page. If it does not react, set the shortcut in `brave://extensions/shortcuts` inside that profile.
+5. **Check the look:** the tab strip and toolbar should not be visible. If a strip of them shows, or the page loses its top, adjust `webappChromePx` in `xmonad.hs` (86 px, with the bookmarks bar hidden), then `xmonad --recompile` and `xmonad --restart`.
+
+How it works, in one paragraph: the Claude extension needs a normal Brave window, and a normal window always shows the tab strip and toolbar. xmonad (`WebAppCrop` in `xmonad.hs`) extends the rectangle of every `WebPanel-*` window upwards by `webappChromePx`, so the toolbar falls off the top of the screen (or under the window above, because these windows are stacked below the others) while the window stays tiled with the rest. Before each launch `webapp fresh` makes the profile start on a new tab instead of restoring the previous session, which would add a second tab. The reasons for each choice are in `docs/DECISIONS.md`.
+
+`webapp extensions` with no name opens the shared profile instead, with the Chrome Web Store searching FireShot (whole page to PDF or image). App windows have no toolbar, so give the extension a shortcut in `brave://extensions/shortcuts`.

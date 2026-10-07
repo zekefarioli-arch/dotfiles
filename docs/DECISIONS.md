@@ -128,8 +128,9 @@ Why: no state to get wrong; no bar is left behind for a monitor that is gone.
 
 ## 2026-10-06: hiding Brave's toolbar in panel web apps
 - Decided: a layout modifier (WebAppCrop) that extends the rectangle of a
-  WebPanel-* window upwards by ~86 px when it is at the top edge of its area, so
-  the tab strip and toolbar fall off the screen. The window stays tiled.
+  WebPanel-* window upwards by ~86 px and stacks these windows below the
+  others: the tab strip and toolbar fall off the screen at the top edge, or
+  under the window above anywhere else. The window stays tiled.
 - Why: the Claude side panel needs a normal window, which always shows Brave's
   toolbar; it has to be hidden from outside.
 - Considered: --app (no side panel); Brave fullscreen (hides the UI but covers
@@ -138,5 +139,19 @@ Why: no state to get wrong; no bar is left behind for a monitor that is gone.
   upwards (leaves the layout); a Chromium patch (too heavy).
 - Google Calendar follows the same rule (class WebPanel-calendar, no
   fullscreen) since its fullscreen did not fit xmonad's Full layout.
-- Limits: height is a constant to tune; a web app below another window in a
-  column keeps its toolbar visible.
+- Limits: height is a constant to tune. A first version only cropped windows at
+  the top edge, and a web app in the second row showed its toolbar again.
+
+## 2026-10-07: no session restore in web app profiles
+- Decided: before each launch, if the profile is not running, `webapp fresh`
+  sets session.restore_on_startup = 5 (new tab page) and exit_type = Normal in
+  the profile's Preferences. Used by webapp and google-calendar.
+- Why: Brave restored the previous tab and the launcher added its URL as a
+  second one; WhatsApp and Messages allow one session per profile and asked
+  "use here". Seen in the session files (tab 0 restored, tab 1 from the URL).
+- Considered: dropping the URL when restoring (the first start has nothing to
+  restore); a managed policy (RestoreOnStartup) in /etc, which is system-wide
+  and would also hit the normal browser. Closing the extra tabs by hand does
+  not last.
+- Limit: Brave rewrites its preferences on exit, so it only works while the
+  profile is not running.

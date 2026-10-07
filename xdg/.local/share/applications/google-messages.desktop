@@ -1,7 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Google Messages
-Comment=SMS from the phone in a Brave app window
-Exec=brave-browser --app=https://messages.google.com/web/
-Icon=internet-chat
-Categories=Network;Chat;

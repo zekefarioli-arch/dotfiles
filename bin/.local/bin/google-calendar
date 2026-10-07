@@ -36,6 +36,7 @@ theme="$store/bkkmolkhemgaeaeggcmfbghljjjoofoh"    # Catppuccin Chrome Theme - M
 brave() {
   # --force-dark-mode: dark browser UI (menus, dialogs, side panel frame)
   # --password-store=basic: no GNOME keyring prompt (see bin/webapp)
+  webapp fresh "$profile"   # no session restore: it would add a second calendar tab
   setsid -f brave-browser --user-data-dir="$profile" --class=WebPanel-calendar \
     --password-store=basic --no-first-run --no-default-browser-check \
     --force-dark-mode "$@" >/dev/null 2>&1
@@ -53,6 +54,15 @@ case "${1:-}" in
     # Workspace product page; with one, ServiceLogin goes straight to $url
     login="https://accounts.google.com/ServiceLogin?service=cl&continue=$(
       python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$url")"
+    # No date given and the calendar is already open: bring it to the front
+    # instead of opening another window (see bin/webapp)
+    if [[ -z ${1:-} ]]; then
+      for w in $(xdotool search --class WebPanel-calendar 2>/dev/null); do
+        case $(xdotool getwindowname "$w" 2>/dev/null) in
+          *" - Brave") xdotool windowactivate "$w"; exit 0 ;;
+        esac
+      done
+    fi
     brave --new-window "$login"
     ;;
 esac
