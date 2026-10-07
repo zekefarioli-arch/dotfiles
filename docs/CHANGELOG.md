@@ -5,7 +5,7 @@ to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
 ## 2026-10-07
-- Committed the uncommitted work of six clones (7 commits), without pushing; a few log and backup files were left out on purpose.
+- Committed the uncommitted work of six clones (7 commits) and pushed them to the hub and to GitHub, except one branch kept off GitHub because it has an address of the home network in it; a few log and backup files were left out on purpose.
 - Nightly backups of the two home servers and of the git hub (restic, crossed between the servers, a restore drill passed). A private repo of the Arch desktop that had no remote now has a third copy in a private GitLab project. Details in home-infra (private).
 - All my other own repos are wired to the git hub too (17 in total, on the laptop, the Arch desktop and the router). Three have two commits each that are on the hub but not yet on GitHub.
 - Git hub on the home media server: the central copy of my repos, reached over ssh with a restricted `git` user. dotfiles, claude-tools, webapps and home-infra now have `origin` on the hub, with a second push URL on GitHub or GitLab, so one `git push` updates both. Details in home-infra (private).
