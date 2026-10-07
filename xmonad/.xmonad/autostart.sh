@@ -14,9 +14,12 @@ xset s off
 xset +dpms
 xset dpms 300 300 300
 
-# Lock on suspend / lid close (xidlehook is not packaged for Fedora)
+# No automatic lock. xss-lock used to run lock-screen on suspend and on lid close, which
+# meant a password prompt every time the lid was opened (removed on 2026-10-07 because it
+# was a nuisance; see docs/DECISIONS.md). Super+L still locks by hand. To bring it back,
+# uncomment the xss-lock line (and run it once in the current session).
 pkill -x xss-lock 2>/dev/null || true
-xss-lock -- ~/.local/bin/lock-screen &
+# xss-lock -- ~/.local/bin/lock-screen &
 
 xsetroot -cursor_name left_ptr
 

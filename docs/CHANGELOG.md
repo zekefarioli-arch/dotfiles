@@ -5,6 +5,15 @@ to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
 ## 2026-10-07
+- `claudio` (claude-tools): claude-pick without a screen, as numbered menus in the terminal; claude-pick falls back to it with no display or no rofi.
+- Removed the automatic screen lock (`xss-lock`): it locked on every lid close. Super+L still locks by hand.
+- This laptop has a fixed IP (a DHCP reservation in the home router). A dedicated ssh key (not in
+  the repo) is authorised on the other machines of the house; ssh-askpass-rofi lets ssh ask for a
+  password through rofi when there is no terminal. The network is documented in home-infra (private).
+- Session names are now `<path>_NNN@<machine>` (for example
+  `Zeke_projects-foo_002@arch`): the path from ~ keeps same-named folders apart
+  and the machine only labels, so numbering and "last session" work across
+  computers. Old names still count. (claude-tools)
 - The Claude tools (`claude-new`, `claude-pick`, `claude-fresh`) moved to the
   public repo claude-tools, and `webapp` to the public repo webapps, both with a
   README and an install.sh for pacman, dnf and apt, so the Arch desktop can use

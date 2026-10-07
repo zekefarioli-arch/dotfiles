@@ -25,7 +25,9 @@ _Last updated: 2026-10-07_
 - picom (glx, vsync): blur and slide animation for the dropdown terminal.
 - Dropdown terminal: alacritty (class dropterm) with tmux session `drop`,
   toggled by Super+Ctrl+T; it hides before rofi, Super+Enter and Super+E.
-- Lock: i3lock through `lock-screen`; Super+L and xss-lock (suspend, lid).
+- Lock: i3lock through `lock-screen`, by hand with Super+L only. There is no automatic
+  lock any more (xss-lock was removed on 2026-10-07: it locked on every lid close).
+  The monitor still turns off after 5 minutes of inactivity (DPMS), without a password.
 - Theme: Catppuccin Mocha with a pink accent in GTK, Qt, rofi, dunst, CopyQ,
   alacritty, tmux, Neovim, Polybar; Papirus-Dark icons.
 - Apps: Brave (default browser), Thunar, Atril, Neovim (LazyVim),
@@ -67,8 +69,9 @@ _Last updated: 2026-10-07_
 ## Claude Code
 - The session tools live in their own repo, github.com/zekefarioli-arch/claude-tools
   (cloned in ~/Zeke_projects/claude-tools, linked into ~/.local/bin by its
-  install.sh): `claude-new` (sessions named <machine>_<folder>_NNN, machine =
-  first 4 of /etc/machine-id), `claude-pick` (rofi launcher on Super+a: folders,
+  install.sh): `claude-new` (sessions named <path>_NNN@<machine>, path = the
+  folder from ~ with dashes, machine = first 4 of /etc/machine-id or the text of
+  ~/.config/claude-new/machine), `claude-pick` (rofi launcher on Super+a: folders,
   sessions, context usage, handoff from 50%, git marks) and `claude-fresh`
   (updates the project from GitHub before a session when it is only behind and
   clean). How to use them: docs/SESSIONS.md here, and the repo's README.
@@ -103,19 +106,47 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
    detected, the xmonad crop as a snippet). Both are documented in the
    `super-zeke` voice. On Arch: clone both, run their install.sh, stow
    `webapps` and `claude` from dotfiles, `webapp sync`, `xmonad --recompile`.
-   Not tried on Arch yet.
-4. NEXT, session names. A: path from ~ without the machine
-   (`Zeke_projects-mini-calendar_001`). B (recommended): path plus a machine
-   tag (`..._001@d36e`) where the lookup ignores the machine, so the same
-   folder shows the sessions of both computers. C: as now (`d36e_folder_001`).
-   Not chosen yet.
-5. THEN, sharing sessions between machines. A (recommended for now): do not
-   share, docs/memory/projects already travel through GitHub. B: private repo
-   `claude-sessions` with a `claude-sync` script. C: Syncthing on
-   ~/.claude/projects. D: rsync over ssh when starting and leaving. The
-   dotfiles repo is public and sessions can hold secrets, so they never go
-   there; they are 36 MB today. Not chosen yet.
-6. LATER, a private repo for Claude's memory and settings (memory/,
+   Done on Arch on 2026-10-07: both repos cloned in ~/Projects and installed, with
+   ~/.config/claude-tools/{projects_dir,repos}, machine name `arch`, terminal wezterm
+   (no alacritty there; claude-pick detects it). Super+a on Arch is one line added to
+   its own xmonad.hs (additionalKeysP) and compiled; it needs `xmonad --restart` there.
+   Arch's dotfiles are 85 commits behind with 3 uncommitted files that conflict, so no
+   pull yet: merging them (or a per-machine split) is still to do.
+4. DONE 2026-10-07, session names: `<path>_NNN@<machine>`, for example
+   `Zeke_projects-mini-calendar_002@arch` (`home_001@d36e` in ~). The machine
+   only labels: the last session of a folder is the most recent one of any
+   machine and the next number is the highest plus one, so the sessions of two
+   computers in the same place do not collide. Old names (`d36e_home_001`,
+   <machine>_<folder>_NNN of this machine) still count; fedora_desktop003 and
+   unnamed ones do not. Chosen: B with the full path; readable machine names
+   are optional (`./install.sh --name arch`). Not tried yet: starting a real
+   session with the new name (checked with a fake claude and my real sessions).
+5. DONE 2026-10-07, `claudio`: the console-only mode of claude-pick (numbered menus in the
+   terminal you are in, the session starts there; `claude-pick --console`), and
+   claude-pick falls back to it by itself with no display or no rofi. For a TTY or ssh
+   from the phone. Installed on the laptop and on Arch.
+6. DONE 2026-10-07, claude-tools also: the terminal is detected or set (CLAUDE_TERMINAL,
+   ~/.config/claude-tools/terminal; wezterm on Arch), the projects folder can be a file
+   (~/.config/claude-tools/projects_dir; ~/Projects on Arch), and claude-pick puts
+   ~/.local/bin first in PATH (a key bound in xmonad has a minimal one).
+7. NEXT, ideas to design (not built; give options for one step at a time):
+   a) Git repos on the LAN: bare repos on one of the home servers reached
+      over ssh as the central copy, with tests still run on the laptop and the Arch
+      desktop, and GitHub or GitLab as an off-site mirror. Open: which server, whether a
+      web UI (Gitea or Forgejo) is worth it, and what claude-fresh then fetches from.
+   b) Bring the Arch dotfiles up to date: they are 85 commits behind with 3 uncommitted
+      files that conflict (xmonad.hs, autostart.sh, launch-polybar.sh), and its xmonad.hs is
+      an older, simpler design. Either merge keeping the local edits, or split the
+      configuration per machine (the real fix for dotfiles mixing both computers). Super+a
+      on Arch is one line in its own xmonad.hs, compiled, and still needs `xmonad
+      --restart` there to load it.
+   c) Sharing Claude sessions between the machines (A: do not share, recommended for now;
+      B: private repo with a sync script; C: Syncthing; D: rsync over ssh). The names
+      already work across machines.
+   d) Harden ssh on the laptop and the Arch desktop: keys first, then passwords off and a
+      firewall rule for the LAN only (the details are in home-infra).
+   e) Open claude-pick sessions inside tmux so the phone can attach to them.
+8. LATER, a private repo for Claude's memory and settings (memory/,
    settings.json, keybindings.json, skills), not decided.
 
 ## Pending
@@ -153,6 +184,19 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
   (OAuth) is deferred; for now the Ask Claude box does it.
 - Polybar hot-plugging was only tested with simulated monitors; confirm with
   a real external monitor.
+
+- Network: this laptop has a fixed address through a DHCP reservation in the home router.
+  The addresses, the machines and how they connect (router, media server, Arch desktop,
+  printers, Docker services) are documented in the private repo home-infra, a private
+  GitLab project cloned in ~/Zeke_projects/home-infra, and not here, because this repo is
+  public. Private repos could not be created on GitHub on 2026-10-07 (HTTP 500), so that one
+  lives on GitLab; the public repos (dotfiles, claude-tools, webapps) stay on GitHub. GitLab
+  is reached over ssh with a key that ~/.ssh/config offers for gitlab.com only.
+- Arch desktop: ssh access from this laptop is set up and claude-tools and webapps are
+  installed there; Super+a there is one line in its own xmonad.hs, compiled, and needs
+  `xmonad --restart` on that machine to load. Details in home-infra.
+- ssh: hardening is planned for this laptop and the Arch desktop (keys first, then passwords
+  off and a firewall rule for the LAN only). The current state and the plan are in home-infra.
 
 ## Known issues
 - picom died once without a trace (no log, no core dump) and was started again

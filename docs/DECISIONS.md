@@ -217,3 +217,31 @@ Why: no state to get wrong; no bar is left behind for a monitor that is gone.
 - Limits: a change to a tool is now two commits in two repos when it also
   touches the dotfiles; claude-fresh in ~ updates them all, so the other
   computer follows on its next session.
+
+## 2026-10-07: session names with the path and the machine as a label
+- Decided: `<path>_NNN@<machine>`. The path is the folder from ~ with dashes; the
+  machine goes after the `@` and is ignored when looking for the last session
+  (the most recent one wins) and for the next number (highest plus one).
+- Why: the last folder name alone mixes `~/work/app` and `~/Zeke_projects/app`,
+  and a name that carries the machine in front made the sessions of the other
+  computer invisible. With the machine as a label, a folder shows the work of both
+  computers and the numbers do not collide if their sessions are ever together.
+- Considered: the path without the machine (two computers can both create `_001`
+  and clash); keeping `<machine>_<folder>_NNN` (does not help to share); dropping
+  `Zeke_projects-` from the path of my projects (shorter, but I asked for the path
+  from ~ and it keeps one rule for every folder).
+- Limits: two different paths can give the same name (`a/b` and `a-b`); the
+  sessions themselves are still not shared between the computers (next step).
+
+## 2026-10-07: no automatic screen lock
+- Decided: remove `xss-lock` from the session. The screen is locked only by hand, with
+  Super+L (`lock-screen`, i3lock).
+- Why: xss-lock ran `lock-screen` on every suspend and lid close, so each time I opened
+  the lid I met a password prompt. The logs showed the lock came from the lid and the
+  suspend, not from inactivity (the X screen saver was already off).
+- Considered: keeping the lock only on suspend but not on the lid (a closed lid suspends
+  the laptop anyway, so it changes nothing); a longer delay (there is no delay, it locks
+  before sleeping); locking only on battery. The cost is that anyone who opens the lid
+  of a suspended laptop finds the session open, which matters most away from home.
+- To restore it: uncomment the `xss-lock` line in xmonad/.xmonad/autostart.sh and start
+  it once. The `lock-screen` script stays.

@@ -1,0 +1,12 @@
+#!/bin/sh
+# SSH_ASKPASS helper: shows ssh's question in rofi, so ssh can ask for a password or a
+# yes/no without a terminal (from a launcher, a script or a Claude Code session).
+#   SSH_ASKPASS=ssh-askpass-rofi SSH_ASKPASS_REQUIRE=force ssh-copy-id ...
+# ssh passes the prompt as $1. With SSH_ASKPASS_PROMPT=confirm it is a yes/no question
+# (exit 0 = yes); with =none it only shows a message; otherwise it is a password, typed
+# hidden and printed to ssh, never to a file or a log.
+case "${SSH_ASKPASS_PROMPT:-}" in
+    confirm) [ "$(printf 'yes\nno\n' | rofi -dmenu -p "$1")" = yes ] ;;
+    none)    rofi -e "$1" ;;
+    *)       rofi -dmenu -password -l 0 -p "$1" </dev/null ;;
+esac
