@@ -125,3 +125,18 @@ Why: no state to get wrong; no bar is left behind for a monitor that is gone.
   (a Chromium per app, ~200 MB each), unlocking the keyring at login (needs
   PAM setup, the behaviour I want to avoid). Google Calendar stays a separate
   profile because it needs the Claude extension (see its script header).
+
+## 2026-10-06: hiding Brave's toolbar in panel web apps
+- Decided: a layout modifier (WebAppCrop) that extends the rectangle of a
+  WebPanel-* window upwards by ~86 px when it is at the top edge of its area, so
+  the tab strip and toolbar fall off the screen. The window stays tiled.
+- Why: the Claude side panel needs a normal window, which always shows Brave's
+  toolbar; it has to be hidden from outside.
+- Considered: --app (no side panel); Brave fullscreen (hides the UI but covers
+  the bar and other windows, and a hook to sink it again fought two EWMH
+  handlers: tried and replaced, commit b70672e); floating window offset
+  upwards (leaves the layout); a Chromium patch (too heavy).
+- Google Calendar follows the same rule (class WebPanel-calendar, no
+  fullscreen) since its fullscreen did not fit xmonad's Full layout.
+- Limits: height is a constant to tune; a web app below another window in a
+  column keeps its toolbar visible.

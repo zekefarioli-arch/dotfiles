@@ -4,11 +4,15 @@ What changed on the system, newest first, one line per change that matters
 to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
+## 2026-10-07
+- Google Calendar is a tiled `WebPanel-calendar` window like the panel web
+  apps (Brave's toolbar pushed off the screen by xmonad) instead of fullscreen.
+
 ## 2026-10-06
 - picom no longer blurs the screenshot area selector (slop window), so the
   screen stays sharp while choosing the area.
-- `webapp add ... --panel`: own Brave profile, fullscreen window kept in xmonad's layout
-  (bar stays visible) with the Claude side panel (Ctrl+E), like Calendar. WhatsApp uses it.
+- `webapp add ... --panel`: own Brave profile, tiled window with the Claude side panel (Ctrl+E);
+  xmonad pushes Brave's tab strip and toolbar off the screen (WebAppCrop). WhatsApp uses it.
 - `webapp`: turn any website into an app window with a rofi launcher (Brave
   `--app`, shared profile, no keyring prompts); google-calendar also skips
   the keyring now; `webapp extensions` opens the shared profile to install

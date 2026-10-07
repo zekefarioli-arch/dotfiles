@@ -3,10 +3,13 @@
 #
 # What it is: a Brave profile used only for the calendar
 # (~/.local/share/calendar-app). It runs as a separate browser process with
-# its own window class (CalendarApp), its own extensions, its own Google login
-# and its own theme, and it opens fullscreen, where Brave hides its tab strip
-# and address bar. The launcher is xdg/.local/share/applications/
-# google-calendar.desktop (shown in rofi), and Super+Shift+C runs it.
+# its own window class (WebPanel-calendar), its own extensions, its own Google
+# login and its own theme. It is a normal tiled window: xmonad.hs (WebPanel-*,
+# WebAppCrop) pushes Brave's tab strip and address bar off the top of the
+# screen, like the `webapp --panel` apps. It used to open fullscreen, which
+# covered the bar and did not fit xmonad's layouts.
+# The launcher is xdg/.local/share/applications/google-calendar.desktop (shown
+# in rofi), and Super+Shift+C runs it.
 #
 # Why not a real app window (brave --app=URL, or tools such as Web App Hub,
 # which do the same): app windows have no side panel, and the Claude extension
@@ -33,7 +36,7 @@ theme="$store/bkkmolkhemgaeaeggcmfbghljjjoofoh"    # Catppuccin Chrome Theme - M
 brave() {
   # --force-dark-mode: dark browser UI (menus, dialogs, side panel frame)
   # --password-store=basic: no GNOME keyring prompt (see bin/webapp)
-  setsid -f brave-browser --user-data-dir="$profile" --class=CalendarApp \
+  setsid -f brave-browser --user-data-dir="$profile" --class=WebPanel-calendar \
     --password-store=basic --no-first-run --no-default-browser-check \
     --force-dark-mode "$@" >/dev/null 2>&1
 }
@@ -46,24 +49,10 @@ case "${1:-}" in
     if [[ ${1:-} =~ ^([0-9]{4})-0?([0-9]{1,2})-0?([0-9]{1,2})$ ]]; then
       url+="/day/${BASH_REMATCH[1]}/${BASH_REMATCH[2]}/${BASH_REMATCH[3]}"
     fi
-    # --start-fullscreen only applies when the profile is not running yet; if
-    # it is, the new window is made fullscreen through the window manager
-    # (EWMH state, not simulated keys)
-    before=" $(xdotool search --onlyvisible --class CalendarApp 2>/dev/null | tr '\n' ' ') "
     # Through Google's login: without a session calendar.google.com shows the
     # Workspace product page; with one, ServiceLogin goes straight to $url
     login="https://accounts.google.com/ServiceLogin?service=cl&continue=$(
       python3 -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$url")"
-    brave --start-fullscreen --new-window "$login"
-    [[ $before == "  " ]] && exit 0
-    for _ in $(seq 40); do
-      sleep 0.25
-      for w in $(xdotool search --onlyvisible --class CalendarApp 2>/dev/null); do
-        [[ $before == *" $w "* ]] && continue
-        sleep 0.5
-        xdotool windowstate --add FULLSCREEN "$w"
-        exit 0
-      done
-    done
+    brave --new-window "$login"
     ;;
 esac

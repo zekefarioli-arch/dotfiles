@@ -87,14 +87,14 @@ For the full calendar I use a separate Brave profile that works as its own app (
 
 | Keys | What it does |
 |---|---|
-| `Super + Shift + C` | Opens Google Calendar fullscreen in that profile (also the mini calendar's button) |
+| `Super + Shift + C` | Opens Google Calendar in that profile, as a tiled window (also the mini calendar's button) |
 | `Super + Ctrl + C` | Opens that profile's extensions, with Claude and the Catppuccin Mocha theme in the Chrome Web Store |
 | `Ctrl + E` | Inside the calendar, opens or closes the Claude extension in a side panel |
 
-The profile has its own window class, extensions, theme and Google login, and in fullscreen Brave hides the tabs and the address bar, so it looks like an app. I first tried a real app window (`brave --app`, which is also what tools such as Web App Hub create), but app windows have no side panel, and the Claude extension needs normal windows for its tab groups, so it cannot run there. The script's header lists the first-run steps.
+The profile has its own window class, extensions, theme and Google login, and xmonad pushes Brave's tabs and address bar off the top of the screen (the same `WebPanel-*` rule as `webapp --panel`), so it looks like an app and stays in the layout; it used to be fullscreen, which covered the bar and did not fit xmonad's layouts. I first tried a real app window (`brave --app`, which is also what tools such as Web App Hub create), but app windows have no side panel, and the Claude extension needs normal windows for its tab groups, so it cannot run there. The script's header lists the first-run steps.
 
 ## Web apps
 
 `webapp add <name> <url>` turns a website into an app: its own window without tabs or address bar, and a launcher in rofi (`webapp list`, `webapp remove <name>`). It runs `brave --app` in one shared profile (`~/.local/share/webapps`), so one Google login serves YouTube, Drive and the rest. It uses `--password-store=basic`, so Brave never asks for the keyring password. Google Calendar is separate because it needs the Claude extension. `webapp extensions` opens that profile in a normal window with the Chrome Web Store searching FireShot (whole page to PDF or image); app windows have no toolbar, so set the extension's shortcut in `brave://extensions/shortcuts`.
 
-`webapp add <name> <url> --panel` makes the Calendar kind of app instead: its own Brave profile and a fullscreen window that xmonad keeps in its layout (Brave hides its tabs and menus, the bar and other windows stay; `Super+f` maximizes it), so the Claude extension and its side panel (`Ctrl+E`) work. After creating it, run `webapp extensions <name>` once to install Claude and sign in. WhatsApp is made this way.
+`webapp add <name> <url> --panel` makes the Calendar kind of app instead: its own Brave profile and a normal tiled window, so the Claude extension and its side panel (`Ctrl+E`) work. After creating it, run `webapp extensions <name>` once to install Claude and sign in. WhatsApp is made this way. Brave's tab strip and toolbar are pushed above the top of the screen by xmonad (`WebAppCrop` in `xmonad.hs`, height `webappChromePx`), so only the page and the Claude panel are visible while the window stays in the layout.

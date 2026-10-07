@@ -6,11 +6,13 @@
 #    (~/.local/share/webapps), so a Google login is done once for YouTube,
 #    Drive, etc. No tabs, no address bar, no side panel.
 #  - panel (`--panel`): its own Brave profile (~/.local/share/webapp-<name>)
-#    and a fullscreen window kept in xmonad's layout, like google-calendar. App windows have no
-#    side panel and the Claude extension needs normal windows, so this is the
-#    mode for sites that need Claude (Ctrl+E). The profile needs the Claude
+#    and a normal tiled window. App windows have no side panel and the Claude
+#    extension needs normal windows, so this is the mode for sites that need
+#    Claude (Ctrl+E). xmonad hides Brave's tab strip and toolbar by pushing
+#    them above the top of the screen (WebAppCrop in xmonad.hs). The profile needs the Claude
 #    extension installed once: `webapp extensions <name>`.
-# Each app gets its own window class (WebApp-<name>).
+# Window class: WebApp-<name> for app mode, WebPanel-<name> for panel mode
+# (xmonad.hs crops only WebPanel-* windows: --app windows have no toolbar).
 #
 # --password-store=basic: Brave stores cookies and passwords in a plain
 # profile file instead of the GNOME keyring / KWallet, so it never asks for
@@ -55,6 +57,7 @@ case "${1:-}" in
     name=${args[0]} url=${args[1]} icon=${args[2]:-brave-browser}
     [[ $url == http* ]] || url=https://$url
     id=$(slug "$name")
+    cls=WebApp; [[ $panel == yes ]] && cls=WebPanel
     mkdir -p "$apps"
     cat >"$apps/webapp-$id.desktop" <<DESKTOP
 [Desktop Entry]
@@ -63,7 +66,7 @@ Name=$name
 Comment=$url as an app
 Exec=webapp run $id
 Icon=$icon
-StartupWMClass=WebApp-$id
+StartupWMClass=$cls-$id
 Categories=Network;
 X-WebApp-URL=$url
 X-WebApp-Panel=$panel
@@ -82,24 +85,10 @@ DESKTOP
       brave "$shared" "WebApp-$id" --app="$url"
       exit 0
     fi
-    # Panel mode: fullscreen so Brave hides its tabs and menus. xmonad.hs
-    # (webappTiled) keeps WebApp-* windows in the layout, so the bar stays and
-    # Super+f maximizes. --start-fullscreen only applies when the profile is
-    # not running yet; if it is, the new window is made fullscreen through the
-    # window manager (EWMH state, not simulated keys).
-    # (|| true: xdotool exits 1 when there is no window, and set -e would stop here)
-    before=" $(xdotool search --onlyvisible --class "WebApp-$id" 2>/dev/null | tr '\n' ' ' || true) "
-    brave "$data/webapp-$id" "WebApp-$id" --start-fullscreen --new-window "$url"
-    [[ $before == "  " ]] && exit 0
-    for _ in $(seq 40); do
-      sleep 0.25
-      for w in $(xdotool search --onlyvisible --class "WebApp-$id" 2>/dev/null); do
-        [[ $before == *" $w "* ]] && continue
-        sleep 0.5
-        xdotool windowstate --add FULLSCREEN "$w"
-        exit 0
-      done
-    done
+    # Panel mode: a normal tiled window. Brave shows its tab strip and
+    # toolbar, but xmonad.hs (WebAppCrop) pushes them off the screen when the
+    # window is at the top edge of its area, so only the page is seen.
+    brave "$data/webapp-$id" "WebPanel-$id" --new-window "$url"
     ;;
   extensions)
     # App windows have no toolbar, so extensions are installed from a normal
@@ -107,7 +96,7 @@ DESKTOP
     # brave://extensions/shortcuts).
     if [[ -n ${2:-} ]]; then
       id=$(slug "$2")
-      brave "$data/webapp-$id" "WebApp-$id" --new-window brave://extensions "$claude" "$theme"
+      brave "$data/webapp-$id" "WebPanel-$id" --new-window brave://extensions "$claude" "$theme"
     else
       mkdir -p "$shared"
       brave "$shared" WebApps --new-window brave://extensions "$fireshot"

@@ -330,7 +330,7 @@ class MiniCalendar(Gtk.Window):
 
     def open_google(self, day):
         day = day or dt.date(*self.month, 1)
-        # Fullscreen Brave window, so the Claude extension can be used there
+        # Normal Brave window (the Claude extension needs one for its side panel)
         subprocess.Popen([os.path.expanduser("~/.local/bin/google-calendar"), day.isoformat()],
                          start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         self.destroy()

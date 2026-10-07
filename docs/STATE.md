@@ -38,7 +38,8 @@ _Last updated: 2026-10-06_
   profile ~/.local/share/webapps, `--password-store=basic` so the keyring
   never asks for a password). Launchers: xdg/ package, shown in rofi.
 - `--panel` apps (WhatsApp) have their own profile ~/.local/share/webapp-<name>
-  and a fullscreen window kept in the layout by xmonad.hs (webappTiled; Super+f maximizes) so the Claude side panel works; the Claude
+  and a normal tiled window (xmonad.hs WebAppCrop pushes Brave's tab strip and
+  toolbar off the top of the screen, `webappChromePx`) so the Claude side panel works; the Claude
   extension must be installed once per profile (`webapp extensions <name>`).
 
 ## Calendar
@@ -46,7 +47,7 @@ _Last updated: 2026-10-06_
   from secret iCal addresses in ~/.config/mini-calendar/ics-url (private,
   mode 600, never in the repo) and an "Ask Claude…" box (headless Claude Code
   with the Google Calendar connector).
-- Super+Shift+C: Google Calendar in its own fullscreen Brave profile
+- Super+Shift+C: Google Calendar in its own Brave profile (tiled; WebPanel-calendar)
   (~/.local/share/calendar-app) with the Claude extension (Ctrl+E).
   Super+Ctrl+C: that profile's extensions and theme.
 
