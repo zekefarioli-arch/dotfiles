@@ -152,7 +152,7 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
       mock-oclock/private has a third copy in a private GitLab project. Details and the
       commands to check them are in the private repo home-infra. An alert
       now e-mails me when a night fails (each job pings healthchecks.io, set up on 2026-10-07);
-      still open: an encrypted off-site copy.)
+      still open, postponed for budget: an encrypted off-site copy.)
    b) Bring the Arch dotfiles up to date: they are 85 commits behind with 3 uncommitted
       files that conflict (xmonad.hs, autostart.sh, launch-polybar.sh), and its xmonad.hs is
       an older, simpler design. Either merge keeping the local edits, or split the
