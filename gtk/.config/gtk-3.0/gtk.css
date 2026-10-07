@@ -1,0 +1,31 @@
+/* ~/.config/gtk-3.0/gtk.css — overrides on top of the Catppuccin-Pink-Dark theme.
+ *
+ * Flat popup menus (File, Edit... in Mousepad, context menus). The theme gives
+ * them a 12px radius, a 6px margin and a drawn shadow (`.csd.popup decoration`
+ * with a 20px margin), which under picom shows up as a rounded box with square
+ * corners and shadows around it. Rejected: turning the shadow off in picom
+ * only (the menus are GTK-drawn, picom's shadow is already off).
+ */
+.popup decoration,
+.csd.popup decoration {
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border: 1px solid #45475a;
+}
+
+menu,
+.csd menu,
+.menu,
+.context-menu {
+  margin: 0;
+  padding: 2px 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+menu menuitem,
+.menu menuitem {
+  border-radius: 0;
+  margin: 0;
+}

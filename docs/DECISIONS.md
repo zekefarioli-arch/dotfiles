@@ -155,3 +155,14 @@ Why: no state to get wrong; no bar is left behind for a monitor that is gone.
   not last.
 - Limit: Brave rewrites its preferences on exit, so it only works while the
   profile is not running.
+
+## 2026-10-07: flat GTK menus through ~/.config/gtk-3.0/gtk.css
+- Decided: override the theme's popup rules in gtk/.config/gtk-3.0/gtk.css
+  (no radius, no margin, no drawn shadow, 1px border).
+- Why: Catppuccin-Pink-Dark draws menus as a 12px rounded box inside a
+  transparent 20px margin with a shadow, which looked like a square box with
+  shadows around it (Mousepad's menu bar).
+- Considered: editing the theme itself (lost on updates, outside the repo);
+  picom rules (the shadow is drawn by GTK, not by picom).
+- Not verified on screen: popup menus cannot be opened without simulating
+  input; check it by opening Mousepad's File menu.

@@ -5,6 +5,9 @@ to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
 ## 2026-10-07
+- Mousepad: the Catppuccin Mocha scheme never loaded (GtkSourceView needs
+  `version="1.0"` in the XML), so the current line and the gutter were white.
+- GTK popup menus are flat (gtk.css): no rounded box with shadows.
 - Panel web apps and Calendar start on a new tab and no longer restore the
   previous session (`webapp fresh`): Brave restored one tab and the launcher
   added another, so WhatsApp asked "use here".
