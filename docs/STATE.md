@@ -142,12 +142,11 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
    commits each that are on the hub but not yet on GitHub; a `git push` in each clone
    sends them to both.
 8. NEXT, ideas to design (not built; give options for one step at a time):
-   a) The commits made on 2026-10-07 in six clones are pushed to the hub and to GitHub,
-      except one branch of an experiment that is only on the hub because the script in it has
-      an address of the home network written in it and the repo is public: take the address
-      out (read it from an environment variable) before publishing it. One more repo has two
-      commits on the hub that are not on GitHub yet. A few log and backup files were left
-      uncommitted on purpose. (The hub and the two home servers now have nightly restic backups, crossed
+   a) DONE: the commits made on 2026-10-07 in six clones, and a repo that had two commits
+      only on the hub, are pushed to the hub and to GitHub; the hub and GitHub agree. One
+      experiment branch was published only after taking an address of the home network
+      out of its script (it reads it from an environment variable now). A few log and backup
+      files were left uncommitted on purpose. (The hub and the two home servers now have nightly restic backups, crossed
       between the servers, set up and verified on 2026-10-07 with a restore drill; and
       mock-oclock/private has a third copy in a private GitLab project. Details and the
       commands to check them are in the private repo home-infra. Still open there: an alert
