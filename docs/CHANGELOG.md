@@ -5,6 +5,21 @@ to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
 ## 2026-10-07
+- The Claude tools (`claude-new`, `claude-pick`, `claude-fresh`) moved to the
+  public repo claude-tools, and `webapp` to the public repo webapps, both with a
+  README and an install.sh for pacman, dnf and apt, so the Arch desktop can use
+  them without the Fedora-only parts of the dotfiles. My list of apps is now
+  webapps/.config/webapps/apps.conf here, and `webapp sync` writes the launchers.
+  `claude-fresh` also updates claude-tools and the repos in
+  claude/.config/claude-tools/repos when Claude is opened in ~.
+- `claude-fresh`: before Claude starts in a folder, the project is brought up to
+  date from GitHub if it is only behind and clean (`git pull --ff-only`); in ~
+  it is ~/dotfiles. `claude-pick` marks folders with ↑ not pushed, ✎
+  uncommitted, ↓ behind.
+- `claude-pick` (Super+a): rofi launcher for Claude Code. Folder first (~ is the
+  default, then folders already worked in, then ~/Zeke_projects), then session;
+  shows the context usage of each and suggests a new session with a handoff
+  from 50%. `claude-new` got `--new` and `--last`.
 - Mousepad: the Catppuccin Mocha scheme never loaded (GtkSourceView needs
   `version="1.0"` in the XML), so the current line and the gutter were white.
 - GTK popup menus are flat (gtk.css): no rounded box with shadows.

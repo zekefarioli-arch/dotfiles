@@ -166,3 +166,54 @@ Why: no state to get wrong; no bar is left behind for a monitor that is gone.
   picom rules (the shadow is drawn by GTK, not by picom).
 - Not verified on screen: popup menus cannot be opened without simulating
   input; check it by opening Mousepad's File menu.
+
+## 2026-10-07: Claude launcher in rofi, with context usage
+- Decided: `claude-pick` (Python, stdlib only) opens rofi lists for folder and
+  session, shows the context of each session (last reply's prompt tokens over
+  the window) and suggests a new session with a handoff from 50%. `claude-new`
+  stays the one place that names and numbers sessions.
+- Why: choosing by hand where to run Claude and when to cut a long session was
+  guesswork. The context size is in every reply Claude saves, so it costs
+  nothing extra to show it.
+- Considered: fzf in the terminal (one more package, and the folder tree and
+  colours are nicer in rofi, which I already use everywhere); extending
+  `claude-new` itself (one tool, one job); file size or number of messages as
+  the metric (they say little: a 28 MB session can still be compacted).
+- Limits: the window size is an assumption (200000, or 1000000 if a session is
+  above it); the percentage drops by itself after a /compact.
+
+## 2026-10-07: update the project when opening it on the other computer
+- Decided: `claude-fresh` (shared code in lib/claude-tools/gitfresh.py) runs
+  before every session: 4 s `git fetch`, then `git pull --ff-only` only if the
+  tree is behind and clean. Dirty, diverged or ahead: warn and wait for Enter,
+  touch nothing. Never merge, force or push by itself. In ~ it works on
+  ~/dotfiles. claude-pick shows ↑ ✎ ↓ per folder from what git already knows.
+- Why: the two computers share the projects through GitHub, so opening one
+  that the other pushed to would have Claude working on old code.
+- Considered: asking in rofi before updating (one more click every time); only
+  marking the folder (the update stays manual and gets forgotten); auto-stash
+  or rebase (can hide or rewrite my work); syncing the folder with Syncthing
+  (conflicts, and git already is the source of truth).
+- Limits: it needs the network for the fetch (skipped without it); the ↓ badge
+  is as of the last fetch, so it is only exact right after opening a project.
+
+## 2026-10-07: the Claude tools and webapp live in their own repos
+- Decided: `claude-tools` (claude-new, claude-pick, claude-fresh) and `webapps`
+  (webapp) are separate public repos in ~/Zeke_projects, installed by an
+  install.sh that links the commands into ~/.local/bin. The dotfiles keep the
+  Super+a action, my list of apps (webapps/.config/webapps/apps.conf), the extra
+  repos for claude-fresh and the xmonad crop rule. In webapp the apps are a
+  list file and the launchers are generated (`webapp sync`) instead of being
+  stow-managed .desktop files.
+- Why: the dotfiles mix things that only make sense on the Fedora laptop
+  (scripts/, system/, STATE.md, laptop scripts in bin/) and the other computer is
+  an Arch desktop, so cloning them there would bring all of it. The tools have
+  nothing personal and are worth documenting once, for any machine.
+- Considered: a new stow package in the same repo (smallest change, but the
+  Arch machine still clones the whole mix); reorganising the whole dotfiles by
+  machine (too big, touches everything that works); a private repo (the tools
+  hold no secrets, and my personal data stays in the dotfiles and ~/.config).
+  For webapp, keeping launchers as stow files would tie it to ~/dotfiles.
+- Limits: a change to a tool is now two commits in two repos when it also
+  touches the dotfiles; claude-fresh in ~ updates them all, so the other
+  computer follows on its next session.

@@ -93,28 +93,14 @@ For the full calendar I use a separate Brave profile that works as its own app (
 
 The profile has its own window class, extensions, theme and Google login, and xmonad pushes Brave's tabs and address bar off the top of the screen (the same `WebPanel-*` rule as `webapp --panel`), so it looks like an app and stays in the layout; it used to be fullscreen, which covered the bar and did not fit xmonad's layouts. I first tried a real app window (`brave --app`, which is also what tools such as Web App Hub create), but app windows have no side panel, and the Claude extension needs normal windows for its tab groups, so it cannot run there. The script's header lists the first-run steps.
 
+## Claude launcher
+
+`Super + a` opens `claude-pick`, a rofi launcher for Claude Code: it lists the folders where Claude has worked, shows how full the context of each session is, marks folders with unpushed or uncommitted work, and brings a project up to date from GitHub before a session starts. It lives in its own repository, [claude-tools](https://github.com/zekefarioli-arch/claude-tools), cloned in `~/Zeke_projects/claude-tools` and installed with its `install.sh`, because it has nothing specific to this laptop and has to work on the Arch desktop as well.
+
+What stays here is the key (the `claude-pick` action in `xmonad/.xmonad/actions.conf` and `keys.conf`) and `claude/.config/claude-tools/repos`, the list of extra repositories that `claude-fresh` updates when Claude is opened in `~` (the `dotfiles` and `claude-tools` repositories are always included).
+
 ## Web apps
 
-`webapp` turns a website into an app with a launcher in rofi. There are two kinds, and the difference is the Claude side panel:
+`webapp` turns a website into an app with a launcher in rofi, with or without the Claude side panel. It also lives in its own repository, [webapps](https://github.com/zekefarioli-arch/webapps), cloned in `~/Zeke_projects/webapps` and installed with its `install.sh`. Its README explains the two kinds of app, how to make one with the Claude panel, and the choices behind it.
 
-| | `webapp add <name> <url>` | `webapp add <name> <url> --panel` |
-|---|---|---|
-| Window | `brave --app`: no tabs, no address bar | normal tiled Brave window, its toolbar pushed out of sight by xmonad |
-| Claude side panel | not possible (app windows have no side panel) | yes, `Ctrl+E` |
-| Profile | one shared (`~/.local/share/webapps`): one Google login for all | its own (`~/.local/share/webapp-<name>`), so a separate login |
-| Window class | `WebApp-<name>` | `WebPanel-<name>` |
-| Examples | YouTube | WhatsApp, Google Messages (and Calendar, with its own script) |
-
-Both use `--password-store=basic`, so Brave never asks for the keyring password. `webapp list` and `webapp remove <name>` manage them.
-
-### How to make a web app with the Claude panel
-
-1. **Create it:** `webapp add "Gmail" mail.google.com gmail --panel` (the last word is an optional Papirus icon name). It writes the launcher into `xdg/` and links it with stow, so it shows in rofi at once.
-2. **Install Claude in its profile, once:** `webapp extensions gmail` (or right click the launcher in rofi, "Extensions and theme"). It opens that profile with the Chrome Web Store: install **Claude** (and the Catppuccin Mocha theme if you like) and sign in to the extension. Each `--panel` app has its own profile, so this is needed for every one.
-3. **Open it from rofi and sign in to the site.** Opening it again while it runs raises the existing window instead of opening another tab (a second tab of WhatsApp or Messages makes the site say "use here").
-4. **Use the panel:** `Ctrl+E` opens and closes Claude next to the page. If it does not react, set the shortcut in `brave://extensions/shortcuts` inside that profile.
-5. **Check the look:** the tab strip and toolbar should not be visible. If a strip of them shows, or the page loses its top, adjust `webappChromePx` in `xmonad.hs` (86 px, with the bookmarks bar hidden), then `xmonad --recompile` and `xmonad --restart`.
-
-How it works, in one paragraph: the Claude extension needs a normal Brave window, and a normal window always shows the tab strip and toolbar. xmonad (`WebAppCrop` in `xmonad.hs`) extends the rectangle of every `WebPanel-*` window upwards by `webappChromePx`, so the toolbar falls off the top of the screen (or under the window above, because these windows are stacked below the others) while the window stays tiled with the rest. Before each launch `webapp fresh` makes the profile start on a new tab instead of restoring the previous session, which would add a second tab. The reasons for each choice are in `docs/DECISIONS.md`.
-
-`webapp extensions` with no name opens the shared profile instead, with the Chrome Web Store searching FireShot (whole page to PDF or image). App windows have no toolbar, so give the extension a shortcut in `brave://extensions/shortcuts`.
+What stays here is the list of my apps, `webapps/.config/webapps/apps.conf` (a stow package, so the same apps appear on both computers after `webapp sync`), the xmonad rule that hides Brave's toolbar in panel apps (`WebAppCrop` in `xmonad.hs`; the standalone version is in the repository's `docs/`), and `google-calendar`, my own script for the calendar app, which uses `webapp fresh`.

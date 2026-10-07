@@ -40,6 +40,11 @@ In the same commit as each change, update what it touches:
 - Code projects live in ~/Zeke_projects (GitHub: zekefarioli-arch).
 
 ## Dotfiles
+- The Claude session tools (`claude-new`, `claude-pick`, `claude-fresh`) and
+  `webapp` are not here: they are the repos claude-tools and webapps in
+  ~/Zeke_projects, linked into ~/.local/bin by their install.sh. Change them
+  there, test them there and push there; only my list of apps and the Super+a
+  key live in these dotfiles.
 - ~/dotfiles (github.com/zekefarioli-arch/dotfiles, branch main) holds every
   config as GNU Stow packages: `stow --no-folding -t ~ <package>`.
 - Change the files in ~/dotfiles, not the symlinks' targets elsewhere; files
