@@ -5,6 +5,7 @@ to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
 ## 2026-10-07
+- A .gitignore line in each of three repos for the log, browser-session and backup files that were left out of commits (committed, not pushed yet).
 - Committed the uncommitted work of six clones (7 commits) and pushed everything to the hub and to GitHub; one experiment branch went to GitHub only after I took an address of the home network out of its script. A few log and backup files were left out on purpose.
 - Nightly backups of the two home servers and of the git hub (restic, crossed between the servers, a restore drill passed). A private repo of the Arch desktop that had no remote now has a third copy in a private GitLab project. Details in home-infra (private).
 - All my other own repos are wired to the git hub too (17 in total, on the laptop, the Arch desktop and the router). Three have two commits each that are on the hub but not yet on GitHub.

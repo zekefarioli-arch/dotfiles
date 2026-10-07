@@ -145,8 +145,9 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
    a) DONE: the commits made on 2026-10-07 in six clones, and a repo that had two commits
       only on the hub, are pushed to the hub and to GitHub; the hub and GitHub agree. One
       experiment branch was published only after taking an address of the home network
-      out of its script (it reads it from an environment variable now). A few log and backup
-      files were left uncommitted on purpose. (The hub and the two home servers now have nightly restic backups, crossed
+      out of its script (it reads it from an environment variable now). The few log and backup
+      files that were left out are now ignored by a .gitignore in each repo (three commits,
+      not pushed yet). (The hub and the two home servers now have nightly restic backups, crossed
       between the servers, set up and verified on 2026-10-07 with a restore drill; and
       mock-oclock/private has a third copy in a private GitLab project. Details and the
       commands to check them are in the private repo home-infra. Still open there: an alert
