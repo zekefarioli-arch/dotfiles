@@ -126,9 +126,6 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
 - Claude sessions: the older fedora_desktop003 is not matched by `claude-new`;
   open it with `claude -r`.
 - Claude sessions: no way yet to delete old ones (to do later).
-- Git: 3 commits are not pushed yet (5b7512f, 908a1c6, c383dae) plus the
-  uncommitted work (moving the Claude and web app tools out to their repos, the
-  list of apps, docs); commit and push when I say so.
 - Web apps: FireShot (whole page to PDF or image) is not installed in the shared
   profile yet: `webapp extensions`, then set its shortcut in
   brave://extensions/shortcuts (suggested Alt+Shift+P for PDF, Alt+Shift+I for
