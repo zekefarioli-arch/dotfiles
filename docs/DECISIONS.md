@@ -245,3 +245,22 @@ Why: no state to get wrong; no bar is left behind for a monitor that is gone.
   of a suspended laptop finds the session open, which matters most away from home.
 - To restore it: uncomment the `xss-lock` line in xmonad/.xmonad/autostart.sh and start
   it once. The `lock-screen` script stays.
+
+## 2026-10-07: a git hub on the home media server, each machine pushes to two places
+- Decided: bare repositories on the media server, owned by a restricted `git` user whose shell
+  is `git-shell`, reached over ssh. Every clone has `origin` on the hub with two push URLs, the
+  hub and the public copy (GitHub, or GitLab for the private repo), and a spare remote for
+  away from home. The tests keep running on the laptop and the Arch desktop.
+- Why: one central copy at home that every computer reaches quickly and without the internet
+  (claude-fresh fetches from it), and a second, off-site copy at no cost; GitHub also failed
+  to create private repositories on the day I did this. A repository that had no remote at
+  all (a private one on the Arch desktop) got its first copy.
+- Considered: the router as the server (more disk, but it is the machine exposed to the
+  internet and the one that must not break); reusing my own user (it is in the `docker` group,
+  which equals administrator, so every added key would grant that); the server pushing to
+  GitHub and GitLab by itself with a hook (it would need their tokens stored on the server);
+  Forgejo or Gitea (a web page and more to maintain; it can be added later on top of the same
+  repositories); moving every repo at once instead of five.
+- Limits: the hub has no backup of its own; away from home it needs the VPN, and the spare
+  remote covers that; a push away from home reaches only the public copy and reports an error
+  for the hub.

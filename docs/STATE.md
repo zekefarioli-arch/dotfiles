@@ -129,11 +129,18 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
    ~/.config/claude-tools/terminal; wezterm on Arch), the projects folder can be a file
    (~/.config/claude-tools/projects_dir; ~/Projects on Arch), and claude-pick puts
    ~/.local/bin first in PATH (a key bound in xmonad has a minimal one).
-7. NEXT, ideas to design (not built; give options for one step at a time):
-   a) Git repos on the LAN: bare repos on one of the home servers reached
-      over ssh as the central copy, with tests still run on the laptop and the Arch
-      desktop, and GitHub or GitLab as an off-site mirror. Open: which server, whether a
-      web UI (Gitea or Forgejo) is worth it, and what claude-fresh then fetches from.
+7. DONE 2026-10-07, repos on the home server: the central copy of my repos is a git hub on
+   the media server (bare repos; a restricted `git` user that can only run git; each key
+   marked `restrict`), reached over ssh with the alias `hub`. Each clone has `origin` on the
+   hub with two push URLs (the hub and GitHub, or GitLab for the private repo) and a spare
+   remote (`github`, `gitlab`) for when I am away from home; the tests still run on the
+   laptop and the Arch desktop. Wired: dotfiles, claude-tools, webapps, home-infra, and a
+   repo of the Arch desktop that had no remote. Not wired yet: my other repos and the Arch
+   checkout of dotfiles. The addresses and details are in the private repo home-infra.
+8. NEXT, ideas to design (not built; give options for one step at a time):
+   a) Wire the rest of my repos to the hub (runbook in home-infra), and decide where the hub
+      itself is backed up: it has no backup, and one repo (mock-oclock/private) exists only
+      on two disks.
    b) Bring the Arch dotfiles up to date: they are 85 commits behind with 3 uncommitted
       files that conflict (xmonad.hs, autostart.sh, launch-polybar.sh), and its xmonad.hs is
       an older, simpler design. Either merge keeping the local edits, or split the
@@ -146,7 +153,7 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
    d) Harden ssh on the laptop and the Arch desktop: keys first, then passwords off and a
       firewall rule for the LAN only (the details are in home-infra).
    e) Open claude-pick sessions inside tmux so the phone can attach to them.
-8. LATER, a private repo for Claude's memory and settings (memory/,
+9. LATER, a private repo for Claude's memory and settings (memory/,
    settings.json, keybindings.json, skills), not decided.
 
 ## Pending

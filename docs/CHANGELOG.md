@@ -5,6 +5,7 @@ to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
 ## 2026-10-07
+- Git hub on the home media server: the central copy of my repos, reached over ssh with a restricted `git` user. dotfiles, claude-tools, webapps and home-infra now have `origin` on the hub, with a second push URL on GitHub or GitLab, so one `git push` updates both. Details in home-infra (private).
 - `claudio` (claude-tools): claude-pick without a screen, as numbered menus in the terminal; claude-pick falls back to it with no display or no rofi.
 - Removed the automatic screen lock (`xss-lock`): it locked on every lid close. Super+L still locks by hand.
 - This laptop has a fixed IP (a DHCP reservation in the home router). A dedicated ssh key (not in
