@@ -142,8 +142,9 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
    commits each that are on the hub but not yet on GitHub; a `git push` in each clone
    sends them to both.
 8. NEXT, ideas to design (not built; give options for one step at a time):
-   a) Commit the uncommitted work that six clones have, since only committed work reaches
-      the hub. (The hub and the two home servers now have nightly restic backups, crossed
+   a) Push the commits made on 2026-10-07 in six clones (the uncommitted work of each was
+      committed, not pushed; each push goes to the hub and to GitHub), and decide about a
+      few log and backup files that were left out on purpose. (The hub and the two home servers now have nightly restic backups, crossed
       between the servers, set up and verified on 2026-10-07 with a restore drill; and
       mock-oclock/private has a third copy in a private GitLab project. Details and the
       commands to check them are in the private repo home-infra. Still open there: an alert
