@@ -5,6 +5,7 @@ to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
 ## 2026-10-08
+- Dropdown terminal: slower slide animation (0.35 s to show, 0.45 s to hide, was 0.2 and 0.3), because it looked rough on the Arch desktop.
 - Arch desktop now uses the same dotfiles as the laptop (main, stowed with --no-folding): xmonad, polybar, rofi, dunst, GTK/Qt themes, alacritty, tmux, starship. Backups of what was replaced are in ~/.config-backup-2026-10-08 on that machine.
 - autostart.sh is shared with the Arch desktop: a machine can skip picom by creating ~/.config/picom/disabled (a local file, not in the repo).
 - Arch desktop: Catppuccin Mocha pink login (SDDM) shown on one monitor only, alacritty, micro, scrcpy, android-tools and Papirus installed, ble.sh removed, same Starship prompt and alacritty/tmux files as the laptop, and xmonad there re-arranges the monitors and the bars when one is plugged or unplugged. The Arch-only root script is `system/arch/sddm-setup.sh`; the xmonad changes are on the `arch-local` branch until Arch gets the shared configuration.
