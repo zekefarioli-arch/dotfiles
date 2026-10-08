@@ -5,6 +5,7 @@ to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
 ## 2026-10-08
+- Polybar: launch-bars.sh falls back to RandR when Xinerama is inactive (Arch desktop, legacy NVIDIA driver). Before, both bars read screen 0 and the "current monitor" icon lit up or went out on both at once.
 - Arch desktop has its own state file, docs/STATE-arch.md, linked as ~/.claude/STATE.local.md there, and ~/CLAUDE.md now links to the shared one, so Claude sessions on Arch know my rules and the machine.
 - Polybar battery module: battery-status prints nothing when there is no battery, so the shared bar shows no battery on the Arch desktop.
 - Dropdown terminal: slower slide animation (0.35 s to show, 0.45 s to hide, was 0.2 and 0.3), because it looked rough on the Arch desktop.

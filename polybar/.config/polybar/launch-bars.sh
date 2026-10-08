@@ -17,6 +17,14 @@ monitors=$(polybar --list-monitors)
 heads=$(xdpyinfo -ext XINERAMA 2>/dev/null |
   awk '/head #[0-9]+:/ {gsub(/[#:]/, "", $2); split($5, p, ","); print $2, $3 "+" p[1] "+" p[2]}')
 
+# Xinerama can be inactive (the NVIDIA legacy driver on the Arch desktop); xmonad 0.18 reads the
+# screens from RandR then, in the same order as `xrandr --listmonitors`. Without this fallback
+# every bar got SCREEN=0 and showed the same focus indicator.
+if [[ -z $heads ]]; then
+  heads=$(xrandr --listmonitors 2>/dev/null |
+    awk 'NR > 1 {n = $1; sub(/:/, "", n); g = $3; gsub(/\/[0-9]+/, "", g); print n, g}')
+fi
+
 seen=" "
 while read -r n geom; do
   [[ -z $geom || $seen == *" $geom "* ]] && continue  # mirrored monitors: one bar

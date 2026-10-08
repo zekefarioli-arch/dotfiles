@@ -78,5 +78,7 @@ _Last updated: 2026-10-08_
 - The NVIDIA GT 710 needs the legacy driver `nvidia-470xx-dkms` (AUR). After a kernel
   update check that the module builds (`dkms status`) before rebooting, or X will not
   start; a TTY and ssh still work.
+- Xinerama is inactive on this X server (NVIDIA legacy driver); xmonad 0.18 and
+  launch-bars.sh use RandR instead (`xrandr --listmonitors` order: VGA-0 is screen 0).
 - Memory gets tight with many browser tabs and several Claude agents at once (load
   reached 150 on 2026-10-08). Do not start several agents in parallel here.
