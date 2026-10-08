@@ -4,6 +4,9 @@ What changed on the system, newest first, one line per change that matters
 to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
+## 2026-10-08
+- Arch desktop: Catppuccin Mocha pink login (SDDM) shown on one monitor only, alacritty, micro, scrcpy, android-tools and Papirus installed, ble.sh removed, same Starship prompt and alacritty/tmux files as the laptop, and xmonad there re-arranges the monitors and the bars when one is plugged or unplugged. The Arch-only root script is `system/arch/sddm-setup.sh`; the xmonad changes are on the `arch-local` branch until Arch gets the shared configuration.
+
 ## 2026-10-07
 - Postponed the encrypted off-site backup (no budget now); the options are in the private repo home-infra.
 - Alert for failed nightly backups: each job pings healthchecks.io when it succeeds and the service e-mails me if a ping does not arrive. The details (keys, hosts) are in the private repo home-infra.

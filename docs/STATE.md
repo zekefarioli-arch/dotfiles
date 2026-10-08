@@ -6,7 +6,7 @@ every session; keep it short and true, and update it in the same commit as
 the change it describes. History goes in CHANGELOG.md, reasons in
 DECISIONS.md.
 
-_Last updated: 2026-10-07_
+_Last updated: 2026-10-08_
 
 ## Machine
 - Lenovo ThinkPad X13 Gen 1 AMD (20UGS2Q500), 30 GiB RAM, 236 GB NVMe.
@@ -211,6 +211,7 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
   public. Private repos could not be created on GitHub on 2026-10-07 (HTTP 500), so that one
   lives on GitLab; the public repos (dotfiles, claude-tools, webapps) stay on GitHub. GitLab
   is reached over ssh with a key that ~/.ssh/config offers for gitlab.com only.
+- Arch desktop (2026-10-08): fully updated; alacritty, micro, scrcpy, android-tools and Papirus installed; SDDM with the Catppuccin pink theme on one monitor (`system/arch/sddm-setup.sh`); its xmonad (branch `arch-local`, not in main) uses alacritty and re-arranges monitors and bars on hot-plug. Still to do there: the shared xmonad configuration (step 3b above) and its own STATE file.
 - Arch desktop: ssh access from this laptop is set up and claude-tools and webapps are
   installed there; Super+a there is one line in its own xmonad.hs, compiled, and needs
   `xmonad --restart` on that machine to load. Details in home-infra.
