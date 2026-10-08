@@ -5,6 +5,7 @@ to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
 ## 2026-10-08
+- Polybar: the bar's screen number now reaches xmonad-log.sh through the environment, because polybar 3.7.2 on Arch did not expand ${env:SCREEN:0} in `exec`. This is the real cause of the "current monitor" icon lighting up on both bars.
 - Polybar: launch-bars.sh falls back to RandR when Xinerama is inactive (Arch desktop, legacy NVIDIA driver). Before, both bars read screen 0 and the "current monitor" icon lit up or went out on both at once.
 - Arch desktop has its own state file, docs/STATE-arch.md, linked as ~/.claude/STATE.local.md there, and ~/CLAUDE.md now links to the shared one, so Claude sessions on Arch know my rules and the machine.
 - Polybar battery module: battery-status prints nothing when there is no battery, so the shared bar shows no battery on the Arch desktop.
