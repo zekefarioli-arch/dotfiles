@@ -5,6 +5,7 @@ to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
 ## 2026-10-08
+- Polybar battery module: battery-status prints nothing when there is no battery, so the shared bar shows no battery on the Arch desktop.
 - Dropdown terminal: slower slide animation (0.35 s to show, 0.45 s to hide, was 0.2 and 0.3), because it looked rough on the Arch desktop.
 - Arch desktop now uses the same dotfiles as the laptop (main, stowed with --no-folding): xmonad, polybar, rofi, dunst, GTK/Qt themes, alacritty, tmux, starship. Backups of what was replaced are in ~/.config-backup-2026-10-08 on that machine.
 - autostart.sh is shared with the Arch desktop: a machine can skip picom by creating ~/.config/picom/disabled (a local file, not in the repo).

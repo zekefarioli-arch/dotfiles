@@ -16,6 +16,8 @@ BAT="${BAT:-/sys/class/power_supply/BAT0}"
 STATE="${STATE:-${XDG_RUNTIME_DIR:-/tmp}/battery-status.state}"
 TAU=120   # seconds
 AC="${AC:-/sys/class/power_supply/AC}"
+# Desktop without a battery: print nothing, so polybar hides the module (shared dotfiles).
+[ -d "$BAT" ] || exit 0
 RED="#f38ba8"; PEACH="#fab387"; GREEN="#a6e3a1"; GREY="#6c7086"
 SEP="%{F$GREY}|%{F-}"   # same grey separator as between the bar modules
 ICONS=(󰂎 󰁺 󰁻 󰁼 󰁽 󰁾 󰁿 󰂀 󰂁 󰂂 󰁹)
