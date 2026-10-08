@@ -211,7 +211,7 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
   public. Private repos could not be created on GitHub on 2026-10-07 (HTTP 500), so that one
   lives on GitLab; the public repos (dotfiles, claude-tools, webapps) stay on GitHub. GitLab
   is reached over ssh with a key that ~/.ssh/config offers for gitlab.com only.
-- Arch desktop (2026-10-08): fully updated; alacritty, micro, scrcpy, android-tools and Papirus installed; SDDM with the Catppuccin pink theme on one monitor (`system/arch/sddm-setup.sh`); its xmonad (branch `arch-local`, not in main) uses alacritty and re-arranges monitors and bars on hot-plug. Still to do there: the shared xmonad configuration (step 3b above) and its own STATE file.
+- Arch desktop (2026-10-08): fully updated and on the shared configuration: dotfiles on `main` (the old edits are kept in branch `arch-local`), stowed with `--no-folding`: xmonad polybar bin alacritty tmux rofi dunst gtk qt x11 xdg micro picom starship. Not stowed there: nvim, bash (its own .bashrc), claude, webapps, copyq. Picom is off there (`~/.config/picom/disabled`). alacritty, micro, scrcpy, android-tools and Papirus installed; SDDM with the Catppuccin pink theme on one monitor (`system/arch/sddm-setup.sh`); hot-plug of monitors works through the shared xmonad.hs. Still to do there: its own STATE file (step 5) and trying everything on screen.
 - Arch desktop: ssh access from this laptop is set up and claude-tools and webapps are
   installed there; Super+a there is one line in its own xmonad.hs, compiled, and needs
   `xmonad --restart` on that machine to load. Details in home-infra.
