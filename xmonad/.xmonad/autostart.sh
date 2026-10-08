@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# XMonad autostart (Fedora). The bars are started by xmonad, not by this script.
+# XMonad autostart (Fedora laptop and Arch desktop). The bars are started by xmonad, not by this script.
 
 # 1) Display and environment
 [ -f ~/.xprofile ] && source ~/.xprofile
@@ -7,7 +7,9 @@ autorandr --change --default horizontal
 
 # 2) Compositor (transparency and shadows)
 pkill -x picom
-picom &                # config: ~/.config/picom/picom.conf
+# A machine can opt out by creating ~/.config/picom/disabled (the Arch desktop did: its old
+# NVIDIA driver had trouble with picom and screen copies). Not tracked in the repo.
+[ -e ~/.config/picom/disabled ] || picom &   # config: ~/.config/picom/picom.conf
 
 # 3) Power management and screen saver
 xset s off
