@@ -21,7 +21,7 @@
     horizontal_padding = 14
     text_icon_padding = 12
 
-    corner_radius = 10
+    corner_radius = 20
     frame_width = 2
     frame_color = "#f5c2e7"
     separator_color = frame

@@ -4,6 +4,9 @@ What changed on the system, newest first, one line per change that matters
 to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
+## 2026-10-10
+- Rounder look: Polybar is a floating pill (margins, fully round ends, pink border all round), picom rounds windows to 14 px (not the bar, fullscreen or the screenshot selector), rofi and dunst radii raised to 18-22 px. Polybar cannot round single modules, so there are no per-module pills.
+
 ## 2026-10-08
 - Polybar: the bar's screen number now reaches xmonad-log.sh through the environment, because polybar 3.7.2 on Arch did not expand ${env:SCREEN:0} in `exec`. This is the real cause of the "current monitor" icon lighting up on both bars.
 - Polybar: launch-bars.sh falls back to RandR when Xinerama is inactive (Arch desktop, legacy NVIDIA driver). Before, both bars read screen 0 and the "current monitor" icon lit up or went out on both at once.

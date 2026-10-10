@@ -6,7 +6,7 @@ every session; keep it short and true, and update it in the same commit as
 the change it describes. History goes in CHANGELOG.md, reasons in
 DECISIONS.md.
 
-_Last updated: 2026-10-08_
+_Last updated: 2026-10-10_
 
 ## Machine
 - Lenovo ThinkPad X13 Gen 1 AMD (20UGS2Q500), 30 GiB RAM, 236 GB NVMe.
@@ -20,9 +20,9 @@ _Last updated: 2026-10-08_
 - xmonad: action catalog in xmonad.hs, shortcuts in ~/.xmonad/keys.conf,
   custom actions in ~/.xmonad/actions.conf. `keys-editor` edits them and
   `keybinds` (Super+F1 or Super+/) lists them.
-- Polybar: one bar per monitor, launched by xmonad (launch-bars.sh). Modules:
+- Polybar: one floating pill bar per monitor (rounded ends, pink border), launched by xmonad (launch-bars.sh). Modules:
   workspaces, window title, Wi-Fi, CPU, memory, battery script, date.
-- picom (glx, vsync): blur and slide animation for the dropdown terminal.
+- picom (glx, vsync): rounded windows (14 px), blur and slide animation for the dropdown terminal.
 - Dropdown terminal: alacritty (class dropterm) with tmux session `drop`,
   toggled by Super+Ctrl+T; it hides before rofi, Super+Enter and Super+E.
 - Lock: i3lock through `lock-screen`, by hand with Super+L only. There is no automatic
