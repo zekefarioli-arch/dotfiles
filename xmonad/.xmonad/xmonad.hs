@@ -28,7 +28,7 @@ import qualified XMonad.StackSet as W
 import Control.Monad (filterM, forM_, unless, when)
 
 import Data.Char (toLower)
-import Data.List (elemIndex, find, intercalate, isInfixOf, isPrefixOf, sortOn)
+import Data.List (elemIndex, find, intercalate, isInfixOf, isPrefixOf, sortOn, stripPrefix)
 import qualified Data.Map as M
 import System.Directory (XdgDirectory (XdgCache), createDirectoryIfMissing, doesFileExist, getHomeDirectory, getXdgDirectory, renameFile)
 import System.Exit (exitWith, ExitCode(ExitSuccess))
@@ -260,18 +260,32 @@ logWinTitleOnScreen s = do
             Just w  -> do
                 cls  <- runQuery className w
                 name <- show <$> getName w
-                -- WebPanel-* (web apps): the class is only an internal name, so the page
-                -- title alone is shown. Max 32 characters: the pill-shaped bar leaves
-                -- less room, and long titles ran into the modules on the right.
-                let text | null name || cls == name = cls
-                         | "WebPanel-" `isPrefixOf` cls = name
-                         | otherwise                = cls ++ " - " ++ name
-                pure $ Just $ appIcon (map toLower cls) ++ " " ++ polyEsc (shorten 32 (filter (/= '\n') text))
+                -- Known applications (the icon says which one) show only the window title,
+                -- without Brave's " - Brave" suffix; others keep "class - title". Max 32
+                -- characters: the pill-shaped bar leaves little room, and long titles ran
+                -- into the modules on the right. Rejected: tying the limit to the screen
+                -- width (it also depends on the Wi-Fi name and the battery).
+                let c     = map toLower cls
+                    title = maybe name reverse (stripPrefix (reverse " - Brave") (reverse name))
+                    text | null name || cls == name = cls
+                         | knownApp c               = title
+                         | otherwise                = cls ++ " - " ++ title
+                pure $ Just $ appIcon c ++ " " ++ polyEsc (shorten 32 (filter (/= '\n') text))
+
+-- Web apps made by `webapp --panel` have the class WebPanel-<id>
+isWebPanel :: String -> Bool
+isWebPanel = ("WebPanel-" `isPrefixOf`)
+
+knownApp :: String -> Bool
+knownApp c = isWebPanel' || any (`isInfixOf` c) ["code", "kitty", "alacritty", "dropterm", "thunar", "brave"]
+  where isWebPanel' = "webpanel-" `isPrefixOf` c
 
 appIcon :: String -> String
 appIcon c
     | "code"   `isInfixOf` c = fgc "#89b4fa" "\xE70C"
     | "kitty"  `isInfixOf` c = fgc "#f5e0dc" "\xF489"
+    | "alacritty" `isInfixOf` c || "dropterm" `isInfixOf` c = fgc "#f5e0dc" "\xF489"
+    | "webpanel-" `isPrefixOf` c = fgc "#89b4fa" "\xF059F"
     | "thunar" `isInfixOf` c = fgc "#f9e2af" "\xF0DCF"
     | "brave"  `isInfixOf` c = fgc "#fab387" "\xE743"
     | otherwise              = fgc colorEmp  "\xF05B2"
@@ -502,7 +516,7 @@ instance LayoutModifier WebAppCrop Window where
     return (others ++ map crop panels, Nothing)
     where
       tag wr@(w, _) = do
-        isPanel <- runQuery (fmap ("WebPanel-" `isPrefixOf`) className) w
+        isPanel <- runQuery (fmap isWebPanel className) w
         return (isPanel, wr)
       crop (w, r) = ( w
                     , r { rect_y = rect_y r - fromIntegral webappChromePx
