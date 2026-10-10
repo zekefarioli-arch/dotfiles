@@ -260,9 +260,13 @@ logWinTitleOnScreen s = do
             Just w  -> do
                 cls  <- runQuery className w
                 name <- show <$> getName w
+                -- WebPanel-* (web apps): the class is only an internal name, so the page
+                -- title alone is shown. Max 32 characters: the pill-shaped bar leaves
+                -- less room, and long titles ran into the modules on the right.
                 let text | null name || cls == name = cls
+                         | "WebPanel-" `isPrefixOf` cls = name
                          | otherwise                = cls ++ " - " ++ name
-                pure $ Just $ appIcon (map toLower cls) ++ " " ++ polyEsc (shorten 45 (filter (/= '\n') text))
+                pure $ Just $ appIcon (map toLower cls) ++ " " ++ polyEsc (shorten 32 (filter (/= '\n') text))
 
 appIcon :: String -> String
 appIcon c
