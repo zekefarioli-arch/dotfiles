@@ -5,6 +5,7 @@ to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
 ## 2026-10-10
+- Battery module: the time next to the percentage now has a plug icon instead of a second battery icon (red crossed-out plug while discharging, green plug while charging), because the old end-of-line battery looked like the level icon.
 - Rounder look: Polybar is a floating pill (margins, fully round ends, pink border all round), picom rounds windows to 14 px (not the bar, fullscreen or the screenshot selector), rofi and dunst radii raised to 18-22 px. Polybar cannot round single modules, so there are no per-module pills.
 
 ## 2026-10-08
