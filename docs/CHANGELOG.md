@@ -4,6 +4,9 @@ What changed on the system, newest first, one line per change that matters
 to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
+## 2026-10-12
+- Arch desktop: Gemini CLI installed under ~/.local with an AI Studio API key, and a user skill `gemini` for Claude Code sessions (second reader, blind solves, second opinions) in the `claude` package.
+
 ## 2026-10-10
 - Bar window title: known apps (Brave, web apps, terminals, code, Thunar) show only the window title without the class or Brave's " - Brave" suffix; terminals and web apps got their own icons. Other windows keep "class - title".
 - Bar window title: web apps (WebPanel-*) show only the page title, without the internal class name, and titles are cut at 32 characters instead of 45, because a long title (Google Calendar) ran into the right-hand modules of the pill-shaped bar.
