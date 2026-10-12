@@ -63,13 +63,14 @@ _Last updated: 2026-10-12_
 - Super+a opens claude-pick (shared xmonad.hs).
 - ~/CLAUDE.md is a symlink to ~/dotfiles/claude/CLAUDE.md, and ~/.claude/STATE.local.md
   is this file.
-- Gemini from Claude Code: the Gemini CLI (`@google/gemini-cli`, npm with `--prefix ~/.local`,
-  so `~/.local/bin/gemini`) with API-key auth (`~/.gemini/settings.json`; the AI Studio key is in the
-  system keyring, no file). The user skill `gemini` (dotfiles `claude` package) tells sessions how to use it;
-  it is linked by hand (`ln -s ~/dotfiles/claude/.claude/skills/gemini ~/.claude/skills/gemini`)
-  because `stow claude` refuses here: `~/.config/claude-tools/repos` is a real, machine-specific file. The Google-account free tier no longer
-  serves the CLI; the project and Vertex modes need a paid licence. Antigravity is installed but
-  cannot be driven from the command line.
+- Gemini from Claude Code: `agy` (the Antigravity CLI, `~/.local/bin/agy`, signed in with the Google AI Pro
+  plan, headless with `--print --output-format json --mode plan < /dev/null`) is the default; the Gemini CLI
+  (`@google/gemini-cli`, npm with `--prefix ~/.local`, API-key auth with the AI Studio key in the system
+  keyring) is the fallback. The user skill `gemini` (dotfiles `claude` package) tells sessions how to use
+  them; it is linked by hand (`ln -s ~/dotfiles/claude/.claude/skills/gemini ~/.claude/skills/gemini`)
+  because `stow claude` refuses here: `~/.config/claude-tools/repos` is a real, machine-specific file.
+  The agy installer appended a PATH line to `~/.config/fish/config.fish` (unused, harmless). The Google-
+  account free tier no longer serves the Gemini CLI; `antigravity --help` launches the IDE.
 
 ## Pending
 - Try on screen: hot-plug of a monitor, the login with one monitor, the Print shortcut,

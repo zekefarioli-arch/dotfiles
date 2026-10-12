@@ -265,8 +265,12 @@ Why: no state to get wrong; no bar is left behind for a monitor that is gone.
   remote covers that; a push away from home reaches only the public copy and reports an error
   for the hub.
 
-## 2026-10-12: Gemini from Claude Code through the Gemini CLI with an API key
-- Decided: Google's Gemini CLI (`@google/gemini-cli`, installed by npm with `--prefix ~/.local`,
+## 2026-10-12: Gemini from Claude Code through the Antigravity CLI, with the Gemini CLI as fallback
+- Decided (later the same day): `agy`, the Antigravity CLI, is the default, because it runs on the Google AI
+  Pro plan the user already pays for, reads files with its own tools and returns JSON headless
+  (`agy --print ... --output-format json --mode plan < /dev/null`); stdin text is not read, so inputs go in
+  files. The Gemini CLI below stays as the fallback on the API key.
+- Decided first: Google's Gemini CLI (`@google/gemini-cli`, installed by npm with `--prefix ~/.local`,
   no sudo and no system package) authenticated with an AI Studio API key kept in the system
   keyring, and a user skill `gemini` in the `claude` package that tells every Claude Code session
   how to call it headless (`gemini -p ... -o json --approval-mode plan`, files by `@path`).

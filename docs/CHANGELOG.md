@@ -5,7 +5,7 @@ to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
 ## 2026-10-12
-- Arch desktop: Gemini CLI installed under ~/.local with an AI Studio API key, and a user skill `gemini` for Claude Code sessions (second reader, blind solves, second opinions) in the `claude` package.
+- Arch desktop: Gemini from Claude Code sessions through the Antigravity CLI `agy` (Google AI Pro plan, headless), with the Gemini CLI and an AI Studio API key as fallback; the user skill `gemini` in the `claude` package explains both (second reader, blind solves, second opinions).
 
 ## 2026-10-10
 - Bar window title: known apps (Brave, web apps, terminals, code, Thunar) show only the window title without the class or Brave's " - Brave" suffix; terminals and web apps got their own icons. Other windows keep "class - title".
