@@ -7,7 +7,7 @@ it short and true, and update it in the same commit as the change it describes.
 History goes in CHANGELOG.md, reasons in DECISIONS.md. The laptop's file is
 STATE.md; many things (themes, xmonad, polybar) are shared and described there.
 
-_Last updated: 2026-10-08_
+_Last updated: 2026-10-12_
 
 ## Machine
 - Desktop PC: Intel Core i5-4440, 16 GB RAM (zram swap 7.7 GB), 500 GB SATA SSD,
@@ -63,6 +63,14 @@ _Last updated: 2026-10-08_
 - Super+a opens claude-pick (shared xmonad.hs).
 - ~/CLAUDE.md is a symlink to ~/dotfiles/claude/CLAUDE.md, and ~/.claude/STATE.local.md
   is this file.
+- Gemini from Claude Code: `agy` (the Antigravity CLI, `~/.local/bin/agy`, signed in with the Google AI Pro
+  plan, headless with `--print --output-format json --mode plan < /dev/null`) is the default; the Gemini CLI
+  (`@google/gemini-cli`, npm with `--prefix ~/.local`, API-key auth with the AI Studio key in the system
+  keyring) is the fallback. The user skill `gemini` (dotfiles `claude` package) tells sessions how to use
+  them; it is linked by hand (`ln -s ~/dotfiles/claude/.claude/skills/gemini ~/.claude/skills/gemini`)
+  because `stow claude` refuses here: `~/.config/claude-tools/repos` is a real, machine-specific file.
+  The agy installer appended a PATH line to `~/.config/fish/config.fish` (unused, harmless). The Google-
+  account free tier no longer serves the Gemini CLI; `antigravity --help` launches the IDE.
 
 ## Pending
 - Try on screen: hot-plug of a monitor, the login with one monitor, the Print shortcut,

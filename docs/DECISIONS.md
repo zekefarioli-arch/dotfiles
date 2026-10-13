@@ -264,3 +264,26 @@ Why: no state to get wrong; no bar is left behind for a monitor that is gone.
 - Limits: the hub has no backup of its own; away from home it needs the VPN, and the spare
   remote covers that; a push away from home reaches only the public copy and reports an error
   for the hub.
+
+## 2026-10-12: Gemini from Claude Code through the Antigravity CLI, with the Gemini CLI as fallback
+- Decided (later the same day): `agy`, the Antigravity CLI, is the default, because it runs on the Google AI
+  Pro plan the user already pays for, reads files with its own tools and returns JSON headless
+  (`agy --print ... --output-format json --mode plan < /dev/null`); stdin text is not read, so inputs go in
+  files. The Gemini CLI below stays as the fallback on the API key.
+- Decided first: Google's Gemini CLI (`@google/gemini-cli`, installed by npm with `--prefix ~/.local`,
+  no sudo and no system package) authenticated with an AI Studio API key kept in the system
+  keyring, and a user skill `gemini` in the `claude` package that tells every Claude Code session
+  how to call it headless (`gemini -p ... -o json --approval-mode plan`, files by `@path`).
+  Claude calls it from Bash like any other tool, in any project.
+- Why: a second model that did not write the content catches wrong keys and ambiguities the
+  author cannot see (it found 15 items in the young learners mocks on 2026-10-11); the CLI is
+  one maintained command, reads files, returns JSON and needs no code of ours. The Google-account
+  free tier stopped serving the CLI the same day ("migrate to Antigravity"); the key route was
+  verified to work and costs cents at this volume.
+- Considered: a community Gemini MCP server (a typed tool for Claude, but third-party code and
+  dependencies to trust; can still be added on top of the same key if a tool feels better than a
+  command); Composio or another hosted MCP gateway (prompts and code pass through a third party,
+  plus an account and a plan); driving Antigravity, which is installed (its internal `agentapi`
+  only works inside a running IDE session and keeps the answers in the IDE's own database);
+  the Code Assist project and Vertex AI modes of the CLI (both answer "no valid licence" without
+  a paid plan); a script of our own against the Gemini API (more to maintain for no gain).
