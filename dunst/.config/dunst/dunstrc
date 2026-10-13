@@ -77,3 +77,11 @@
 [phone-otp]
     appname = "*KDE Connect*"
     script = ~/.local/bin/otp-to-clipboard
+
+# The same for SMS shown by the Google Messages web app (a Brave window): its notifications
+# come from "Brave" and carry a link to messages.google.com in the body, which keeps this
+# from running the script for every other Brave notification.
+[phone-otp-messages]
+    appname = "Brave"
+    body = "*messages.google.com*"
+    script = ~/.local/bin/otp-to-clipboard

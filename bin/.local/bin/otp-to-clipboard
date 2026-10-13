@@ -7,4 +7,8 @@ shopt -s nocasematch
 code=$(grep -oE '\b[0-9]{3}[- ][0-9]{3}\b|\b[0-9]{4,8}\b' <<<"$text" | head -1 | tr -d ' -')
 [[ -n $code ]] || exit 0
 printf %s "$code" | xclip -selection clipboard
+# Also keep the last code and when it arrived (epoch seconds) for scripts that wait for one,
+# such as findajob (Zeke_projects/findajob-login). In the runtime dir, which is tmpfs and
+# private to the user, so the code is gone at reboot or logout.
+(umask 077; printf '%s %s\n' "$(date +%s)" "$code" > "${XDG_RUNTIME_DIR:-/run/user/$UID}/last-otp")
 notify-send -a osd -u low -t 4000 -i edit-paste "Code copied" "$code"

@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Toggle the WireGuard connection to the house (NetworkManager connection "wg-home"):
+# off -> on, on -> off, with a notification. Bound to a key in xmonad (actions.conf).
+# The connection routes only the home network and the VPN subnet, not all traffic, and it
+# does not autoconnect: it is for reaching the home servers when away (ssh, git hub).
+# Why NetworkManager and not wg-quick: no root needed, and the private key stays in NM's
+# own root-only store instead of a file in $HOME.
+# Set up once with `nmcli connection import type wireguard file CLIENT.conf`, after
+# editing AllowedIPs to the home subnets and PersistentKeepalive to 25 (home-infra has
+# the steps). Pass "status" to only print the state.
+CON="${HOME_VPN_CON:-wg-home}"
+notify() { notify-send -a home-vpn -h string:x-dunst-stack-tag:home-vpn "$@"; }
+
+active() { nmcli -t -f NAME connection show --active | grep -qx "$CON"; }
+
+if [[ ${1:-} == status ]]; then
+  active && echo on || echo off
+  exit 0
+fi
+
+if ! nmcli -t -f NAME connection show | grep -qx "$CON"; then
+  notify -u critical "Home VPN" "No connection named $CON on this machine"
+  exit 1
+fi
+
+if active; then
+  nmcli connection down "$CON" >/dev/null 2>&1
+  notify "Home VPN off"
+else
+  if timeout 25 nmcli connection up "$CON" >/dev/null 2>&1; then
+    notify "Home VPN on" "The home network is reachable"
+  else
+    notify -u critical "Home VPN" "Could not connect (is there internet?)"
+    exit 1
+  fi
+fi

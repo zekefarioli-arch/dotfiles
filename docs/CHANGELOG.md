@@ -4,7 +4,12 @@ What changed on the system, newest first, one line per change that matters
 to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
+## 2026-10-13
+- Find a job (jobs.service.gov.uk, GOV.UK One Login): `findajob` (repo findajob-login) signs in with a saved password and types the SMS code by itself; Super+G opens it, and it is the `find-a-job` panel app (Claude side panel). otp-to-clipboard also writes the last code and its time to $XDG_RUNTIME_DIR/last-otp, and dunst runs it for SMS shown by the Google Messages web app as well as by KDE Connect.
+- Laptop disk replaced by a 1 TB NVMe. The old layout was copied, then the btrfs partition (p3) was grown to the end of the disk with sfdisk and `btrfs filesystem resize max /`, online: 929 GB, 912 GB free, no disk errors.
+
 ## 2026-10-10
+- Super+O toggles the WireGuard VPN to the house (`home-vpn`, NetworkManager connection `wg-home`, split tunnel: only the home subnets) with a notification. Tested from the phone's hotspot: the home servers answer, and git pushes to the hub.
 - Bar window title: known apps (Brave, web apps, terminals, code, Thunar) show only the window title without the class or Brave's " - Brave" suffix; terminals and web apps got their own icons. Other windows keep "class - title".
 - Bar window title: web apps (WebPanel-*) show only the page title, without the internal class name, and titles are cut at 32 characters instead of 45, because a long title (Google Calendar) ran into the right-hand modules of the pill-shaped bar.
 - Battery module: the time next to the percentage now has a plug icon instead of a second battery icon (red crossed-out plug while discharging, green plug while charging), because the old end-of-line battery looked like the level icon.

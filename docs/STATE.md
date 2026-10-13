@@ -6,10 +6,11 @@ every session; keep it short and true, and update it in the same commit as
 the change it describes. History goes in CHANGELOG.md, reasons in
 DECISIONS.md.
 
-_Last updated: 2026-10-10_
+_Last updated: 2026-10-13_
 
 ## Machine
-- Lenovo ThinkPad X13 Gen 1 AMD (20UGS2Q500), 30 GiB RAM, 236 GB NVMe.
+- Lenovo ThinkPad X13 Gen 1 AMD (20UGS2Q500), 30 GiB RAM, 1 TB NVMe (Crucial P310, replaced on 2026-10-13: the old 236 GB layout
+  was copied and p3, the btrfs root and /home, grown to the end of the disk).
 - BIOS R1CET79W (1.48).
 - Fedora 44, kernel 7.2.x, btrfs root with snapper snapshots.
 - Wi-Fi only; timezone Europe/London, set
@@ -43,8 +44,11 @@ _Last updated: 2026-10-10_
   keyring never asks for a password.
 - My apps are the list webapps/.config/webapps/apps.conf (stow package, linked
   as ~/.config/webapps/apps.conf); `webapp sync` writes their launchers in
-  ~/.local/share/applications. Apps: YouTube (app), WhatsApp and Google Messages
-  (panel). Google Calendar is its own script, bin/google-calendar.
+  ~/.local/share/applications. Apps: YouTube (app), WhatsApp, Google Messages and
+  Find a job (panel). Find a job is driven by `findajob` (own repo findajob-login, in
+  ~/Zeke_projects, Playwright on Brave): `findajob setup` saves the One Login email and
+  password once in ~/.config/findajob/credentials (mode 600), and the SMS code comes from
+  the last-otp file that otp-to-clipboard writes; Super+G opens it. Google Calendar is its own script, bin/google-calendar.
 - xmonad.hs WebAppCrop pushes Brave's tab strip and toolbar out of sight for
   `WebPanel-*` windows (`webappChromePx`); the Claude extension must be
   installed once per panel profile (`webapp extensions <id>`).
@@ -204,10 +208,11 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
 - Polybar hot-plugging was only tested with simulated monitors; confirm with
   a real external monitor.
 
+- VPN to the house: NetworkManager connection `wg-home` (WireGuard, split tunnel, no autoconnect), toggled with Super+O (`home-vpn`). Needed away from home: a phone hotspot does not carry the phone's own VPN to tethered devices. The client key lives only in NetworkManager; the server name and subnets are in home-infra.
 - Network: this laptop has a fixed address through a DHCP reservation in the home router.
   The addresses, the machines and how they connect (router, media server, Arch desktop,
   printers, Docker services) are documented in the private repo home-infra, a private
-  GitLab project cloned in ~/Zeke_projects/home-infra, and not here, because this repo is
+  GitLab project cloned in ~/Zeke_projects/home_network/home-infra, and not here, because this repo is
   public. Private repos could not be created on GitHub on 2026-10-07 (HTTP 500), so that one
   lives on GitLab; the public repos (dotfiles, claude-tools, webapps) stay on GitHub. GitLab
   is reached over ssh with a key that ~/.ssh/config offers for gitlab.com only.
