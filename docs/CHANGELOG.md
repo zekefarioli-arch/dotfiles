@@ -5,6 +5,7 @@ to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
 ## 2026-10-14
+- Decision recorded (nothing installed): the CI runner will live in a Debian VM on the new Ryzen desktop, whose host stays Fedora for work. See DECISIONS.md.
 - Decision recorded (nothing installed): pipelines for private repos spend fewer GitHub minutes first, and any self-hosted runner goes on a dedicated machine in an ephemeral, limited container, never on the router. See DECISIONS.md.
 
 ## 2026-10-13
