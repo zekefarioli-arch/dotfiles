@@ -287,3 +287,25 @@ Why: no state to get wrong; no bar is left behind for a monitor that is gone.
   only works inside a running IDE session and keeps the answers in the IDE's own database);
   the Code Assist project and Vertex AI modes of the CLI (both answer "no valid licence" without
   a paid plan); a script of our own against the Gemini API (more to maintain for no gain).
+
+## 2026-10-14: CI pipelines for private repos: cut the minutes first, a runner only on a dedicated machine, never on the router
+- Decided: GitHub stays the home of the code and the pull requests. When the free Actions minutes
+  (2,000 a month on the Free plan) run out, the first step is to spend fewer: end-to-end tests only
+  on `main`, no CI for docs-only changes, fewer Dependabot pull requests. If that is not enough, run
+  the same workflows on a self-hosted GitHub Actions runner (`runs-on: self-hosted`) in a container on
+  a dedicated machine: ephemeral (one container per job), with CPU and memory limits and no route to
+  the rest of the LAN. Deploy jobs stay on GitHub's own runners, so the server keys never reach the
+  house. The spare laptop (inspiron) is the first candidate; a second 16 GB module would help.
+- Never on the router (hs-gateway): it does PPPoE, NAT, DHCP, DNS and the VPN for the whole house, so
+  a full Gradle and Playwright run would starve the network, Docker rewrites firewall rules there, and
+  a PR's code would run on the machine that every packet crosses. It already runs a few containers;
+  that is not a reason to add heavier ones. This reverses the line "CI, long builds" that the
+  machines inventory listed for it; it agrees with the 2026-10-07 decision, which kept the git hub
+  off the router because it "must not break".
+- Considered: moving the repo to GitLab (400 free minutes, rewrite the pipelines, Dependabot has no
+  equivalent there, pull requests do not migrate); a GitHub Enterprise trial (the repo would have to move
+  into an organisation, and it asks for a card); making the repo public (free minutes, but private
+  notes and content live in it); a separate CI server such as Woodpecker or Jenkins (own pipelines to
+  rewrite and another service to maintain); paying for Pro ($4, only 1,000 more minutes).
+- Open: whether GitHub lets a self-hosted runner start while the Actions billing notice is on (should
+  be, since it uses no minutes; to be tested). Nothing is installed yet.

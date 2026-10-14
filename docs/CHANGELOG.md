@@ -4,6 +4,9 @@ What changed on the system, newest first, one line per change that matters
 to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
+## 2026-10-14
+- Decision recorded (nothing installed): pipelines for private repos spend fewer GitHub minutes first, and any self-hosted runner goes on a dedicated machine in an ephemeral, limited container, never on the router. See DECISIONS.md.
+
 ## 2026-10-13
 - Find a job (jobs.service.gov.uk, GOV.UK One Login): `findajob` (repo findajob-login) signs in with a saved password and types the SMS code by itself; Super+G opens it, and it is the `find-a-job` panel app (Claude side panel). otp-to-clipboard also writes the last code and its time to $XDG_RUNTIME_DIR/last-otp, and dunst runs it for SMS shown by the Google Messages web app as well as by KDE Connect.
 - Laptop disk replaced by a 1 TB NVMe. The old layout was copied, then the btrfs partition (p3) was grown to the end of the disk with sfdisk and `btrfs filesystem resize max /`, online: 929 GB, 912 GB free, no disk errors.
