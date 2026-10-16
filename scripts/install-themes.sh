@@ -5,6 +5,8 @@
 # Required packages:
 #   Fedora: sudo dnf install sassc gtk-murrine-engine kvantum qt5ct qt6ct xdg-desktop-portal-gtk unzip git curl
 #   Arch:   sudo pacman -S sassc gtk-engine-murrine kvantum qt5ct qt6ct xdg-desktop-portal-gtk unzip git curl
+#   Ubuntu: sudo apt install sassc gtk2-engines-murrine qt5-style-kvantum qt6-style-kvantum qt5ct qt6ct xdg-desktop-portal-gtk unzip git curl
+#           (scripts/ubuntu-post-install.sh already installs them)
 #
 # The configs (gtk-3.0, gtk-4.0, qt6ct, Kvantum, .xprofile) live in the
 # stow packages "gtk", "qt", "x11" and "copyq": stow --no-folding -t ~ gtk qt x11 copyq

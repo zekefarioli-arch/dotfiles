@@ -287,3 +287,17 @@ Why: no state to get wrong; no bar is left behind for a monitor that is gone.
   only works inside a running IDE session and keeps the answers in the IDE's own database);
   the Code Assist project and Vertex AI modes of the CLI (both answer "no valid licence" without
   a paid plan); a script of our own against the Gemini API (more to maintain for no gain).
+
+## 2026-10-16: the laptop moves from Fedora 44 to Ubuntu Server 26.04 LTS
+Decided: replace Fedora on the ThinkPad with Ubuntu Server 26.04.1 LTS (minimized, text
+installer) and build the same desktop on it from these dotfiles. The plan, the package map
+and the checklists are in docs/UBUNTU-MIGRATION.md. The old 236 GB disk stays untouched as the
+way back, and a backup of everything changed since it was copied is on the gateway.
+Considered: staying on Fedora (a release is supported for about 13 months, so it means an
+upgrade or reinstall every year); Ubuntu Desktop (brings GNOME and snaps, against the light
+system I want); cloning the Fedora disk onto the new install (different distribution, so it
+cannot work); an in-place conversion (not possible). Why: I asked for the latest stable LTS, which has
+five years of security updates, on a base that is as small as the Fedora one. Filesystem: ext4 (chosen
+on 2026-10-16: the installer makes it without manual steps, and the dotfiles plus the backups cover what
+snapshots did). Still open: whether picom 12.5, the Ubuntu version, accepts
+every line of the picom.conf (the rules syntax is from picom 12, so it probably does).

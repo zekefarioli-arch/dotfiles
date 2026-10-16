@@ -6,7 +6,7 @@ every session; keep it short and true, and update it in the same commit as
 the change it describes. History goes in CHANGELOG.md, reasons in
 DECISIONS.md.
 
-_Last updated: 2026-10-13_
+_Last updated: 2026-10-16_
 
 ## Machine
 - Lenovo ThinkPad X13 Gen 1 AMD (20UGS2Q500), 30 GiB RAM, 1 TB NVMe (Crucial P310, replaced on 2026-10-13: the old 236 GB layout
@@ -173,6 +173,7 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
    settings.json, keybindings.json, skills), not decided.
 
 ## Pending
+- Migration to Ubuntu Server 26.04 LTS planned (docs/UBUNTU-MIGRATION.md): the old 236 GB disk is kept as the way back, the backup is on the gateway. scripts/ubuntu-post-install.sh is written and checked but not run; ext4 chosen; the picom 12.5 check is for after the install. This file describes Fedora until the move is done.
 - Firmware: BIOS 1.54 and Secure Boot KEK/UEFI CA 2023 plus dbx updates are
   available. Needs the charger plugged in: `sudo fwupdmgr update`.
 - Passwordless sudo (/etc/sudoers.d/zeke-nopasswd) was added for the setup;
