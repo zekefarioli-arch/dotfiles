@@ -172,6 +172,16 @@ with Alt+G; the printers; `git pull` in `~/dotfiles` and `claude-fresh`; a night
 this laptop if one is set up; and update `docs/STATE.md` for the new system (this file stays
 as the record of the migration).
 
+## 9. Doing it remotely from the gateway
+
+Claude Code is already installed and logged in on the gateway. After the Ubuntu install, it can
+ssh into the laptop and run sections 3 to 8 by itself: the brief it follows is in the private repo
+home-infra (`runbooks/ubuntu-migration-remote.md`, copied to `~/migration-2026-10-16/TASK.md` on the
+gateway, because it has the real addresses). What I do at the laptop first, once: finish the
+installer with OpenSSH, copy the gateway's ssh key with `ssh-copy-id`, and add a temporary
+`/etc/sudoers.d/zeke-nopasswd` so it can run `apt`. At the end that file is removed and ssh passwords are
+turned off. It is told to ask me before `netplan apply`, the firewall or anything hard to undo.
+
 ## Limits and next steps
 
 `scripts/ubuntu-post-install.sh` exists but has not been run on a real Ubuntu install, so the
