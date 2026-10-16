@@ -72,7 +72,8 @@ In the same commit as each change, update what it touches:
 - If I reject or interrupt a command, check what actually changed before
   doing anything else.
 - `hs-gateway` is the router of the house (PPPoE, NAT, DHCP, DNS, VPN):
-  read-only commands only. Never install services, CI runners, build jobs or
-  containers on it, and never touch its firewall or Docker setup. Heavy or
-  untrusted work (CI, builds) goes on a dedicated machine; see DECISIONS.md
-  (2026-10-14).
+  read-only by default. I may write files in my home directory there (backups,
+  copies, notes) when I ask for that task. Never install services, CI runners,
+  build jobs or containers on it, and never touch its firewall or Docker setup.
+  Heavy or untrusted work (CI, builds) goes on a dedicated machine; see
+  DECISIONS.md (2026-10-14 and 2026-10-16).

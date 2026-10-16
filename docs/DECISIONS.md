@@ -340,3 +340,15 @@ five years of security updates, on a base that is as small as the Fedora one. Fi
 on 2026-10-16: the installer makes it without manual steps, and the dotfiles plus the backups cover what
 snapshots did). Still open: whether picom 12.5, the Ubuntu version, accepts
 every line of the picom.conf (the rules syntax is from picom 12, so it probably does).
+
+## 2026-10-16 (later): the router may hold files I ask it to hold, nothing more
+Decided: `hs-gateway` stays read-only for Claude by default, but Claude may write files in
+zeke's home directory there when I ask for that task (the first use: the backup of the laptop for
+the move to Ubuntu, in ~/migration-2026-10-16). Everything else of the 2026-10-14 rule stands: no
+services, CI runners, build jobs or containers, and no changes to its firewall or Docker setup.
+Considered: keeping it strictly read-only (the backup would have needed another machine, and the
+only one with free space and no role in the network is the router's own /home partition, 596 GB
+free, separate from the system disk); allowing any change on it (the reasons of 2026-10-14 still
+hold: a heavy job would starve the network of the whole house, and Docker rewrites firewall rules
+there). Why: the risk the rule guards against is load and broken routing, and a static file in
+a user's home adds neither.
