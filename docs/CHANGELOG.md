@@ -7,6 +7,10 @@ I can read in a minute. Add a line in the same commit as the change.
 ## 2026-10-16
 - Planning the move of the laptop from Fedora 44 to Ubuntu Server 26.04 LTS: docs/UBUNTU-MIGRATION.md has the install steps, the Fedora-to-Ubuntu package map (checked against the Ubuntu index), what to restore and the risks, and scripts/ubuntu-post-install.sh installs it all (checked, not yet run). `findajob-login` is now a private GitLab project and a backup of /home and of the system files is on the gateway.
 
+## 2026-10-14
+- Decision recorded (nothing installed): the CI runner will live in a Debian VM on the new Ryzen desktop, whose host stays Fedora for work. See DECISIONS.md.
+- Decision recorded (nothing installed): pipelines for private repos spend fewer GitHub minutes first, and any self-hosted runner goes on a dedicated machine in an ephemeral, limited container, never on the router. See DECISIONS.md.
+
 ## 2026-10-13
 - Find a job (jobs.service.gov.uk, GOV.UK One Login): `findajob` (repo findajob-login) signs in with a saved password and types the SMS code by itself; Super+G opens it, and it is the `find-a-job` panel app (Claude side panel). otp-to-clipboard also writes the last code and its time to $XDG_RUNTIME_DIR/last-otp, and dunst runs it for SMS shown by the Google Messages web app as well as by KDE Connect.
 - Laptop disk replaced by a 1 TB NVMe. The old layout was copied, then the btrfs partition (p3) was grown to the end of the disk with sfdisk and `btrfs filesystem resize max /`, online: 929 GB, 912 GB free, no disk errors.

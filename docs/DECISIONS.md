@@ -288,6 +288,45 @@ Why: no state to get wrong; no bar is left behind for a monitor that is gone.
   the Code Assist project and Vertex AI modes of the CLI (both answer "no valid licence" without
   a paid plan); a script of our own against the Gemini API (more to maintain for no gain).
 
+## 2026-10-14: CI pipelines for private repos: cut the minutes first, a runner only on a dedicated machine, never on the router
+- Decided: GitHub stays the home of the code and the pull requests. When the free Actions minutes
+  (2,000 a month on the Free plan) run out, the first step is to spend fewer: end-to-end tests only
+  on `main`, no CI for docs-only changes, fewer Dependabot pull requests. If that is not enough, run
+  the same workflows on a self-hosted GitHub Actions runner (`runs-on: self-hosted`) in a container on
+  a dedicated machine: ephemeral (one container per job), with CPU and memory limits and no route to
+  the rest of the LAN. Deploy jobs stay on GitHub's own runners, so the server keys never reach the
+  house. The spare laptop (inspiron) is the first candidate; a second 16 GB module would help.
+- Never on the router (hs-gateway): it does PPPoE, NAT, DHCP, DNS and the VPN for the whole house, so
+  a full Gradle and Playwright run would starve the network, Docker rewrites firewall rules there, and
+  a PR's code would run on the machine that every packet crosses. It already runs a few containers;
+  that is not a reason to add heavier ones. This reverses the line "CI, long builds" that the
+  machines inventory listed for it; it agrees with the 2026-10-07 decision, which kept the git hub
+  off the router because it "must not break".
+- Considered: moving the repo to GitLab (400 free minutes, rewrite the pipelines, Dependabot has no
+  equivalent there, pull requests do not migrate); a GitHub Enterprise trial (the repo would have to move
+  into an organisation, and it asks for a card); making the repo public (free minutes, but private
+  notes and content live in it); a separate CI server such as Woodpecker or Jenkins (own pipelines to
+  rewrite and another service to maintain); paying for Pro ($4, only 1,000 more minutes).
+- Open: whether GitHub lets a self-hosted runner start while the Actions billing notice is on (should
+  be, since it uses no minutes; to be tested). Nothing is installed yet.
+
+## 2026-10-14 (later): the CI runner goes on the new Ryzen desktop, in a Debian virtual machine
+- Decided: when the new desktop arrives (Ryzen 9 9900X, 12 cores and 24 threads, 16 GB DDR5 now and 32 GB later,
+  1 TB, two Ethernet ports) it is both my workstation and a 24/7 machine. The host runs Fedora for work.
+  The GitHub Actions runner lives in a Debian 13 virtual machine (KVM) on it: about 6 threads and 8 GB, lower
+  CPU priority than the host so work stays smooth, one runner and one job at a time, deploy jobs still on
+  GitHub's runners. The suspend setting must be off while it serves CI. Until it arrives the first step stays
+  the same: spend fewer GitHub minutes.
+- Why: a Debian guest gives the CI the environment it was written for (`apt`, Playwright `--with-deps`, Docker
+  without SELinux or firewalld surprises), and the code of pull requests and dependencies runs apart from my
+  files and sessions; if anything goes wrong the VM is deleted and rebuilt. Fedora on the host keeps
+  newer packages for development, which Debian stable would not.
+- Considered: the runner directly on the Fedora host (needs three workarounds: Playwright `--with-deps`, SELinux
+  `:z` on mounts, firewalld with Docker, and runs untrusted code beside my files); Debian on the whole machine
+  (old packages for daily work); the router, the media server (i5-4570T, 4 threads, a 3.9 GB /var, 9 media
+  services) and the spare laptop (see the entries above; they stay rejected).
+- Supersedes the "first candidate: the spare laptop" line of the entry above; that one stays as history.
+
 ## 2026-10-16: the laptop moves from Fedora 44 to Ubuntu Server 26.04 LTS
 Decided: replace Fedora on the ThinkPad with Ubuntu Server 26.04.1 LTS (minimized, text
 installer) and build the same desktop on it from these dotfiles. The plan, the package map
