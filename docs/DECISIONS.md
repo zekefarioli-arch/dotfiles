@@ -401,3 +401,12 @@ a user's home adds neither.
   they pull dozens of packages and overwrite configs, against keeping the system light; to be looked at only if I ask.
 - Layout mapping: Tall = master (left), Mirror Tall = master (top), ThreeColMid = master (center), Full = maximize.
   Grid and my own F1Layout have no equivalent. Hyprland 0.55 deprecates hyprlang for Lua: this config is for 0.53.
+
+## 2026-10-17: the disk moves to the Ryzen 9 desktop; name `zeke-ryzen9-desktop`, address `.23`
+- Decided: hostname and `claude-new` label `zeke-ryzen9-desktop` (set with `machine name ... --hostname` plus the 127.0.1.1 line of
+  /etc/hosts). Fixed address `.23` as a DHCP reservation by the desktop's wired MAC, next to the other fixed machines (.20-.22).
+- Considered: keeping `.140` (it is inside the DHCP pool 50-200, so the router could hand it out; the tool refuses it); `.24` and
+  `.30` (also free, no reason to prefer them). Kept the label equal to the hostname so there is one name to remember.
+- The reservation was run by hand (the router is read-only for Claude) with the command printed by `machine ip 23`, then
+  `machine ip --renew`: the desktop has 192.168.0.23. 23 is now in `reserved=` in home-infra/config/machine-network.conf.
+- The old laptop MAC reservations (.20, .21) stay as they are, as decided on 2026-10-17 above.

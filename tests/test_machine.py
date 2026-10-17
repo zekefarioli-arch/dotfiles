@@ -37,7 +37,7 @@ class CheckNumber(unittest.TestCase):
 
 class Names(unittest.TestCase):
     def test_valid(self):
-        for name in ("temp-zeke-thinkpad", "arch", "a1"):
+        for name in ("zeke-ryzen9-desktop", "arch", "a1"):
             self.assertTrue(machine.valid_name(name), name)
 
     def test_invalid(self):

@@ -9,16 +9,16 @@ DECISIONS.md.
 _Last updated: 2026-10-17_
 
 ## Machine
-- Lenovo ThinkPad X13 Gen 1 AMD (20UGS2Q500), 30 GiB RAM, 1 TB NVMe (Crucial P310, replaced on 2026-10-13: the old 236 GB layout
-  was copied and p3, the btrfs root and /home, grown to the end of the disk).
-- BIOS R1CET79W (1.48).
+- Ryzen 9 desktop (the 1 TB NVMe, Crucial P310, moved here from the ThinkPad X13 on 2026-10-17; it was the laptop's disk since
+  2026-10-13). Hostname `zeke-ryzen9-desktop`. The ThinkPad no longer has this system. Hardware details of the desktop: not
+  written down yet.
 - Ubuntu 26.04 LTS (server install, minimized, plus the desktop of these dotfiles), kernel 7.0.x, ext4 on LVM
   (replaced Fedora 44 on 2026-10-17; plan and package map in docs/UBUNTU-MIGRATION.md; the old Fedora
-  disk is kept in a USB enclosure). Hostname `zeke-thinkpad`; ufw on (ssh from the LAN only).
-- Wi-Fi only (`CASITA_5G`), managed by NetworkManager through netplan; timezone Europe/London, set
-  automatically by a NetworkManager dispatcher script. The address is now whatever the router gives
-  (192.168.0.58 on 2026-10-17): the old reservation `.20` was bound to the Wi-Fi MAC of the Fedora
-  install and cloning that MAC did not bring it back.
+  disk is kept in a USB enclosure). Hostname `zeke-ryzen9-desktop` (was `zeke-thinkpad`); ufw on (ssh from the LAN only).
+- Wired (`eno1`, MAC 30:c5:99:d2:3b:ee), managed by NetworkManager through netplan; timezone Europe/London, set
+  automatically by a NetworkManager dispatcher script. Fixed address `.23` (a DHCP reservation by this MAC in the router, outside
+  the pool; made and checked on 2026-10-17). The Wi-Fi card (`wlp8s0`) is down;
+  the netplan file for `CASITA_5G` is left over from the laptop (it matches `wlp3s0`) and does nothing here.
 - User `zeke`; LightDM starts the xmonad session.
 
 ## Desktop
@@ -75,9 +75,8 @@ _Last updated: 2026-10-17_
   /etc/sane.d/airscan.conf. Setup: scripts/setup-printers.sh.
 
 ## Claude Code
-- `machine` (bin/.local/bin/machine, linked in ~/.local/bin): name label for `claude-new` (now `temp-zeke-thinkpad`, the disk
-  goes to the new desktop later), and `machine ip N` to choose a fixed address; its private list of taken numbers is
-  home-infra/config/machine-network.conf, linked as ~/.config/machine/network.conf. The router reservation for this laptop is not made yet (it still gets .58 by DHCP).
+- `machine` (bin/.local/bin/machine, linked in ~/.local/bin): name label for `claude-new` (now `zeke-ryzen9-desktop`), and `machine ip N` to choose a fixed address; its private list of taken numbers is
+  home-infra/config/machine-network.conf, linked as ~/.config/machine/network.conf. The router reservation (`.23`) is made.
 - The session tools live in their own repo, github.com/zekefarioli-arch/claude-tools
   (cloned in ~/Zeke_projects/claude-tools, linked into ~/.local/bin by its
   install.sh): `claude-new` (sessions named <path>_NNN@<machine>, path = the
@@ -232,7 +231,7 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
   a real external monitor.
 
 - VPN to the house: NetworkManager connection `wg-home` (WireGuard, split tunnel, no autoconnect), toggled with Super+O (`home-vpn`). Needed away from home: a phone hotspot does not carry the phone's own VPN to tethered devices. The client key lives only in NetworkManager; the server name and subnets are in home-infra.
-- Network: this laptop has a fixed address through a DHCP reservation in the home router.
+- Network: this desktop has a fixed address (`.23`) through a DHCP reservation in the home router.
   The addresses, the machines and how they connect (router, media server, Arch desktop,
   printers, Docker services) are documented in the private repo home-infra, a private
   GitLab project cloned in ~/Zeke_projects/home_network/home-infra, and not here, because this repo is
