@@ -513,3 +513,16 @@ a user's home adds neither.
 - Note on 2026-10-14: the host of that VM is now Ubuntu 26.04, not Fedora. Cowork and a CI VM each reserve RAM: the desktop has 14 GiB
   today and 32 GiB is planned.
 - Not decided yet: libvirt/virt-manager or plain QEMU scripts for the CI VM (separate step, options first).
+
+## 2026-10-18: the router may run light services; runners and untrusted code still may not
+Decided: `hs-gateway` can host light services and containers as long as it has spare CPU and
+RAM (first candidate: none yet; the code index of ia_general_workflow_improvement runs on the
+desktop because it needs the code on disk). Each one with CPU and memory limits and no host
+networking. Still off limits: CI runners, build jobs and anything that runs untrusted code
+(they "can break everything" on the machine every packet crosses), and changes to its firewall
+or to the existing Docker setup. Files in the home directory on request, as decided on 2026-10-16.
+Considered: leaving the 2026-10-14 rule as it was (it kept the router untouched, but the machine
+has idle capacity and I accept the risk for small services); allowing anything (rejected: a heavy
+job or a PR's code on the router would starve or expose the whole house, the reasons of
+2026-10-14). This loosens the "no services or containers" part of the 2026-10-14 and 2026-10-16
+entries; the rest stands.

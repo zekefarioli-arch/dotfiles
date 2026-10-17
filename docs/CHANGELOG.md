@@ -155,6 +155,9 @@ I can read in a minute. Add a line in the same commit as the change.
 - Dropdown terminal with persistent tmux sessions, visible lock screen,
   automatic timezone, XDG folders, Brave and Atril as defaults.
 
+## 2026-10-18
+- Rule for the router (hs-gateway) loosened again at my request: light services and containers with limits may run there while it has spare capacity; CI runners, build jobs, untrusted code and changes to its firewall or existing Docker setup stay off limits. DECISIONS.md has the entry.
+
 ## 2026-01 to 2026-05 (previous machine)
 - First XMonad, Polybar and Qtile configs; multi-monitor bar launcher,
   caffeine toggle, per-monitor window titles.

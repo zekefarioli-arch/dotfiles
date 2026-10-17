@@ -72,9 +72,11 @@ In the same commit as each change, update what it touches:
   ~/.config/mini-calendar/ics-url.
 - If I reject or interrupt a command, check what actually changed before
   doing anything else.
-- `hs-gateway` is the router of the house (PPPoE, NAT, DHCP, DNS, VPN):
-  read-only by default. I may write files in my home directory there (backups,
-  copies, notes) when I ask for that task. Never install services, CI runners,
-  build jobs or containers on it, and never touch its firewall or Docker setup.
-  Heavy or untrusted work (CI, builds) goes on a dedicated machine; see
-  DECISIONS.md (2026-10-14 and 2026-10-16).
+- `hs-gateway` is the router of the house (PPPoE, NAT, DHCP, DNS, VPN): it
+  must not break. Light services and containers may run on it while it has
+  spare CPU and RAM (small, with CPU and memory limits, no host networking).
+  Never install CI runners, build jobs or anything that runs untrusted code
+  there, and never touch its firewall or its existing Docker setup. Read-only
+  by default for everything else; I may ask for files in my home directory
+  there (backups, copies, notes). Heavy or untrusted work goes on a dedicated
+  machine; see DECISIONS.md (2026-10-14, 2026-10-16 and 2026-10-18).
