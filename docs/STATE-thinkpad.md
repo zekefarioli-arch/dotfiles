@@ -34,6 +34,8 @@ _Last updated: 2026-10-17_
 - VPN to the house: NetworkManager connection `wg-home` (WireGuard, split tunnel, no
   autoconnect), toggled with Super+O (`home-vpn`).
 - Code projects live in ~/Zeke_projects.
+- Alacritty font size is 11.0, set in ~/.config/alacritty/local.toml (not in the repo; the shared
+  alacritty.toml imports it). Do not put `size` back in the shared file: it would win over this one.
 - The `machine` tool (bin/.local/bin/machine) is in the repo but not installed here yet: it
   needs `stow --no-folding -t ~ bin` and the link ~/.config/machine/network.conf to
   home-infra/config/machine-network.conf.

@@ -418,3 +418,11 @@ a user's home adds neither.
 - Considered: keeping the laptop in STATE.md (sessions here would read another machine's hardware and network); copying the whole
   STATE.md (two long files to keep equal). Rejected. The STATE.md "Pending" still carries a few ThinkPad items from before the
   move; they are repeated in the new file and can be cleaned up there later.
+
+## 2026-10-17: Alacritty font size per machine, in an untracked local.toml
+- Decided: alacritty.toml no longer sets `font.size`; it imports ~/.config/alacritty/local.toml (outside the repo), where each machine
+  sets its own (ThinkPad 11.0, Ryzen 9 8.5). dropterm.toml imports alacritty.toml, so it inherits the size. A missing local.toml is skipped.
+- Why not just override in local.toml while keeping a size in the shared file: Alacritty loads imports first and the importing file last,
+  so the shared value would win. The size has to be absent from the shared file.
+- Considered: lowering or raising the shared value (it just moves the problem to the other machine); editing the stowed file by hand
+  (the next pull overwrites it). Rejected. A machine with no local.toml gets Alacritty's default size (11.25).

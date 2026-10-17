@@ -9,6 +9,7 @@ I can read in a minute. Add a line in the same commit as the change.
 - Planning the move of the laptop from Fedora 44 to Ubuntu Server 26.04 LTS: docs/UBUNTU-MIGRATION.md has the install steps, the Fedora-to-Ubuntu package map (checked against the Ubuntu index), what to restore and the risks, and scripts/ubuntu-post-install.sh installs it all (checked, not yet run). `findajob-login` is now a private GitLab project and a backup of /home and of the system files is on the gateway.
 
 ## 2026-10-17
+- Alacritty font size is now per machine: `size` left alacritty.toml, which imports ~/.config/alacritty/local.toml (not in the repo; 11.0 on the ThinkPad, 8.5 on the Ryzen 9). The shared 8.5 made the ThinkPad's letters too small after a pull.
 - New docs/STATE-thinkpad.md for the ThinkPad (Fedora 44 on its 256 GB disk, hostname `zeke-thinkpad-x13`, address changed in the router), because STATE.md now describes the Ryzen 9 desktop; ~/.claude/STATE.local.md on the laptop points to it, and ~/CLAUDE.md says which file belongs to which machine.
 - Super+I (`show-ip`) shows the home-network IP and the machine's name in a notification: `net-info` now ends with a `Host` line.
 - The 1 TB disk now runs in the Ryzen 9 desktop: hostname and `claude-new` label are `zeke-ryzen9-desktop` (were `zeke-thinkpad` / `temp-zeke-thinkpad`). Fixed address `.23`: reservation added in the router by hand and the desktop renewed onto it (it was `.140` by DHCP, inside the pool).
