@@ -10,7 +10,8 @@ or from a project folder and are started with `claude-new`, which names them
 @~/.claude/STATE.local.md
 
 Each machine has its own state file in ~/dotfiles/docs/ (STATE.md is the
-Fedora laptop's) and a local symlink ~/.claude/STATE.local.md pointing to
+Ryzen 9 desktop's, STATE-thinkpad.md the ThinkPad's, STATE-arch.md the Arch
+one's) and a local symlink ~/.claude/STATE.local.md pointing to
 it, which is imported above so it is in every session. If that import is
 empty, this machine has no link yet: say so and offer to create it
 (`ln -s ~/dotfiles/docs/<its file> ~/.claude/STATE.local.md`, and start the
@@ -19,8 +20,8 @@ you check disagrees with it, say so and fix the file.
 
 ## Keep the docs current
 In the same commit as each change, update what it touches:
-- The state file of the machine you are on (`docs/STATE.md` for the Fedora
-  laptop): what is installed, configured, pending or broken now
+- The state file of the machine you are on (`docs/STATE-thinkpad.md` for
+  the ThinkPad): what is installed, configured, pending or broken now
   (and its "Last updated" date).
 - `docs/CHANGELOG.md`: one line under today's date for changes that matter
   to the user.

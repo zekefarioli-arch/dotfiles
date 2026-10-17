@@ -410,3 +410,11 @@ a user's home adds neither.
 - The reservation was run by hand (the router is read-only for Claude) with the command printed by `machine ip 23`, then
   `machine ip --renew`: the desktop has 192.168.0.23. 23 is now in `reserved=` in home-infra/config/machine-network.conf.
 - The old laptop MAC reservations (.20, .21) stay as they are, as decided on 2026-10-17 above.
+
+## 2026-10-17: the ThinkPad gets its own state file, STATE-thinkpad.md
+- Decided: STATE.md stays the Ryzen 9 desktop's (the 1 TB Ubuntu disk went there), and the ThinkPad, back on its 256 GB Fedora
+  disk and renamed `zeke-thinkpad-x13`, has docs/STATE-thinkpad.md, linked as ~/.claude/STATE.local.md. Same layout as STATE-arch.md:
+  what is specific to the machine, and a pointer to STATE.md for the shared desktop.
+- Considered: keeping the laptop in STATE.md (sessions here would read another machine's hardware and network); copying the whole
+  STATE.md (two long files to keep equal). Rejected. The STATE.md "Pending" still carries a few ThinkPad items from before the
+  move; they are repeated in the new file and can be cleaned up there later.
