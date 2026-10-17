@@ -389,3 +389,15 @@ a user's home adds neither.
   The icon was most likely lost because Polybar was relaunched by hand after CopyQ had started.
 - If the icon is missing after a login, the cause is the start order (CopyQ before the bar's tray). A fix would be to
   start CopyQ after the bars in autostart.sh; not done yet, to see whether it happens.
+
+## 2026-10-17: try Hyprland in a separate admin user, xmonad stays as it is
+- Decided: Hyprland is installed system-wide (apt, 30 small packages, no recommends) but its configuration lives only in the
+  user `zeke-hypr` (administrator, in groups sudo and video), in a stow package `hypr` on the branch `hyprland` of that user's
+  clone of dotfiles. At the login screen I choose the user; `zeke` keeps xmonad, polybar and picom exactly as they are.
+- Considered: a nested Hyprland in a window of the xmonad session (xmonad grabs Super, so the shortcuts could not be tried
+  as they are); the same user with another session (a half-ported config could break `zeke`'s files). Rejected.
+- Theme: Catppuccin Mocha with the pink accent as a palette file (mocha.conf, from the same colours as catppuccin/waybar,
+  because catppuccin/hyprland no longer has the file at its old path). Full rices (HyDE, end-4, JaKooLit) not installed:
+  they pull dozens of packages and overwrite configs, against keeping the system light; to be looked at only if I ask.
+- Layout mapping: Tall = master (left), Mirror Tall = master (top), ThreeColMid = master (center), Full = maximize.
+  Grid and my own F1Layout have no equivalent. Hyprland 0.55 deprecates hyprlang for Lua: this config is for 0.53.

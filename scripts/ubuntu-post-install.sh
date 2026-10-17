@@ -120,7 +120,15 @@ sudo systemctl enable --now power-profiles-daemon
 
 echo "==> Login screen: LightDM with the Catppuccin greeter, session xmonad"
 sudo install -D -m 644 "$DOTFILES/system/etc/lightdm/lightdm-gtk-greeter.conf" /etc/lightdm/lightdm-gtk-greeter.conf
+[[ -f ~/Pictures/catpuccin/kitty.jpg ]] &&
+  sudo install -D -m 644 ~/Pictures/catpuccin/kitty.jpg /usr/share/backgrounds/login-kitty.jpg
 echo /usr/sbin/lightdm | sudo tee /etc/X11/default-display-manager >/dev/null
+# The greeter runs as user lightdm and cannot read ~/.themes or ~/.local/share/icons, so the
+# theme and cursor must also be in /usr/share (run after scripts/install-themes.sh).
+for d in "$HOME/.themes/Catppuccin-Pink-Dark:/usr/share/themes" \
+         "$HOME/.local/share/icons/catppuccin-mocha-pink-cursors:/usr/share/icons"; do
+  [[ -d ${d%%:*} ]] && sudo cp -rL "${d%%:*}" "${d##*:}/" && sudo chmod -R a+rX "${d##*:}/$(basename "${d%%:*}")"
+done
 sudo systemctl enable lightdm
 if [[ ! -e /usr/share/xsessions/xmonad.desktop ]]; then
   printf '[Desktop Entry]\nName=xmonad\nComment=Tiling window manager\nExec=xmonad\nType=Application\n' |

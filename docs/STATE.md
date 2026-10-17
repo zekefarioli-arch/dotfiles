@@ -6,7 +6,7 @@ every session; keep it short and true, and update it in the same commit as
 the change it describes. History goes in CHANGELOG.md, reasons in
 DECISIONS.md.
 
-_Last updated: 2026-10-16_
+_Last updated: 2026-10-17_
 
 ## Machine
 - Lenovo ThinkPad X13 Gen 1 AMD (20UGS2Q500), 30 GiB RAM, 1 TB NVMe (Crucial P310, replaced on 2026-10-13: the old 236 GB layout
@@ -180,6 +180,9 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
    settings.json, keybindings.json, skills), not decided.
 
 ## Pending
+- Hyprland (2026-10-17): installed system-wide; the trial is the user `zeke-hypr` (admin; pick "Hyprland" at the login screen),
+  config in its `hyprland` branch (step 1: Catppuccin, xmonad shortcuts, waybar). Not tried on screen yet. Ported next, if it is kept:
+  keybinds/keys-editor, dropdown terminal, web-app panels (WebAppCrop is xmonad-only), the six scripts that use xdotool.
 - Brightness keys need the `video` group: log out and in once (2026-10-17) so the session has it.
 - Ubuntu migration, still open (2026-10-17): ssh passwords are still on and
   /etc/sudoers.d/zeke-nopasswd (setup convenience) is still there; turn passwords off
@@ -191,7 +194,8 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
   Super+O, sound, brightness and the lid. Keyboard layout is `gb`; say if it should be another.
   The backup on hs-gateway (~/migration-2026-10-16, holds private keys) is still to delete when you are sure.
   Delete the stray /etc/sudoers.d/zeke-nopasswd. on the Arch desktop (created by mistake).
-- Migration to Ubuntu Server 26.04 LTS planned (docs/UBUNTU-MIGRATION.md): the old 236 GB disk is kept as the way back, the backup is on the gateway. scripts/ubuntu-post-install.sh is written and checked but not run; ext4 chosen; the picom 12.5 check is for after the install. This file describes Fedora until the move is done.
+- Ubuntu migration done on 2026-10-17 (plan in docs/UBUNTU-MIGRATION.md); the old 236 GB Fedora disk is kept as the way back. The picom 12.5 check is still to do.
+- Login screen (2026-10-17): LightDM greeter with a Catppuccin wallpaper (/usr/share/backgrounds/login-kitty.jpg) and the theme and cursor copied to /usr/share; not seen on screen yet.
 - Firmware: BIOS 1.54 and Secure Boot KEK/UEFI CA 2023 plus dbx updates are
   available. Needs the charger plugged in: `sudo fwupdmgr update`.
 - Passwordless sudo (/etc/sudoers.d/zeke-nopasswd) was added for the setup;
