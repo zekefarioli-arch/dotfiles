@@ -426,3 +426,27 @@ a user's home adds neither.
   so the shared value would win. The size has to be absent from the shared file.
 - Considered: lowering or raising the shared value (it just moves the problem to the other machine); editing the stowed file by hand
   (the next pull overwrites it). Rejected. A machine with no local.toml gets Alacritty's default size (11.25).
+
+## 2026-10-17: the CI runner is a persistent runner in an Ubuntu Server 26.04 VM on the Ryzen 9 desktop
+- Context: the free GitHub Actions minutes ran out (2,000 a month) and I could not test any saving, because Actions was blocked. Only the
+  private repo `mock-oclock` spends them: its CI ran 167 times in the first 17 days of October, five jobs of about 3 minutes each,
+  billed per job rounded up. This puts the 2026-10-14 plan into practice.
+- Decided: a KVM virtual machine, `ci-runner` (6 vCPU, 6 GB, 80 GB, low CPU priority, autostart), with a GitHub Actions runner as a
+  systemd service. The five CI jobs take `runs-on` from the repository variable `CI_RUNNER` and fall back to `ubuntu-latest`, so the
+  runner can be switched off without a code change. `deploy.yml` stays on GitHub. GitHub did start the runner while the Actions billing
+  notice was on, which was the open question of 2026-10-14; the five jobs passed on it in about 5 to 6 minutes, one at a time.
+- Guest OS: Ubuntu Server 26.04 LTS, not the Debian 13 of the 2026-10-14 plan. Debian was built first and worked, but the CI is written for
+  `ubuntu-latest` and Debian needed three patches (the `docker compose` plugin, pip's PEP 668 block, Playwright's dependency list);
+  Ubuntu needed none, and it is the same release and kernel as the host. Considered: Ubuntu 24.04 (closer to `ubuntu-latest`, but older
+  and no reason to prefer it once 26.04 passed the whole CI). The Debian VM was deleted.
+- Persistent runner, not ephemeral: an ephemeral runner needs a GitHub token inside the VM to register itself again after each job, and
+  that is where the code of pull requests runs. A persistent one only holds its own runner credential, and the VM can be rebuilt. Revisit
+  with a controller on the host if it ever matters. Only for private repos: never for forks of public ones.
+- Hooks, not workflow changes: the e2e job's `docker compose` leaves root-owned files in the workspace and the next `checkout` failed. A
+  runner hook (job started and completed) fixes the ownership and removes leftover containers, networks and volumes, so the repository
+  stays the same as on GitHub's runners.
+- Seeing it: ttyd (current step) and Glances (CPU, memory, containers) as web panels on demand through an ssh tunnel, not as services.
+  Cockpit and Netdata were rejected: always-on services and many more packages. Glances comes from PyPI because the Ubuntu package ships
+  without its web files.
+- Boot detail worth remembering: the Debian cloud image looped in GRUB with BIOS boot on this CPU (any CPU model); UEFI and q35 fixed it.
+- Not on the router, as decided on 2026-10-14 and recorded in ~/CLAUDE.md.

@@ -20,6 +20,11 @@ _Last updated: 2026-10-17_
   the pool; made and checked on 2026-10-17). The Wi-Fi card (`wlp8s0`) is down;
   the netplan file for `CASITA_5G` is left over from the laptop (it matches `wlp3s0`) and does nothing here.
 - User `zeke`; LightDM starts the xmonad session.
+- Virtualization (2026-10-17): KVM and libvirt (`qemu:///system`, packages without recommends; user `zeke` is in `libvirt` and `kvm`).
+  One VM, `ci-runner`: Ubuntu Server 26.04.1, 6 vCPU, 6 GB, 80 GB, UEFI, CPU shares 256, autostart. It hosts a persistent GitHub Actions
+  runner for the private repo `mock-oclock` (label `ryzen-vm`; the repository variable `CI_RUNNER` switches the CI between it and
+  GitHub's runners). Uses 6 GB of the 16 GB of RAM: with the 32 GB planned it is comfortable. Runbook and addresses: home-infra
+  `runbooks/ci-runner.md` (private repo). The suspend setting must stay off while it serves CI.
 
 ## Desktop
 - xmonad: action catalog in xmonad.hs, shortcuts in ~/.xmonad/keys.conf,
@@ -179,6 +184,9 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
    settings.json, keybindings.json, skills), not decided.
 
 ## Pending
+- CI runner VM (2026-10-17): pull request 83 of `mock-oclock` (CI uses the `CI_RUNNER` variable) is open, not merged; until it is,
+  `main` still runs on GitHub's runners. Not tried yet: a second runner so two jobs overlap, and an ephemeral runner (needs a host-side
+  controller so no GitHub token lives in the VM). Whether suspend is really off on this desktop has not been checked.
 - Hyprland (2026-10-17): installed system-wide; the trial is the user `zeke-hypr` (admin; pick "Hyprland" at the login screen),
   config in its `hyprland` branch (step 1: Catppuccin, xmonad shortcuts, waybar). Not tried on screen yet. Ported next, if it is kept:
   keybinds/keys-editor, dropdown terminal, web-app panels (WebAppCrop is xmonad-only), the six scripts that use xdotool.
