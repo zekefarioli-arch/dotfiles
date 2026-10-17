@@ -450,3 +450,18 @@ a user's home adds neither.
   without its web files.
 - Boot detail worth remembering: the Debian cloud image looped in GRUB with BIOS boot on this CPU (any CPU model); UEFI and q35 fixed it.
 - Not on the router, as decided on 2026-10-14 and recorded in ~/CLAUDE.md.
+
+## 2026-10-17 (later): the CI runner's web panels are always on, behind a password, served by the Ryzen
+- Decided: the live view of the runner (ttyd) and of the VM's load (Glances) are two systemd services in the VM, listening only on the VM's address in
+  libvirt's NAT network, and nginx on the Ryzen proxies them to the home network (the ttyd and Glances default ports) with basic authentication. ufw
+  lets only the home network reach those two ports. The VM's address is reserved in libvirt so the proxy keeps working after a reboot.
+  This replaces the first design of the same day, an on-demand ssh tunnel to `localhost` on the laptop: it needed a command and a terminal each time,
+  and a suspended tunnel (Ctrl+Z) or a cut one left the pages dead.
+- Why: I want to open the two pages whenever I like, from any device at home, and see nothing when there is nothing to see. The cost is small: about
+  90 MB of RAM and 1 to 2% of a core for Glances in the VM, a few MB for nginx on the Ryzen.
+- Considered: keeping the tunnel as a permanent user service on the laptop (works only on that laptop); a bridge so the VM has its own LAN address (puts
+  a runner that executes pull requests' code on the LAN, against the isolation of 2026-10-14); `systemd-socket-proxyd` (no password: Glances shows every
+  process and ttyd shows job output); Caddy (about 50 MB for the same job); Cockpit and Netdata (always-on, many more packages). nginx-light is four small packages.
+- Accepted risk: basic authentication over plain HTTP on the home network, so the password is visible to anyone who can sniff my LAN. It protects a read-only
+  monitoring page; the password is not to be reused. The password is set with `ci-panels-passwd` on the Ryzen and never goes through a chat or a command line.
+- Fails closed: an empty password file lets nobody in. Not tried over the VPN.
