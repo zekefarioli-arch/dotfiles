@@ -87,6 +87,18 @@ echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg] http
 sudo apt-get update
 apt_install brave-browser
 
+# Claude Desktop (Linux beta): Anthropic's own apt repository, key fingerprint
+# 31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE. apt_install passes --no-install-recommends on purpose: the
+# recommends would pull 55 packages; only QEMU/OVMF/virtiofsd (Cowork tab, and the CI VMs) are
+# added by hand, gnome-keyring is not; see DECISIONS.md.
+echo "==> Claude Desktop"
+sudo curl -fsSLo /usr/share/keyrings/claude-desktop-archive-keyring.asc https://downloads.claude.ai/claude-desktop/key.asc
+echo "deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/claude-desktop-archive-keyring.asc] https://downloads.claude.ai/claude-desktop/apt/stable stable main" |
+  sudo tee /etc/apt/sources.list.d/claude-desktop.list >/dev/null
+sudo apt-get update
+apt_install claude-desktop socat qemu-system-x86 ovmf virtiofsd
+sudo usermod -aG kvm "$USER"  # Cowork also needs /dev/vhost-vsock; log out and in once
+
 if [[ ${WITH_CHROME:-0} == 1 ]]; then
   echo "==> Google Chrome"
   curl -fsSL https://dl.google.com/linux/linux_signing_key.pub |

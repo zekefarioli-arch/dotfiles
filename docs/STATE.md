@@ -10,8 +10,8 @@ _Last updated: 2026-10-17_
 
 ## Machine
 - Ryzen 9 desktop (the 1 TB NVMe, Crucial P310, moved here from the ThinkPad X13 on 2026-10-17; it was the laptop's disk since
-  2026-10-13). Hostname `zeke-ryzen9-desktop`. The ThinkPad no longer has this system. Hardware details of the desktop: not
-  written down yet.
+  2026-10-13). Hostname `zeke-ryzen9-desktop`. The ThinkPad no longer has this system. 14 GiB RAM now, a 32 GiB upgrade is
+  planned. KVM works (AMD-V, `kvm_amd` loaded). Other hardware details: not written down yet.
 - Ubuntu 26.04 LTS (server install, minimized, plus the desktop of these dotfiles), kernel 7.0.x, ext4 on LVM
   (replaced Fedora 44 on 2026-10-17; plan and package map in docs/UBUNTU-MIGRATION.md; the old Fedora
   disk is kept in a USB enclosure). Hostname `zeke-ryzen9-desktop` (was `zeke-thinkpad`); ufw on (ssh from the LAN only).
@@ -41,7 +41,7 @@ _Last updated: 2026-10-17_
   The monitor still turns off after 5 minutes of inactivity (DPMS), without a password.
 - Theme: Catppuccin Mocha with a pink accent in GTK, Qt, rofi, dunst, CopyQ,
   alacritty, tmux, Neovim, Polybar; Papirus-Dark icons.
-- Apps: Brave (default browser), Thunar, Atril, Neovim (LazyVim),
+- Apps: Claude Desktop 2.42 (Linux beta, Anthropic's apt repo, installed 2026-10-17 without its recommends except QEMU/OVMF/virtiofsd for the Cowork tab; no gnome-keyring, so it may ask to sign in at each launch; `zeke` is in the `kvm` group (log out and in once for Cowork); not signed in or tried yet), Brave (default browser), Thunar, Atril, Neovim (LazyVim),
   Mousepad (default for text files, Catppuccin Mocha colours), micro
   (terminal editor with normal shortcuts), CopyQ,
   KDE Connect and scrcpy for the phone, simple-scan.

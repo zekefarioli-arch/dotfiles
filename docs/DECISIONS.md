@@ -496,3 +496,20 @@ a user's home adds neither.
 - Not measured: the mapping is a reasoned default. If a cheap agent keeps failing at some kind of task, move it up a level in `models.conf`.
 - Based on the Claude Code documentation fetched on 2026-10-17 (summaries of the sub-agents, skills and plugins pages): the plugin side (that plugin agents may set a model) was
   inferred, not stated; the agents here are user-level files, so it does not matter.
+
+## 2026-10-17: Claude Desktop installed lean (no Cowork, no keyring)
+- Decided: install `claude-desktop` from Anthropic's apt repository (key fingerprint checked) with `--no-install-recommends`, plus
+  `socat`. That is 2 packages; the default install pulls 55 (QEMU, OVMF, virtiofsd for the Cowork tab, plus gnome-keyring).
+- Considered: full install (heavy, and Cowork needs a VM and the `kvm` group; against keeping the system light); adding
+  gnome-keyring (10 more packages, and the webapp profiles use `--password-store=basic` so that no keyring ever asks for a
+  password). Consequence: the app may not remember the sign-in between launches. If that is annoying, `sudo apt install
+  gnome-keyring`; for Cowork, `sudo apt install qemu-system-x86 ovmf virtiofsd` and `sudo usermod -aG kvm $USER` (the CPU has svm).
+- The unofficial community builds were not considered: Anthropic ships an official package for Ubuntu.
+
+## 2026-10-17 (later): QEMU/KVM installed after all, for Cowork and the CI virtual machines
+- Reversed in part the entry above: QEMU (`qemu-system-x86`, `ovmf`, `virtiofsd`; 24 packages with `--no-install-recommends`) is
+  installed, and `zeke` is in the `kvm` group. Reason: Cowork is wanted, and the CI runner already decided on 2026-10-14 needs a VM on
+  this desktop anyway, so the virtualization stack is shared. gnome-keyring is still left out.
+- Note on 2026-10-14: the host of that VM is now Ubuntu 26.04, not Fedora. Cowork and a CI VM each reserve RAM: the desktop has 14 GiB
+  today and 32 GiB is planned.
+- Not decided yet: libvirt/virt-manager or plain QEMU scripts for the CI VM (separate step, options first).
