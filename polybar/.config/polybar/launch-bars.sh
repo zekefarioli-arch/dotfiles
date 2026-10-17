@@ -7,6 +7,10 @@
 exec 9>"${XDG_RUNTIME_DIR:-/tmp}/polybar-launch.lock"
 flock 9
 
+# Bars log here (they died once at login with no trace, 2026-10-17)
+log="${XDG_RUNTIME_DIR:-/tmp}/polybar.log"
+: >"$log"
+
 killall -q polybar
 pkill -u "$UID" -f '^xprop -spy -root _XMONAD_LOG_'
 while pgrep -u "$UID" -x polybar >/dev/null; do sleep 0.1; done
@@ -33,10 +37,10 @@ while read -r n geom; do
   [[ -z $mon ]] && continue
   # Screen 0 gets the bar with the systray
   if [[ $n == 0 ]]; then bar=main; else bar=secondary; fi
-  MONITOR=$mon SCREEN=$n polybar "$bar" 9>&- >/dev/null 2>&1 &
+  MONITOR=$mon SCREEN=$n polybar "$bar" 9>&- >>"$log" 2>&1 &
 done <<<"$heads"
 
 # No Xinerama: one bar on the first monitor
 if [[ -z $heads ]]; then
-  MONITOR=${monitors%%:*} SCREEN=0 polybar main 9>&- >/dev/null 2>&1 &
+  MONITOR=${monitors%%:*} SCREEN=0 polybar main 9>&- >>"$log" 2>&1 &
 fi

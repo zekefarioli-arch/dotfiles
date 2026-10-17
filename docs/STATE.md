@@ -177,6 +177,7 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
    settings.json, keybindings.json, skills), not decided.
 
 ## Pending
+- Brightness keys need the `video` group: log out and in once (2026-10-17) so the session has it.
 - Ubuntu migration, still open (2026-10-17): ssh passwords are still on and
   /etc/sudoers.d/zeke-nopasswd (setup convenience) is still there; turn passwords off
   (`/etc/ssh/sshd_config.d/10-no-password.conf`) and remove the sudoers file when the setup is accepted.

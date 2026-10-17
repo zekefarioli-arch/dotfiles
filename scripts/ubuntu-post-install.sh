@@ -59,6 +59,9 @@ apt_install network-manager network-manager-gnome blueman pipewire pipewire-puls
   pulseaudio-utils pavucontrol pasystray brightnessctl power-profiles-daemon fwupd \
   smartmontools efibootmgr btrfs-progs systemd-zram-generator chrony plymouth \
   amd64-microcode linux-firmware
+# The backlight file is writable by group video only: without this the brightness keys
+# (osd-brightness -> brightnessctl) fail with 'Permission denied'. Takes effect at next login.
+sudo usermod -aG video "$USER"
 
 echo "==> Printing and scanning (queues: scripts/setup-printers.sh, still written for dnf)"
 apt_install cups sane-utils sane-airscan
