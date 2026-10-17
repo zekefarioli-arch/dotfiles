@@ -382,3 +382,10 @@ a user's home adds neither.
 - Decided: leave it. CopyQ 13 is built on Qt6, which only speaks StatusNotifier, while Polybar's tray is XEmbed only; Ubuntu has no
   `snixembed` package. It works the same through `Super+V` (`copyq toggle`).
 - Considered: building snixembed from source (needs valac and GTK dev packages just to compile; against keeping the system light).
+
+## 2026-10-17 (later): the CopyQ tray icon did work; the earlier entry is wrong
+- Reversed the entry above: CopyQ docks in Polybar's XEmbed tray (it showed as a 21x21 client) once it is restarted, so
+  there is no need for snixembed and the Qt6/SNI explanation was a wrong guess, made without testing a restart first.
+  The icon was most likely lost because Polybar was relaunched by hand after CopyQ had started.
+- If the icon is missing after a login, the cause is the start order (CopyQ before the bar's tray). A fix would be to
+  start CopyQ after the bars in autostart.sh; not done yet, to see whether it happens.

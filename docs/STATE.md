@@ -243,6 +243,7 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
   off and a firewall rule for the LAN only). The current state and the plan are in home-infra.
 
 ## Known issues
+- CopyQ's tray icon can be missing after a login if CopyQ starts before Polybar's tray; `copyq exit; copyq --start-server &` brings it back.
 - picom died once without a trace (no log, no core dump) and was started again
   by hand; if blur or the dropdown animation stop working, check
   `pgrep -x picom` and start it with `picom &` (autostart.sh only does it at login).

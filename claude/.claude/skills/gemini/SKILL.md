@@ -30,7 +30,8 @@ agy --print "<prompt>" --output-format json --mode plan < /dev/null 2>/dev/null
 - `--output-format json` returns `{"status": "SUCCESS", "response": "...", "usage": {...}, "duration_seconds": ...}`.
   Read `response`; check `status`. An empty response with a stderr line about a denied permission means the
   model tried a tool it may not use in headless mode: rephrase so it only needs to read.
-- `--model "Gemini 3.1 Pro (High)"` for a careful review; by default the CLI picks (Flash for light work).
+- `--model <id>` for a careful review, with an id from `agy models` (for example `gemini-4-argon-high`, or
+  `gemini-3.8-flash-medium` for light work); by default the CLI picks.
   `--effort low|medium|high|xhigh|max` tunes reasoning. `--json-schema '<schema or path>'` forces structured
   output.
 - Expect 40 to 70 seconds per call (it loads workspace context, about 7k to 25k input tokens): batch
@@ -72,7 +73,11 @@ for one JSON per level or per group of exams: long outputs get cut, and a fresh 
 - Do not send secrets: no `.env`, keys, tokens, customer data or private repositories' content beyond what
   the question needs. Google processes what is sent, and `agy` can read any file in the workspace it is
   pointed at, so run it from the project, not from `~`.
-- The Pro plan's limits are a shared pool of credits with no published figures; a job that fails with a quota
+- Check the quota before a big job: `agy --print "/usage" --output-format json --mode plan < /dev/null`
+  (instant, no tokens). `response` has one tab-separated line per group: Gemini models, and Claude and GPT
+  models, each with a five-hour and a weekly limit as "% remaining" plus the UTC time it resets, and the
+  Gemini 4 Argon model with its own weekly limit. Models inside a group share the limits. Below about 20%
+  of the five-hour limit, say so to the user before sending a large job. A job that fails with a quota
   error waits and retries, it does not loop. On the API-key fallback, say roughly what a big job will cost.
 - If `agy` reports an authentication timeout or asks to sign in, tell the user to run `agy` once in a normal
   terminal (interactive sign-in); do not try to sign in from a session. The Gemini CLI's Google-account
