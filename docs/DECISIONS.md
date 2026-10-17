@@ -480,3 +480,19 @@ a user's home adds neither.
 - Cost: jobs of the two repos wait for each other. Dependabot adds up: touching its configuration made four pull requests refresh at once and the queue of about
   25 jobs took half an hour to drain.
 - `erlef/setup-beam` needs `ImageOS=ubuntu24` in the runner's environment on a self-hosted machine; it passed the first time on Ubuntu 26.04.
+
+## 2026-10-17: model routing with agents that carry their model, not an MCP and not a rule to remember
+- Decided: the full-stack blueprint and frontend-kit route work to the cheapest model that does it through **agents whose file names the model** (`model: haiku`,
+  `sonnet` or `opus` in the frontmatter, which is what Claude Code reads): mechanical work on haiku, building and reviews on sonnet, architecture, security, the data
+  model, ADRs and design decisions on opus. The skills run on sonnet and delegate by agent name without passing a model (a model passed per call overrides the one in the
+  file). The values are in one `models.conf` per kit and `models apply` copies them into the agents, so changing a model is editing one line.
+- Why: it is enforced by the agent file, it needs no process to run, and an agent that meets a decision that is not its own is told to stop and say so, so a cheap
+  model does not settle an expensive question by guessing. A skill cannot change the main session's model for good (that is `/model`), so the cheap way is a session
+  on a cheaper model that delegates up.
+- Considered: an MCP server (a process to keep running to expose what a command and a skill already give; against keeping the system light); a rule in CLAUDE.md or
+  in the skill asking the model to remember to pick the model (not enforced); one model for everything (pays the top price for typing, or risks the cheap one deciding
+  an architecture); `CLAUDE_CODE_SUBAGENT_MODEL` (one value for all agents; it is only the default and is overridden by the agent file); a plugin bundle (possible, but the
+  agents are user-level files linked by `install.sh`, like the skills, with nothing to publish).
+- Not measured: the mapping is a reasoned default. If a cheap agent keeps failing at some kind of task, move it up a level in `models.conf`.
+- Based on the Claude Code documentation fetched on 2026-10-17 (summaries of the sub-agents, skills and plugins pages): the plugin side (that plugin agents may set a model) was
+  inferred, not stated; the agents here are user-level files, so it does not matter.

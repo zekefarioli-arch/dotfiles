@@ -39,10 +39,16 @@ _Last updated: 2026-10-17_
 - The `machine` tool (bin/.local/bin/machine) is in the repo but not installed here yet: it
   needs `stow --no-folding -t ~ bin` and the link ~/.config/machine/network.conf to
   home-infra/config/machine-network.conf.
+- Project tools, installed here with their `install.sh` (links, nothing copied): `fullstack-blueprint` and `frontend-kit` (repos in
+  ~/Zeke_projects, private), `ci-add-runner` and `ci-remove-runner` (from home-infra, `scripts/ci-runner`, linked by hand; they read the CI VM's
+  address from the private ~/.config/ci-runner/vm.conf). Their skills are in ~/.claude/skills and their seven agents in ~/.claude/agents
+  (`fb-*`, `fk-*`, each with its own model; `fullstack-blueprint models` and `frontend-kit models` show them). Claude Code loads agents and skills at
+  the start of a session: open a new one to use them.
 - Git has no global identity on this laptop: commits need `-c user.name=... -c user.email=...`
   until it is set.
 
 ## Pending
+- The repos `fullstack-blueprint` and `frontend-kit` are on GitHub only: wire them to the home git hub when it is on again (runbook add-a-repo-to-the-hub in home-infra).
 - Ubuntu again on this laptop in a few days (2026-10-17): follow docs/UBUNTU-MIGRATION.md;
   when it is done, replace this file's Machine section.
 - Firmware: BIOS 1.54 and Secure Boot KEK/UEFI CA 2023 plus dbx updates are
