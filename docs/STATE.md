@@ -24,7 +24,7 @@ _Last updated: 2026-10-17_
   One VM, `ci-runner`: Ubuntu Server 26.04.1, 6 vCPU, 6 GB, 80 GB, UEFI, CPU shares 256, autostart. It hosts a persistent GitHub Actions
   runners for the private repos `mock-oclock` and `due-card` (one runner each, label `ryzen-vm`; the repository variable `CI_RUNS_ON` of each
   switches its CI between the VM and GitHub's runners; a lock makes the two repos share the VM one job at a time). Two password-protected web panels for it (the runner's current step, the VM's load) are served by nginx on this
-  desktop and reachable from the home network only (ufw). Uses 6 GB of the 16 GB of RAM: with the 32 GB planned it is comfortable. Runbook and addresses: home-infra
+  desktop and reachable from the home network only (ufw). The VM may use 6 GB of the 16 GB of RAM and gives back what it frees (free page reporting on its memory balloon, 2026-10-17): idle it holds about 1.6 GiB of the host, not 5.7; with the 32 GB planned it is comfortable. Runbook and addresses: home-infra
   `runbooks/ci-runner.md` (private repo). The suspend setting must stay off while it serves CI.
 
 ## Desktop
