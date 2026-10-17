@@ -9,6 +9,7 @@ I can read in a minute. Add a line in the same commit as the change.
 - Planning the move of the laptop from Fedora 44 to Ubuntu Server 26.04 LTS: docs/UBUNTU-MIGRATION.md has the install steps, the Fedora-to-Ubuntu package map (checked against the Ubuntu index), what to restore and the risks, and scripts/ubuntu-post-install.sh installs it all (checked, not yet run). `findajob-login` is now a private GitLab project and a backup of /home and of the system files is on the gateway.
 
 ## 2026-10-17
+- Ubuntu: the brightness keys needed a udev rule (system/etc/udev/rules.d/90-brightnessctl.rules) and the `video` group; log out and in once to use them.
 - The laptop runs Ubuntu 26.04 LTS instead of Fedora 44: packages installed with scripts/ubuntu-post-install.sh, home and settings restored from the backup on the gateway, NetworkManager manages Wi-Fi, printers, scanner, `wg-home` VPN, `findajob`, xmonad (0.18.0), polybar and picom checked. See DECISIONS.md.
 
 ## 2026-10-14
