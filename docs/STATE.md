@@ -230,7 +230,7 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
 - Polybar hot-plugging was only tested with simulated monitors; confirm with
   a real external monitor.
 
-- Network info: Super+I (`show-ip`, runs `net-info`) shows a notification with the connection, the IP, the gateway and the name of this machine; a click on the bar's Wi-Fi module does the same. Needs `xmonad --restart` once to load the key (added 2026-10-17, not tried on screen).
+- Network info: Super+I (`show-ip`, runs `net-info`) shows a notification with the connection, the IP, the gateway and the name of this machine; a click on the bar's Wi-Fi module does the same. Added and tried on screen on 2026-10-17.
 - VPN to the house: NetworkManager connection `wg-home` (WireGuard, split tunnel, no autoconnect), toggled with Super+O (`home-vpn`). Needed away from home: a phone hotspot does not carry the phone's own VPN to tethered devices. The client key lives only in NetworkManager; the server name and subnets are in home-infra.
 - Network: this desktop has a fixed address (`.23`) through a DHCP reservation in the home router.
   The addresses, the machines and how they connect (router, media server, Arch desktop,
