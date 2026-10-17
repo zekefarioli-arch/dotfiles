@@ -465,3 +465,18 @@ a user's home adds neither.
 - Accepted risk: basic authentication over plain HTTP on the home network, so the password is visible to anyone who can sniff my LAN. It protects a read-only
   monitoring page; the password is not to be reused. The password is set with `ci-panels-passwd` on the Ryzen and never goes through a chat or a command line.
 - Fails closed: an empty password file lets nobody in. Not tried over the VPN.
+
+## 2026-10-17 (later still): the CI runner VM serves a second private repo, with a lock between the runners
+- Decided: `due-card` (Elixir and Phoenix, one CI job against PostgreSQL) uses the same VM through a second runner, because it also needs the free minutes
+  that ran out and a personal account cannot share one runner between repositories. Its `ci.yml` reads the runner from `CI_RUNS_ON`, as in `mock-oclock`.
+  That repo works on `main` with no pull requests (its ADR 0002), so the change was first validated with a manual run on a throw-away branch and then the
+  same commit went to `main`, which stayed green.
+- A **VM-wide lock** in the runners' job hook: one job at a time in the VM, whichever repository it belongs to. Without it the cleanup that runs between jobs
+  (remove every container) would kill the containers of a job running for the other repository, and the two would share Docker and ports (`due-card`
+  publishes the Postgres port of the host). The hook tells the start from the end of a job by who holds the lock, so one file serves both and could be swapped
+  in place while a job was running, with no runner restart.
+- Considered: a second VM for `due-card` (about 4 GB less for the desktop, more to maintain); no lock and run both at once (cleanups kill the other's containers,
+  and Gradle plus Playwright plus Elixir at once do not fit in 6 GB); waiting until `due-card` burns minutes again (it had none this month). Rejected.
+- Cost: jobs of the two repos wait for each other. Dependabot adds up: touching its configuration made four pull requests refresh at once and the queue of about
+  25 jobs took half an hour to drain.
+- `erlef/setup-beam` needs `ImageOS=ubuntu24` in the runner's environment on a self-hosted machine; it passed the first time on Ubuntu 26.04.
