@@ -1,12 +1,12 @@
 # System state
 
-The current state of the laptop: what is installed and configured, what is
+The current state of this machine (the Ryzen 9 desktop): what is installed and configured, what is
 pending and what is known to be broken. Claude Code reads this at the start of
 every session; keep it short and true, and update it in the same commit as
 the change it describes. History goes in CHANGELOG.md, reasons in
 DECISIONS.md.
 
-_Last updated: 2026-10-17_
+_Last updated: 2026-10-18_
 
 ## Machine
 - Ryzen 9 desktop (the 1 TB NVMe, Crucial P310, moved here from the ThinkPad X13 on 2026-10-17; it was the laptop's disk since
@@ -24,8 +24,9 @@ _Last updated: 2026-10-17_
   One VM, `ci-runner`: Ubuntu Server 26.04.1, 6 vCPU, 6 GB, 80 GB, UEFI, CPU shares 256, autostart. It hosts a persistent GitHub Actions
   runners for the private repos `mock-oclock` and `due-card` (one runner each, label `ryzen-vm`; the repository variable `CI_RUNS_ON` of each
   switches its CI between the VM and GitHub's runners; a lock makes the two repos share the VM one job at a time). Two password-protected web panels for it (the runner's current step, the VM's load) are served by nginx on this
-  desktop and reachable from the home network only (ufw). The VM may use 6 GB of the 16 GB of RAM and gives back what it frees (free page reporting on its memory balloon, 2026-10-17): idle it holds about 1.6 GiB of the host, not 5.7; with the 32 GB planned it is comfortable. Runbook and addresses: home-infra
+  desktop and reachable from the home network only (ufw). The VM may use 6 GB of the 14 GiB of RAM and gives back what it frees (free page reporting on its memory balloon, 2026-10-17): idle it holds about 1.6 GiB of the host, not 5.7; with the 32 GB planned it is comfortable. Runbook and addresses: home-infra
   `runbooks/ci-runner.md` (private repo). The suspend setting must stay off while it serves CI.
+- Containers (2026-10-18): rootless Podman 5.7 and `podman-compose` (no daemon; no recommends), for the projects of ~/Zeke_projects/ia_general_workflow_improvement (the code index `ia01` image builds and runs). Cargo/rustc 1.99 come from rustup in ~/.cargo (not on PATH by default: `export PATH=$HOME/.cargo/bin:$PATH`).
 
 ## Desktop
 - xmonad: action catalog in xmonad.hs, shortcuts in ~/.xmonad/keys.conf,
@@ -95,11 +96,11 @@ _Last updated: 2026-10-17_
   updates when Claude is opened in ~ (~/dotfiles and claude-tools are implicit).
 - ~/CLAUDE.md (dotfiles package `claude`) holds the standing instructions and
   imports ~/.claude/STATE.local.md, a per-machine symlink to this file (the
-  laptop) or to the desktop's own state file; the link is not in the repo.
+  Ryzen 9 desktop) or to another machine's own state file; the link is not in the repo.
   Claude's own memory is in ~/.claude/projects/-home-zeke/memory/.
 
 ## In progress
-Making Claude Code sessions easier to launch and to share between this laptop
+Making Claude Code sessions easier to launch and to share between the Ryzen 9 desktop
 and the Arch desktop, one step at a time (I decide each step before it is built):
 1. DONE: `claude-pick`, a rofi launcher on Super+a (folder, then session) showing
    the context usage of each folder's last session and suggesting a new session
@@ -178,7 +179,7 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
    c) Sharing Claude sessions between the machines (A: do not share, recommended for now;
       B: private repo with a sync script; C: Syncthing; D: rsync over ssh). The names
       already work across machines.
-   d) Harden ssh on the laptop and the Arch desktop: keys first, then passwords off and a
+   d) Harden ssh on this desktop and the Arch desktop: keys first, then passwords off and a
       firewall rule for the LAN only (the details are in home-infra).
    e) Open claude-pick sessions inside tmux so the phone can attach to them.
 9. LATER, a private repo for Claude's memory and settings (memory/,
@@ -188,7 +189,7 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
 - CI runner VM (2026-10-17): `mock-oclock` (pull request 82, ADR 046 and 047) and `due-card` (ADR 0028 in that repo) run their CI on it
   while `CI_RUNS_ON` is set. The panels are plain HTTP on the home network: not tried over the VPN. Not tried yet: a second runner per repo so
   two jobs overlap (the lock allows one at a time in the VM), and an ephemeral runner. Not tried yet: a second runner so two jobs overlap, and an ephemeral runner (needs a host-side
-  controller so no GitHub token lives in the VM). Whether suspend is really off on this desktop has not been checked.
+  controller so no GitHub token lives in the VM). Suspend: systemd's suspend.target is not masked, so it is not proven off; check before relying on the VM overnight.
 - Hyprland (2026-10-17): installed system-wide; the trial is the user `zeke-hypr` (admin; pick "Hyprland" at the login screen),
   config in its `hyprland` branch (step 1: Catppuccin, xmonad shortcuts, waybar). Not tried on screen yet. Ported next, if it is kept:
   keybinds/keys-editor, dropdown terminal, web-app panels (WebAppCrop is xmonad-only), the six scripts that use xdotool.
@@ -250,10 +251,10 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
   lives on GitLab; the public repos (dotfiles, claude-tools, webapps) stay on GitHub. GitLab
   is reached over ssh with a key that ~/.ssh/config offers for gitlab.com only.
 - Arch desktop (2026-10-08): fully updated and on the shared configuration: dotfiles on `main` (the old edits are kept in branch `arch-local`), stowed with `--no-folding`: xmonad polybar bin alacritty tmux rofi dunst gtk qt x11 xdg micro picom starship. Not stowed there: nvim, bash (its own .bashrc), claude, webapps, copyq. Picom is off there (`~/.config/picom/disabled`). alacritty, micro, scrcpy, android-tools and Papirus installed; SDDM with the Catppuccin pink theme on one monitor (`system/arch/sddm-setup.sh`); hot-plug of monitors works through the shared xmonad.hs. Still to do there: its own STATE file (step 5) and trying everything on screen.
-- Arch desktop: ssh access from this laptop is set up and claude-tools and webapps are
+- Arch desktop: ssh access from this desktop is set up and claude-tools and webapps are
   installed there; Super+a there is one line in its own xmonad.hs, compiled, and needs
   `xmonad --restart` on that machine to load. Details in home-infra.
-- ssh: hardening is planned for this laptop and the Arch desktop (keys first, then passwords
+- ssh: hardening is planned for this desktop and the Arch desktop (keys first, then passwords
   off and a firewall rule for the LAN only). The current state and the plan are in home-infra.
 
 ## Known issues
