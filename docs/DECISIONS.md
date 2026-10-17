@@ -352,3 +352,16 @@ free, separate from the system disk); allowing any change on it (the reasons of 
 hold: a heavy job would starve the network of the whole house, and Docker rewrites firewall rules
 there). Why: the risk the rule guards against is load and broken routing, and a static file in
 a user's home adds neither.
+
+## 2026-10-17: the laptop moves to Ubuntu 26.04; NetworkManager is switched with a reboot, not `netplan apply`
+- Decided: Ubuntu Server 26.04 (minimized) plus the dotfiles desktop, built by scripts/ubuntu-post-install.sh and the
+  backup on the gateway, driven over ssh from the Arch desktop (the plan said the gateway, but the router should run
+  nothing, so it only served the backup). Kept from the earlier plan: ext4, no snaps, ufw, NetworkManager.
+- NetworkManager takes over the network only by a reboot. Two attempts with `netplan apply` while systemd-networkd
+  and NM both ran left two wpa_supplicants fighting for the card and the laptop off the network. What worked: write the
+  NM netplan file, disable systemd-networkd, enable NetworkManager, reboot, with a boot-time fallback unit that
+  restores the old netplan if there is no default route after 4 minutes.
+- Restoring Brave profiles copies Chromium's `SingletonLock` (it names the old host); delete the `Singleton*` links or
+  the browser waits forever (it blocked `findajob`).
+- Cloning the old Wi-Fi MAC to get the reserved address `.20` back did not work, so the laptop keeps a new address.
+  To get a fixed one, change the router reservation to the new MAC (c0:3c:59:ed:84:f1).

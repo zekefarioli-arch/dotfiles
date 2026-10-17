@@ -8,8 +8,9 @@
 # Switches (environment variables), all off by default because each can cut the network or
 # lock me out, or is heavy:
 #   NM_NETPLAN=1        let NetworkManager manage the network (Ubuntu Server uses systemd-networkd).
-#                       Needed for Wi-Fi and the wg-home VPN. Moves the netplan files aside; apply with
-#                       `sudo netplan apply` from the console, not over ssh.
+#                       Needed for Wi-Fi and the wg-home VPN. Moves the netplan files aside and turns
+#                       systemd-networkd off; REBOOT to apply it. `netplan apply` with both daemons
+#                       running left two wpa_supplicants fighting and the laptop off the network (2026-10-17).
 #   LAN_CIDR=x.x.x.x/24 turn on ufw: deny incoming, allow ssh from that range only, allow KDE Connect.
 #                       The real range is in the private repo home-infra.
 #   NO_SSH_PASSWORD=1   turn off ssh passwords (only if ~/.ssh/authorized_keys has a key).
@@ -144,7 +145,10 @@ if [[ ${NM_NETPLAN:-0} == 1 ]]; then
   # cloud-init would write the old network config back at the next boot
   [[ -d /etc/cloud/cloud.cfg.d ]] &&
     echo 'network: {config: disabled}' | sudo tee /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg >/dev/null
-  echo "    Apply it from the console (not over ssh): sudo netplan apply"
+  sudo systemctl enable NetworkManager
+  sudo systemctl disable systemd-networkd systemd-networkd.socket
+  echo "    Reboot to apply it (not netplan apply). Restore the NM Wi-Fi profile first, or the Wi-Fi will not come back."
+  echo "    After restoring Brave profiles, delete their Singleton* links or the browser waits forever." 
   echo "    To undo: put the files of /etc/netplan.pre-nm back and remove 01-network-manager.yaml"
 fi
 

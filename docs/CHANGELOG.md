@@ -8,6 +8,9 @@ I can read in a minute. Add a line in the same commit as the change.
 - Rule for the router (hs-gateway) loosened at my request: Claude may write files in my home directory there when I ask for it (the migration backup); services, CI, containers and its firewall or Docker setup stay off limits. DECISIONS.md has the entry.
 - Planning the move of the laptop from Fedora 44 to Ubuntu Server 26.04 LTS: docs/UBUNTU-MIGRATION.md has the install steps, the Fedora-to-Ubuntu package map (checked against the Ubuntu index), what to restore and the risks, and scripts/ubuntu-post-install.sh installs it all (checked, not yet run). `findajob-login` is now a private GitLab project and a backup of /home and of the system files is on the gateway.
 
+## 2026-10-17
+- The laptop runs Ubuntu 26.04 LTS instead of Fedora 44: packages installed with scripts/ubuntu-post-install.sh, home and settings restored from the backup on the gateway, NetworkManager manages Wi-Fi, printers, scanner, `wg-home` VPN, `findajob`, xmonad (0.18.0), polybar and picom checked. See DECISIONS.md.
+
 ## 2026-10-14
 - Decision recorded (nothing installed): the CI runner will live in a Debian VM on the new Ryzen desktop, whose host stays Fedora for work. See DECISIONS.md.
 - Decision recorded (nothing installed): pipelines for private repos spend fewer GitHub minutes first, and any self-hosted runner goes on a dedicated machine in an ephemeral, limited container, never on the router. See DECISIONS.md.

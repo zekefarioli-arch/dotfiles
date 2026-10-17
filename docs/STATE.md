@@ -12,9 +12,13 @@ _Last updated: 2026-10-16_
 - Lenovo ThinkPad X13 Gen 1 AMD (20UGS2Q500), 30 GiB RAM, 1 TB NVMe (Crucial P310, replaced on 2026-10-13: the old 236 GB layout
   was copied and p3, the btrfs root and /home, grown to the end of the disk).
 - BIOS R1CET79W (1.48).
-- Fedora 44, kernel 7.2.x, btrfs root with snapper snapshots.
-- Wi-Fi only; timezone Europe/London, set
-  automatically by a NetworkManager dispatcher script.
+- Ubuntu 26.04 LTS (server install, minimized, plus the desktop of these dotfiles), kernel 7.0.x, ext4 on LVM
+  (replaced Fedora 44 on 2026-10-17; plan and package map in docs/UBUNTU-MIGRATION.md; the old Fedora
+  disk is kept in a USB enclosure). Hostname `zeke-thinkpad`; ufw on (ssh from the LAN only).
+- Wi-Fi only (`CASITA_5G`), managed by NetworkManager through netplan; timezone Europe/London, set
+  automatically by a NetworkManager dispatcher script. The address is now whatever the router gives
+  (192.168.0.58 on 2026-10-17): the old reservation `.20` was bound to the Wi-Fi MAC of the Fedora
+  install and cloning that MAC did not bring it back.
 - User `zeke`; LightDM starts the xmonad session.
 
 ## Desktop
@@ -173,6 +177,14 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
    settings.json, keybindings.json, skills), not decided.
 
 ## Pending
+- Ubuntu migration, still open (2026-10-17): ssh passwords are still on and
+  /etc/sudoers.d/zeke-nopasswd (setup convenience) is still there; turn passwords off
+  (`/etc/ssh/sshd_config.d/10-no-password.conf`) and remove the sudoers file when the setup is accepted.
+  Antigravity IDE is not reinstalled (the backup left it out; the symlink in ~/.local/bin is broken).
+  Not tried on screen yet: the look of the bars and picom's rules, Super+Ctrl+T, `findajob` with Alt+G,
+  Super+O, sound, brightness and the lid. Keyboard layout is `gb`; say if it should be another.
+  The backup on hs-gateway (~/migration-2026-10-16, holds private keys) is still to delete when you are sure.
+  Delete the stray /etc/sudoers.d/zeke-nopasswd. on the Arch desktop (created by mistake).
 - Migration to Ubuntu Server 26.04 LTS planned (docs/UBUNTU-MIGRATION.md): the old 236 GB disk is kept as the way back, the backup is on the gateway. scripts/ubuntu-post-install.sh is written and checked but not run; ext4 chosen; the picom 12.5 check is for after the install. This file describes Fedora until the move is done.
 - Firmware: BIOS 1.54 and Secure Boot KEK/UEFI CA 2023 plus dbx updates are
   available. Needs the charger plugged in: `sudo fwupdmgr update`.
