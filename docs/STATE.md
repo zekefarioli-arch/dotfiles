@@ -27,6 +27,7 @@ _Last updated: 2026-10-18_
   desktop and reachable from the home network only (ufw). The VM may use 6 GB of the 14 GiB of RAM and gives back what it frees (free page reporting on its memory balloon, 2026-10-17): idle it holds about 1.6 GiB of the host, not 5.7; with the 32 GB planned it is comfortable. Runbook and addresses: home-infra
   `runbooks/ci-runner.md` (private repo). The suspend setting must stay off while it serves CI.
 - Containers (2026-10-18): rootless Podman 5.7 and `podman-compose` (no daemon; no recommends), for the projects of ~/Zeke_projects/ia_general_workflow_improvement (the code index `ia01` image builds and runs). Cargo/rustc 1.99 come from rustup in ~/.cargo (not on PATH by default: `export PATH=$HOME/.cargo/bin:$PATH`).
+- MCP (2026-10-18): the code index `ia01` (repo code-index-mcp) is registered as `ia01` in Claude Code (user scope) and in `agy`; `~/.local/bin/ia01-mcp` starts its Podman container for the folder you are in (read-only, no network). Only Python is parsed so far.
 
 ## Desktop
 - xmonad: action catalog in xmonad.hs, shortcuts in ~/.xmonad/keys.conf,

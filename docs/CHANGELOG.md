@@ -158,6 +158,7 @@ I can read in a minute. Add a line in the same commit as the change.
 ## 2026-10-18
 - Rule for the router (hs-gateway) loosened again at my request: light services and containers with limits may run there while it has spare capacity; CI runners, build jobs, untrusted code and changes to its firewall or existing Docker setup stay off limits. DECISIONS.md has the entry.
 - Podman (rootless, with podman-compose) and Rust (rustup, in ~/.cargo) installed for the ia_general_workflow_improvement projects; decision in that repo's docs/decisiones.md.
+- MCP server `ia01` (code index: symbol search, definitions, callers) registered in Claude Code and agy; runs in Podman through `ia01-mcp`. Repo: zekefarioli-arch/code-index-mcp (private).
 
 ## 2026-01 to 2026-05 (previous machine)
 - First XMonad, Polybar and Qtile configs; multi-monitor bar launcher,
