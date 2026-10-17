@@ -1,0 +1,14 @@
+# Antigravity IDE (an Electron app unpacked in ~/.local/opt) needs to create user namespaces for
+# its sandbox; Ubuntu 24.04+ denies that to unknown binaries (kernel.apparmor_restrict_unprivileged_userns=1).
+# Same shape as the profiles that ship for brave, chrome and code: it only names this one binary and
+# lets it use userns, it confines nothing else. Narrower than --no-sandbox, which turns the sandbox off.
+# Install: sudo install -m 644 system/etc/apparmor.d/antigravity-ide /etc/apparmor.d/ &&
+#          sudo apparmor_parser -r /etc/apparmor.d/antigravity-ide
+abi <abi/4.0>,
+include <tunables/global>
+
+profile antigravity-ide /home/*/.local/opt/antigravity-ide/antigravity-ide flags=(unconfined) {
+  userns,
+
+  include if exists <local/antigravity-ide>
+}

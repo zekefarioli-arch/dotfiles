@@ -94,6 +94,11 @@ For the full calendar I use a separate Brave profile that works as its own app (
 The profile has its own window class, extensions, theme and Google login, and xmonad pushes Brave's tabs and address bar off the top of the screen (the same `WebPanel-*` rule as `webapp --panel`), so it looks like an app and stays in the layout; it used to be fullscreen, which covered the bar and did not fit xmonad's layouts. I first tried a real app window (`brave --app`, which is also what tools such as Web App Hub create), but app windows have no side panel, and the Claude extension needs normal windows for its tab groups, so it cannot run there. The script's header lists the first-run steps.
 
 ## Claude launcher
+`machine` shows and changes the name and the fixed address of the computer (the disk may move to another one):
+`machine status`, `machine name NAME [--hostname]` and `machine ip N`. The address is a DHCP reservation in the router: the tool
+checks the number (1-254, not taken, not in the DHCP pool, not answering) and prints the command to run; it does not
+write to the router. The taken numbers are in `home-infra/config/machine-network.conf` (private repo, linked as `~/.config/machine/network.conf`).
+
 
 `Super + a` opens `claude-pick`, a rofi launcher for Claude Code: it lists the folders where Claude has worked, shows how full the context of each session is, marks folders with unpushed or uncommitted work, and brings a project up to date from GitHub before a session starts. It lives in its own repository, [claude-tools](https://github.com/zekefarioli-arch/claude-tools), cloned in `~/Zeke_projects/claude-tools` and installed with its `install.sh`, because it has nothing specific to this laptop and has to work on the Arch desktop as well.
 

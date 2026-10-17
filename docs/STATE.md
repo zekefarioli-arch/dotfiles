@@ -75,6 +75,9 @@ _Last updated: 2026-10-16_
   /etc/sane.d/airscan.conf. Setup: scripts/setup-printers.sh.
 
 ## Claude Code
+- `machine` (bin/.local/bin/machine, linked in ~/.local/bin): name label for `claude-new` (now `temp-zeke-thinkpad`, the disk
+  goes to the new desktop later), and `machine ip N` to choose a fixed address; its private list of taken numbers is
+  home-infra/config/machine-network.conf, linked as ~/.config/machine/network.conf. The router reservation for this laptop is not made yet (it still gets .58 by DHCP).
 - The session tools live in their own repo, github.com/zekefarioli-arch/claude-tools
   (cloned in ~/Zeke_projects/claude-tools, linked into ~/.local/bin by its
   install.sh): `claude-new` (sessions named <path>_NNN@<machine>, path = the
@@ -181,7 +184,9 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
 - Ubuntu migration, still open (2026-10-17): ssh passwords are still on and
   /etc/sudoers.d/zeke-nopasswd (setup convenience) is still there; turn passwords off
   (`/etc/ssh/sshd_config.d/10-no-password.conf`) and remove the sudoers file when the setup is accepted.
-  Antigravity IDE is not reinstalled (the backup left it out; the symlink in ~/.local/bin is broken).
+  Antigravity IDE 1.107 (tarball 2.5.5) and the CLI `agy` 1.4.0 are installed again (2026-10-17); the IDE still needs its AppArmor profile
+  (`system/etc/apparmor.d/antigravity-ide`, installed in /etc/apparmor.d on 2026-10-17, steps in its header) or Ubuntu blocks its sandbox.
+  Both are signed in; `agy --print "/usage" --output-format json --mode plan < /dev/null` shows the quota left.
   Not tried on screen yet: the look of the bars and picom's rules, Super+Ctrl+T, `findajob` with Alt+G,
   Super+O, sound, brightness and the lid. Keyboard layout is `gb`; say if it should be another.
   The backup on hs-gateway (~/migration-2026-10-16, holds private keys) is still to delete when you are sure.

@@ -365,3 +365,20 @@ a user's home adds neither.
   the browser waits forever (it blocked `findajob`).
 - Cloning the old Wi-Fi MAC to get the reserved address `.20` back did not work, so the laptop keeps a new address.
   To get a fixed one, change the router reservation to the new MAC (c0:3c:59:ed:84:f1).
+
+## 2026-10-17: `machine`, a tool for the name and the fixed address; reservation in the router, not a static address
+- Decided: a small tool (bin/.local/bin/machine) because the disk moves between computers. The address is a DHCP
+  reservation in the router (dnsmasq, runbook dhcp-reservation in home-infra); the tool picks a free number, refuses
+  the taken ones and prints the command, and never writes to the router (hs-gateway stays read-only for Claude).
+- Considered: a static address in NetworkManager on the machine (works without the router, but can clash with the
+  pool or another machine and spreads address management over every computer). Rejected.
+- The taken numbers and the pool live in the private repo home-infra (config/machine-network.conf), linked as
+  ~/.config/machine/network.conf, because dotfiles is public and the home addresses are private; the tool refuses to pick
+  a number if the list is missing. The pool range is refused too, so a reserved number is never handed out.
+- A reservation is by MAC: when the disk goes to another computer the network card changes, so the tool has to be run
+  again there. Numbers .20 and .21 stay refused: they are still reserved in the router for the old MACs.
+
+## 2026-10-17: CopyQ without a tray icon in Polybar
+- Decided: leave it. CopyQ 13 is built on Qt6, which only speaks StatusNotifier, while Polybar's tray is XEmbed only; Ubuntu has no
+  `snixembed` package. It works the same through `Super+V` (`copyq toggle`).
+- Considered: building snixembed from source (needs valac and GTK dev packages just to compile; against keeping the system light).

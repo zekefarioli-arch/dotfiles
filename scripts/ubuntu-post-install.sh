@@ -48,7 +48,7 @@ apt_install alacritty terminator tmux starship micro vim neovim ripgrep fd-find 
 
 echo "==> Desktop apps, themes and fonts"
 apt_install thunar pcmanfm mousepad atril mupdf galculator gparted simple-scan flameshot \
-  copyq kdeconnect scrcpy adb kmag zbar-tools imagemagick gvfs \
+  copyq copyq-plugins kdeconnect scrcpy adb kmag zbar-tools imagemagick gvfs \
   python3 python3-gi gir1.2-gtk-3.0 python3-icalendar python3-dateutil \
   papirus-icon-theme qt5ct qt6ct qt5-style-kvantum qt6-style-kvantum \
   gtk2-engines-murrine sassc xdg-desktop-portal-gtk dconf-cli libglib2.0-bin \

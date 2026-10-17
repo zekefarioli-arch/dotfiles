@@ -9,6 +9,9 @@ I can read in a minute. Add a line in the same commit as the change.
 - Planning the move of the laptop from Fedora 44 to Ubuntu Server 26.04 LTS: docs/UBUNTU-MIGRATION.md has the install steps, the Fedora-to-Ubuntu package map (checked against the Ubuntu index), what to restore and the risks, and scripts/ubuntu-post-install.sh installs it all (checked, not yet run). `findajob-login` is now a private GitLab project and a backup of /home and of the system files is on the gateway.
 
 ## 2026-10-17
+- CopyQ now stores screenshots and other images: Ubuntu ships the image plugin in `copyq-plugins` (added to ubuntu-post-install.sh). Its tray icon does not show in Polybar (CopyQ 13 is Qt6, SNI only, and Ubuntu has no snixembed); I left it that way, `Super+V` opens it.
+- Antigravity is back: IDE from Google's tarball in ~/.local/opt/antigravity-ide and the CLI `agy` from Google's installer (checksum verified; I removed the PATH lines it added to .bashrc, .bash_profile and .profile). The IDE needs an AppArmor profile to start (system/etc/apparmor.d/antigravity-ide).
+- New `machine` tool: `machine status`, `machine name NAME [--hostname]` and `machine ip N` (picks the last byte of a fixed address, refuses numbers taken by the house or inside the DHCP pool, checks it is free and prints the router command; it never writes to the router). This laptop's session label is now `temp-zeke-thinkpad` because its disk will move to the new desktop.
 - Terminal font size 11 -> 8.5 (the laptop screen is 166 ppp at 96 dpi, so 11 looked huge).
 - Ubuntu: the brightness keys needed a udev rule (system/etc/udev/rules.d/90-brightnessctl.rules) and the `video` group; log out and in once to use them.
 - The bar vanished after a login once; launch-bars.sh now logs polybar's output to $XDG_RUNTIME_DIR/polybar.log so the cause shows if it happens again.

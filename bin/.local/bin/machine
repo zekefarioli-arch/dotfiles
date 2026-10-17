@@ -1,0 +1,169 @@
+#!/usr/bin/env python3
+"""Name and fixed address of this machine (the disk moves between computers).
+
+  machine status             name, hostname, address, MAC and the reserved numbers
+  machine name NAME [--hostname]
+                             label for claude-new sessions (and the hostname with --hostname)
+  machine ip N               pick the last byte N (1-254) for this machine's address: checks
+                             that it is allowed and free, and prints the line to reserve it
+  machine ip --renew         reconnect Wi-Fi/Ethernet to pick the reserved address up
+
+Why a reservation in the router (DHCP) and not a static address on the machine: decided on
+2026-10-17, the router stays the one place where addresses are managed. This tool never
+writes to the router (hs-gateway is read-only for Claude); it prints the command to run.
+The taken numbers are in ~/.config/machine/network.conf, outside the repo because it is
+public and the home addresses are private.
+"""
+import os
+import re
+import subprocess
+import sys
+
+CONF = os.path.expanduser("~/.config/machine/network.conf")
+LABEL = os.path.expanduser("~/.config/claude-new/machine")
+
+
+def read_conf(path=CONF):
+    conf = {}
+    try:
+        with open(path) as f:
+            for line in f:
+                line = line.split("#", 1)[0].strip()
+                if "=" in line:
+                    k, v = line.split("=", 1)
+                    conf[k.strip()] = v.strip()
+    except OSError:
+        pass
+    return conf
+
+
+def reserved_numbers(conf):
+    return {int(x) for x in conf.get("reserved", "").split(",") if x.strip().isdigit()}
+
+
+def pool_range(conf):
+    m = re.fullmatch(r"(\d+)-(\d+)", conf.get("pool", ""))
+    return (int(m[1]), int(m[2])) if m else None
+
+
+def check_number(text, conf):
+    """Return (number, None) if allowed, else (None, reason)."""
+    if not text.isdigit():
+        return None, "it has to be a number from 1 to 254"
+    n = int(text)
+    if not 1 <= n <= 254:
+        return None, "it has to be from 1 to 254 (0 is the network, 255 the broadcast)"
+    if n in reserved_numbers(conf):
+        return None, f".{n} is already taken by a machine of the house"
+    pool = pool_range(conf)
+    if pool and pool[0] <= n <= pool[1]:
+        return None, f".{n} is inside the DHCP pool ({pool[0]}-{pool[1]}): the router could hand it out"
+    return n, None
+
+
+def valid_name(name):
+    return re.fullmatch(r"[a-z0-9][a-z0-9-]{0,62}", name) is not None
+
+
+def run(*cmd):
+    return subprocess.run(cmd, capture_output=True, text=True).stdout.strip()
+
+
+def mac_of(dev):
+    # nmcli -g escapes the colons ("C0\\:3C\\:...")
+    return run("nmcli", "-g", "GENERAL.HWADDR", "device", "show", dev).replace("\\:", ":")
+
+
+def active_device():
+    """(device, connection) of the default route, e.g. ('wlp3s0', 'CASITA_5G')."""
+    dev = run("sh", "-c", "ip route show default | awk '{for(i=1;i<NF;i++) if($i==\"dev\"){print $(i+1); exit}}'")
+    conn = run("nmcli", "-g", "GENERAL.CONNECTION", "device", "show", dev) if dev else ""
+    return dev, conn
+
+
+def current_label():
+    try:
+        with open(LABEL) as f:
+            return f.readline().strip()
+    except OSError:
+        return ""
+
+
+def cmd_status(conf):
+    dev, conn = active_device()
+    print(f"claude-new label: {current_label() or '(machine-id)'}")
+    print(f"hostname:         {run('hostname')}")
+    print(f"connection:       {conn or '-'} on {dev or '-'}")
+    if dev:
+        print(f"address:          {run('sh', '-c', f'ip -4 -br a show {dev} | tr -s " " | cut -d" " -f3')}")
+        print(f"MAC:              {mac_of(dev)}")
+    print(f"taken numbers:    {sorted(reserved_numbers(conf)) or '(no ~/.config/machine/network.conf)'}")
+
+
+def cmd_name(args):
+    host = "--hostname" in args
+    names = [a for a in args if a != "--hostname"]
+    if len(names) != 1 or not valid_name(names[0]):
+        sys.exit("usage: machine name NAME [--hostname]   (lowercase letters, digits and dashes)")
+    os.makedirs(os.path.dirname(LABEL), exist_ok=True)
+    with open(LABEL, "w") as f:
+        f.write(names[0] + "\n")
+    print(f"claude-new label: {names[0]}")
+    if host:
+        subprocess.run(["sudo", "hostnamectl", "set-hostname", names[0]], check=True)
+        print(f"hostname: {names[0]} (also edit the 127.0.1.1 line of /etc/hosts if there is one)")
+
+
+def cmd_ip(args, conf):
+    dev, conn = active_device()
+    if args == ["--renew"]:
+        if not conn:
+            sys.exit("no active connection")
+        subprocess.run(["nmcli", "connection", "up", conn], check=True)
+        return cmd_status(conf)
+    if len(args) != 1:
+        sys.exit("usage: machine ip N | machine ip --renew")
+    if not reserved_numbers(conf):
+        # Without the list any number would pass, and a clash cuts another machine off.
+        sys.exit(f"no list of taken numbers: {CONF} is missing or empty "
+                 "(link it to home-infra/config/machine-network.conf)")
+    n, why = check_number(args[0], conf)
+    if why:
+        sys.exit(f"no: {why}")
+    me = run("sh", "-c", f"ip -4 -br a show {dev} | tr -s ' ' | cut -d' ' -f3 | cut -d/ -f1")
+    prefix = me.rsplit(".", 1)[0]
+    ip = f"{prefix}.{n}"
+    if subprocess.run(["ping", "-c", "1", "-W", "1", ip], capture_output=True).returncode == 0 and ip != me:
+        sys.exit(f"no: {ip} answers to ping, somebody is using it")
+    mac = mac_of(dev).lower()
+    label = current_label() or run("hostname")
+    line = f"dhcp-host={mac},{ip},{label}"
+    router = conf.get("router")
+    print(f"{ip} is allowed and free. MAC to reserve: {mac}\n")
+    if router:
+        print("Run this on this laptop (it asks for your sudo password on the router):\n")
+        print(f"  ssh -t zeke@{router} \"echo '{line}' | sudo tee -a /etc/dnsmasq.d/10-reservas.conf && "
+              "sudo dnsmasq --test -7 /etc/dnsmasq.d,.dpkg-dist,.dpkg-old,.dpkg-new && "
+              "sudo systemctl restart dnsmasq && echo RESTARTED\"\n")
+    else:
+        print(f"Add this line to /etc/dnsmasq.d/10-reservas.conf on the router:\n\n  {line}\n")
+    print("Then run: machine ip --renew")
+    print("If the disk moves to another computer, the MAC changes with the network card: "
+          "run this again there.")
+
+
+def main(argv):
+    conf = read_conf()
+    cmd, args = (argv[1], argv[2:]) if len(argv) > 1 else ("status", [])
+    if cmd == "status":
+        cmd_status(conf)
+    elif cmd == "name":
+        cmd_name(args)
+    elif cmd == "ip":
+        cmd_ip(args, conf)
+    else:
+        sys.exit(__doc__)
+
+
+if __name__ == "__main__":
+    main(sys.argv)
