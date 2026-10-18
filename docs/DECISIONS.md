@@ -526,3 +526,16 @@ has idle capacity and I accept the risk for small services); allowing anything (
 job or a PR's code on the router would starve or expose the whole house, the reasons of
 2026-10-14). This loosens the "no services or containers" part of the 2026-10-14 and 2026-10-16
 entries; the rest stands.
+
+## 2026-10-18: the Ryzen 9 desktop's root volume grows to 300 GB, not to the whole disk
+- Decided (this machine only; the ThinkPad and the Arch desktop have their own disks and state files): extend `ubuntu-vg/ubuntu-lv` from 100 GB to 300 GB with `lvextend -r -L +200G` (online,
+  ext4). The disk is 931 GB; the installer had allocated 100 GB and left 828 GB unassigned, so `/`
+  showed 86% used with 80 GB in use. Largest users: the CI VM disk (34 GB of its 80 GB limit),
+  Claude Desktop's VM bundle (12 GB), Podman images and the Rust build directory.
+- Considered: extending to the whole disk (nothing is gained today and it removes the free
+  space for another volume or LVM snapshots; an ext4 volume is easy to grow and hard to shrink);
+  extending by 300 GB (more than the expected need of about 150 to 190 GB: current use, the CI VM
+  growing to its limit, the models and indexes of the projects to come); only cleaning up (about
+  6 GB, and the CI VM can still grow into what is left).
+- Later: grow again the same way if needed; the unassigned space is the reserve.
+

@@ -12,7 +12,7 @@ _Last updated: 2026-10-18_
 - Ryzen 9 desktop (the 1 TB NVMe, Crucial P310, moved here from the ThinkPad X13 on 2026-10-17; it was the laptop's disk since
   2026-10-13). Hostname `zeke-ryzen9-desktop`. The ThinkPad no longer has this system. 14 GiB RAM now, a 32 GiB upgrade is
   planned. KVM works (AMD-V, `kvm_amd` loaded). Other hardware details: not written down yet.
-- Ubuntu 26.04 LTS (server install, minimized, plus the desktop of these dotfiles), kernel 7.0.x, ext4 on LVM
+- Ubuntu 26.04 LTS (server install, minimized, plus the desktop of these dotfiles), kernel 7.0.x, ext4 on LVM (the root volume is 300 GB of the 931 GB disk, extended from the installer's 100 GB on 2026-10-18; about 628 GB stay unassigned in the volume group `ubuntu-vg` for later: `sudo lvextend -r -L +NG /dev/ubuntu-vg/ubuntu-lv`)
   (replaced Fedora 44 on 2026-10-17; plan and package map in docs/UBUNTU-MIGRATION.md; the old Fedora
   disk is kept in a USB enclosure). Hostname `zeke-ryzen9-desktop` (was `zeke-thinkpad`); ufw on (ssh from the LAN only).
 - Wired (`eno1`, MAC 30:c5:99:d2:3b:ee), managed by NetworkManager through netplan; timezone Europe/London, set
