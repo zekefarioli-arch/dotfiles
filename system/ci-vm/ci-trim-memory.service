@@ -1,0 +1,13 @@
+# CI virtual machine only. See ci-trim-memory.sh for what it does and how to install it.
+[Unit]
+Description=Give unused memory of the CI VM back to the host when no job is running
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/ci-trim-memory.sh
+# It must never get in the way of a job that starts meanwhile.
+Nice=19
+IOSchedulingClass=idle
+PrivateTmp=yes
+ProtectHome=yes
+NoNewPrivileges=yes

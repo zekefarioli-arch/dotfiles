@@ -1,0 +1,13 @@
+# CI virtual machine only. See ci-trim-memory.sh.
+[Unit]
+Description=Every minute, give unused memory of the CI VM back to the host when it is idle
+
+[Timer]
+# After a boot nothing is cached yet; the first look comes later.
+OnBootSec=15min
+# Cheap: it exits at once unless the VM has been idle for a couple of minutes with cache to give back.
+OnUnitActiveSec=1min
+AccuracySec=10s
+
+[Install]
+WantedBy=timers.target
