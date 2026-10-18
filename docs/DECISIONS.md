@@ -539,3 +539,37 @@ entries; the rest stands.
   6 GB, and the CI VM can still grow into what is left).
 - Later: grow again the same way if needed; the unassigned space is the reserve.
 
+## 2026-10-18: `ci-status` reads each runner from its systemd service, over ssh
+- Decided: one ssh call to the VM (as `ci`, with the existing key, non-interactive) reads, per runner
+  service (`actions.runner.<owner>-<repo>.<name>`), the cgroup's `anon` memory (its processes and its
+  jobs), `file` (cache the kernel gives back) and peak, and whether a `Runner.Worker` (a job) is running.
+  The memory the VM holds on this desktop comes from its qemu process in /proc; `gh` adds the runs waiting.
+  Shown as a notification on Super+C, like Super+I.
+- Why: the runner is a service, so its cgroup contains exactly its own processes and its jobs; a
+  per-process view cannot tell which runner a job belongs to (both run as the same user).
+  `file` is shown apart because it was most of what a runner "used" (1.1 GiB of 1.3 GiB when idle).
+- Considered: Glances' web API on the VM (works without ssh, but has no parent process, so the
+  memory of a job cannot be assigned to its runner); the QEMU guest agent (not configured in the VM);
+  the nginx panels (behind a password, built for the eye); the host's view alone (it only sees the whole VM).
+- Not done: making the VM give memory back by itself when no runner is busy. Free page reporting is
+  on (in the VM definition and in QEMU) and returns only large contiguous blocks, so the VM keeps
+  about 5 GiB after a job. A timer that shrinks and restores the balloon while idle was proposed and is waiting for an answer.
+
+## 2026-10-18: Super+Q compiles first, restarts only on success, and shows the error in a terminal window
+- Decided: the action `restart-xmonad` runs `xmonad-reload`: `xmonad --recompile`, then `xmonad --restart`
+  only if the first succeeded. On failure: no restart (the running xmonad is untouched), the formatted error
+  goes to the clipboard, to a floating alacritty window (class `xmonad-error`, centred in xmonad.hs) and to
+  a critical notification; on success a notification says "xmonad configuration reloaded".
+- Why: with `;` the restart happened even when the compilation failed, and nothing said so. A terminal
+  window, not a notification, because its text can be selected and copied (the user asked for that); the
+  message is the file and place, GHC's explanation, six lines of the file around it (GHC's own excerpt has one),
+  and a hint, because a parse error is usually reported lines after the real mistake. The clipboard gets
+  the plain text, the window the coloured one, both whole.
+- Found while testing: `xmonad --recompile` opens an `xmessage` window with the error whenever it
+  fails and keeps our pipes open, so the script waited forever for someone to click it (and left a window
+  on the screen). A stand-in `xmessage` that does nothing goes first in PATH for that call.
+- Considered: only a notification (cannot be copied, dunst cuts long text); `xmessage` as xmonad does
+  (ugly, no colours, blocks); rofi or zenity (a dependency for a text box); a new shortcut next to the old one
+  (two ways to do the same, one of them wrong); testing on the real `~/.xmonad` (a mistake there is exactly
+  what the tool is for, so every test uses XMONAD_CONFIG_DIR with a copy).
+

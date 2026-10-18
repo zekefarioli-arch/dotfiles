@@ -160,6 +160,8 @@ I can read in a minute. Add a line in the same commit as the change.
 - Podman (rootless, with podman-compose) and Rust (rustup, in ~/.cargo) installed for the ia_general_workflow_improvement projects; decision in that repo's docs/decisiones.md.
 - MCP server `ia01` (code index: symbol search, definitions, callers) registered in Claude Code and agy; runs in Podman through `ia01-mcp`. Repo: zekefarioli-arch/code-index-mcp (private).
 - Ryzen 9 desktop only: the root volume was extended from 100 GB to 300 GB (`lvextend -r`, online): it was at 86% because the Ubuntu installer had used only 100 GB of the 931 GB disk. Use went from 86% to 29%; about 628 GB remain unassigned.
+- Ryzen 9 desktop: Super+C (`ci-status`) shows the CI runners of the VM and the memory each one takes (processes, file cache, peak), plus the runs waiting on GitHub and, as the last line in the pink accent, the total memory the VM takes on this computer with its share of RAM. `~/.xmonad/actions.conf` was a loose copy instead of a link to this repo; it is linked again.
+- Super+Q now recompiles first and restarts xmonad only if it compiled (`xmonad-reload`): "xmonad configuration reloaded" on success; on a mistake in xmonad.hs it does not restart, copies the error to the clipboard and shows it in a floating window with the lines around it and a hint. Before, a mistake was silently ignored and xmonad restarted with the old binary.
 
 ## 2026-01 to 2026-05 (previous machine)
 - First XMonad, Polybar and Qtile configs; multi-monitor bar launcher,
