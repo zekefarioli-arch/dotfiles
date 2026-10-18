@@ -1,0 +1,116 @@
+#!/usr/bin/env python3
+"""Recompile xmonad and restart it, but only if the configuration compiled.
+
+  xmonad-reload                 what the shortcut (Super+Q) runs
+  xmonad-reload --dry           compile and report, without restarting, notifying or opening anything
+  xmonad-reload --show FILE     (internal) the viewer inside the error window
+Options: --no-restart  --no-window  --no-notify  --no-clipboard  --close-after SECONDS
+
+Success: a notification "xmonad configuration reloaded", and xmonad restarts keeping its windows.
+Failure: xmonad is NOT restarted (it keeps running with the last good configuration); the error is
+shown in a floating terminal window where it can be selected and copied, it is also on the
+clipboard already, and a notification says what and where. Details in
+bin/.local/lib/xmonad-reload/xmreload.py.
+"""
+import os
+import subprocess
+import sys
+import tempfile
+
+sys.dont_write_bytecode = True
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "lib", "xmonad-reload"))
+import xmreload  # noqa: E402
+
+
+WINDOW_COLUMNS = 120
+
+
+def notify(title, body, urgency="normal", timeout=5000):
+    subprocess.run(["notify-send", "-a", "xmonad-reload", "-u", urgency, "-t", str(timeout),
+                    "-h", "string:x-dunst-stack-tag:xmonad-reload", title, body])
+
+
+def show(path, close_after=None):
+    """Inside the error window: print the message, then wait for a key. `c` copies it again."""
+    import select
+    import termios
+    import tty
+    sys.stdout.write(open(path + ".ansi", encoding="utf-8").read())
+    sys.stdout.write("\n\x1b[38;2;108;112;134m[c] copy to the clipboard    [Enter] close\x1b[0m\n")
+    sys.stdout.flush()
+    fd = sys.stdin.fileno()
+    old = termios.tcgetattr(fd)
+    try:
+        tty.setcbreak(fd)
+        while True:
+            ready, _, _ = select.select([sys.stdin], [], [], close_after)
+            if not ready:
+                return 0  # --close-after elapsed
+            key = sys.stdin.read(1)
+            if key == "c":
+                text = open(path, encoding="utf-8").read()
+                done = xmreload.copy_to_clipboard(text)
+                sys.stdout.write("\r\x1b[2K" + ("copied to the clipboard" if done else "no clipboard tool found") + "\n")
+                sys.stdout.flush()
+            elif key in ("\n", "\r", "q", "\x1b", ""):
+                return 0
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old)
+
+
+def open_window(path, close_after):
+    cmd = ["alacritty", "--class", "xmonad-error,xmonad-error", "--title", "xmonad: configuration error",
+           "-o", f"window.dimensions.columns={WINDOW_COLUMNS}", "-o", "window.dimensions.lines=34",
+           "-e", sys.executable, os.path.realpath(__file__), "--show", path]
+    if close_after:
+        cmd.append(str(close_after))
+    subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+
+
+def main(argv):
+    if "--show" in argv:
+        i = argv.index("--show")
+        close = float(argv[i + 2]) if len(argv) > i + 2 else None
+        return show(argv[i + 1], close)
+    dry = "--dry" in argv
+    flag = lambda name: dry or name in argv  # noqa: E731
+    close_after = float(argv[argv.index("--close-after") + 1]) if "--close-after" in argv else None
+
+    rc, output, seconds = xmreload.recompile()
+    if rc == 0:
+        if not flag("--no-restart"):
+            subprocess.run(os.environ.get("XMONAD_RELOAD_RESTART", "xmonad --restart").split())
+        if not flag("--no-notify"):
+            notify("xmonad configuration reloaded", f"Recompiled in {seconds:.1f} s · windows kept", timeout=4000)
+        print(f"reloaded ({seconds:.1f} s)")
+        return 0
+
+    errors = xmreload.parse_errors(output)
+    cdir = xmreload.config_dir()
+    if errors:
+        plain = xmreload.render(errors, cdir, "plain")
+        ansi = xmreload.render(errors, cdir, "ansi", width=WINDOW_COLUMNS - 4)
+        short = xmreload.summary(errors)
+    else:
+        plain = ansi = xmreload.raw_failure(output) + "\n"
+        short = plain.splitlines()[0]
+    if dry:
+        sys.stdout.write(plain)
+        return 1
+    copied = False if flag("--no-clipboard") else xmreload.copy_to_clipboard(plain)
+    if not flag("--no-notify"):
+        notify("xmonad: the configuration has errors",
+               f"{short}\n{'Copied to the clipboard. ' if copied else ''}xmonad was not restarted.",
+               "critical", 15000)
+    if not flag("--no-window"):
+        fd, path = tempfile.mkstemp(prefix="xmonad-error-", dir=os.environ.get("XDG_RUNTIME_DIR"))
+        os.close(fd)
+        open(path, "w", encoding="utf-8").write(plain)
+        open(path + ".ansi", "w", encoding="utf-8").write(ansi)
+        open_window(path, close_after)
+    print(plain, end="")
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

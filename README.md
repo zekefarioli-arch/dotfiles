@@ -57,7 +57,7 @@ When the cheat sheet runs an xmonad shortcut, it replays it by keycode. I learnt
 
 Besides the window manager actions, the catalog has screenshots of an area, the active window, the monitor under the mouse or every monitor. Each screenshot is copied to the clipboard and saved in `~/Pictures/Screenshots`, and there are a few utilities as well, such as suspend, the browser, the phone screen and the microphone. For anything else, the editor's **+ New action** asks for a description and a shell command and saves it in `~/.xmonad/actions.conf`. For instance, an action that runs `flatpak run com.spotify.Client` then gets a shortcut like any built-in one, and it can be renamed, changed or deleted from the editor.
 
-To add a built-in action, I add an `Action` line to the catalog in `xmonad.hs` and recompile with `Super + Q`; after that, the editor and the cheat sheet show it automatically.
+To add a built-in action, I add an `Action` line to the catalog in `xmonad.hs` and recompile with `Super + Q`; after that, the editor and the cheat sheet show it automatically. `Super + Q` runs `xmonad-reload`: it compiles first and restarts xmonad only if that worked, with the message "xmonad configuration reloaded". If `xmonad.hs` has an error xmonad is not restarted (it keeps running as it was), the error is shown in a floating terminal window (place, explanation, the lines of the file around it and a hint; select and copy from it, `c` copies it all) and is already on the clipboard.
 
 The shared Python code lives in `bin/.local/lib/xmonad-keys/xkeys.py`, and the tests cover the conversions, the editor's changes to `keys.conf` and the cheat sheet rows. They only use the standard library and temporary files:
 

@@ -14,7 +14,7 @@ import XMonad.Util.WorkspaceCompare (filterOutWs)
 
 import XMonad.Actions.CycleWS (nextScreen, prevScreen, shiftNextScreen, shiftPrevScreen)
 import XMonad.Hooks.ManageDocks
-import XMonad.Hooks.ManageHelpers (doFloatDep)
+import XMonad.Hooks.ManageHelpers (doFloatDep, doCenterFloat)
 import XMonad.Hooks.EwmhDesktops (ewmh, ewmhFullscreen, addEwmhWorkspaceSort)
 import XMonad.Hooks.Rescreen
 import XMonad.Hooks.RefocusLast (refocusLastLogHook)
@@ -379,7 +379,7 @@ builtinActions =
     , Action "Bar" "toggle-all-bars" "Show / hide all bars" ["M-S-b"] (spawn "polybar-msg cmd toggle")
 
     , Action "System" "lock-screen" "Lock the screen" ["M-l"] (spawn "~/.local/bin/lock-screen")
-    , Action "System" "restart-xmonad" "Recompile and restart xmonad (keeps windows)" ["M-q"] (spawn "xmonad --recompile; xmonad --restart")
+    , Action "System" "restart-xmonad" "Recompile and restart xmonad; on an error it stays as it was and shows the error" ["M-q"] (spawn "~/.local/bin/xmonad-reload")
     , Action "System" "log-out" "Log out" ["M-C-q", "M-S-q"] (io (exitWith ExitSuccess))
     , Action "System" "screenshot" "Screenshot of an area (clipboard + ~/Pictures/Screenshots)" ["<Print>"] (spawn "~/.local/bin/screenshot area")
     , Action "System" "screenshot-window" "Screenshot of the active window" ["M1-<Print>"] (spawn "~/.local/bin/screenshot window")
@@ -543,6 +543,7 @@ main = do
                 [ className =? "kmag"  --> doFloat
                 , className =? "scrcpy" --> doFloat    -- phone screen (scrcpy)
                 , className =? "calendar-popup" --> bottomRightCorner  -- calendar from the bar's date
+                , className =? "xmonad-error" --> doCenterFloat        -- compile error of this very file (xmonad-reload)
                 , className =? "KMag"  --> doFloat
                 , title     =? "KMag"  --> doFloat
                 ]
