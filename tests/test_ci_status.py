@@ -5,8 +5,11 @@ They use a sample of what the VM prints and a fake /proc; nothing is asked of th
 """
 import os
 import sys
+import shutil
+import subprocess
 import tempfile
 import unittest
+from unittest import mock
 
 sys.dont_write_bytecode = True
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -35,6 +38,7 @@ Workers=1
 mem_total=6136553472
 mem_used=2576980377
 mem_avail=3000000000
+mem_cache=3221225472
 """
 
 
@@ -122,6 +126,244 @@ class Report(unittest.TestCase):
         title, body = self.report(remote=None, held=3 * 1024 ** 3)
         self.assertEqual(title, "CI VM: not reachable")
         self.assertIn("3.0 GiB", body)
+
+
+GiB = 1024 ** 3
+MiB = 1024 ** 2
+
+
+def vm(workers=0, used=1.5 * GiB, cache=3 * GiB):
+    sample = SAMPLE.replace("Workers=1", f"Workers={workers}")
+    r = cistatus.parse_remote(sample)
+    r["mem_used"], r["mem_cache"] = int(used), int(cache)
+    return r
+
+
+class TrimDecision(unittest.TestCase):
+    """When it is right to ask the VM to give its memory back, and when it is not."""
+
+    IDLE_GITHUB = {"waiting": 0, "running": 0}
+
+    def test_idle_with_nothing_waiting_and_a_lot_held_goes(self):
+        go, note = cistatus.trim_decision(vm(), int(5 * GiB), self.IDLE_GITHUB)
+        self.assertTrue(go)
+        self.assertIn("asking the VM", note)
+
+    def test_a_working_runner_is_never_touched_and_says_nothing(self):
+        self.assertEqual(cistatus.trim_decision(vm(workers=1), int(5 * GiB), self.IDLE_GITHUB), (False, None))
+
+    def test_runs_waiting_on_github_mean_a_job_starts_soon(self):
+        go, note = cistatus.trim_decision(vm(), int(5 * GiB), {"waiting": 3, "running": 0})
+        self.assertFalse(go)
+        self.assertIn("3 runs on GitHub", note)
+        go, note = cistatus.trim_decision(vm(), int(5 * GiB), {"waiting": 0, "running": 1})
+        self.assertFalse(go)
+        self.assertIn("1 run on GitHub", note)
+
+    def test_without_an_answer_from_github_it_does_not_guess(self):
+        go, note = cistatus.trim_decision(vm(), int(5 * GiB), None)
+        self.assertFalse(go)
+        self.assertIn("GitHub did not answer", note)
+
+    def test_already_tight_is_not_worth_it(self):
+        go, note = cistatus.trim_decision(vm(used=1.5 * GiB), int(1.8 * GiB), self.IDLE_GITHUB)
+        self.assertFalse(go)
+        self.assertIn("Nothing to give back", note)
+        # The edge: 512 MiB more than it uses is the smallest case that goes.
+        self.assertTrue(cistatus.trim_decision(vm(used=1 * GiB), int(1.5 * GiB), self.IDLE_GITHUB)[0])
+        self.assertFalse(cistatus.trim_decision(vm(used=1 * GiB), int(1.5 * GiB) - 1, self.IDLE_GITHUB)[0])
+
+    def test_vm_not_readable_or_not_running(self):
+        self.assertEqual(cistatus.trim_decision(None, int(5 * GiB), self.IDLE_GITHUB), (False, None))
+        self.assertFalse(cistatus.trim_decision(vm(), None, self.IDLE_GITHUB)[0])
+
+
+class TrimReport(unittest.TestCase):
+    def test_it_says_how_much_came_back(self):
+        before, after = vm(cache=3 * GiB), vm(used=1.4 * GiB, cache=0.7 * GiB)
+        title, body = cistatus.format_trim_result(before, after, int(4.9 * GiB), int(3.2 * GiB), 14 * GiB, None)
+        self.assertEqual(title, "CI VM: gave back 1.7 GiB")
+        self.assertIn("Inside the VM: disk cache 3.0 GiB → 717 MiB, used 1.4 GiB", body)
+        self.assertEqual(body.splitlines()[-1], "This computer: 4.9 GiB → 3.2 GiB (23% of RAM)")
+
+    def test_when_little_comes_back_it_says_so(self):
+        title, body = cistatus.format_trim_result(vm(), vm(), int(4.9 * GiB), int(4.88 * GiB), None, None)
+        self.assertEqual(title, "CI VM: nothing came back")
+        self.assertIn("could not free much, or a job just started", body)
+
+    def test_the_last_line_is_coloured_for_the_notification(self):
+        _, body = cistatus.format_trim_result(vm(), vm(), 5 * GiB, 3 * GiB, 14 * GiB, "pango")
+        self.assertTrue(body.splitlines()[-1].startswith('<span foreground="#f5c2e7"><b>This computer:'))
+
+    def test_the_note_goes_before_the_total_in_the_first_notification(self):
+        _, body = cistatus.format_report(vm(), 5 * GiB, {"waiting": 0, "running": 0}, "zekefarioli-arch",
+                                         14 * GiB, None, "a note & more")
+        lines = body.splitlines()
+        self.assertEqual(lines[-2], "a note & more")
+        self.assertTrue(lines[-1].startswith("Total on this computer"))
+        _, body = cistatus.format_report(vm(), 5 * GiB, None, None, None, "pango", "a note & more")
+        self.assertIn("a note &amp; more", body)
+
+    def test_the_vm_cache_is_read(self):
+        self.assertEqual(cistatus.parse_remote(SAMPLE)["mem_cache"], 3221225472)
+
+
+class Settling(unittest.TestCase):
+    def test_waits_until_the_reading_stops_changing(self):
+        readings = iter([5 * GiB, 4 * GiB, 3.2 * GiB, 3.19 * GiB, 3.0 * GiB])
+        slept = []
+        got = cistatus.settle_held(sleep=slept.append, read=lambda: next(readings))
+        self.assertEqual(got, 3.19 * GiB)
+        self.assertEqual(slept, [3.0, 3.0, 3.0])
+
+    def test_gives_up_after_the_limit(self):
+        n = iter(range(100))
+        # Readings 10, 9, 8, 7 GiB at 0, 3, 6, 9 s: it never settles, and returns the last one read.
+        got = cistatus.settle_held(sleep=lambda s: None, read=lambda: (10 - next(n)) * GiB, limit=9)
+        self.assertEqual(got, 7 * GiB)
+
+    def test_a_vm_that_stopped_has_nothing_to_wait_for(self):
+        self.assertIsNone(cistatus.settle_held(sleep=lambda s: None, read=lambda: None))
+
+
+class GitHubQueue(unittest.TestCase):
+    """The queue count drives an action now, so what counts as "waiting" matters."""
+
+    def counts(self, answers):
+        outputs = iter(answers)
+        with mock.patch.object(cistatus, "_gh", lambda args, timeout=8: next(outputs)):
+            return cistatus.github_queue(["a", "b"][:len(answers)], "me")
+
+    def test_every_state_before_a_job_runs_counts_as_waiting(self):
+        runs = '[{"status":"requested"},{"status":"queued"},{"status":"waiting"},{"status":"pending"},' \
+               '{"status":"in_progress"},{"status":"completed"}]'
+        self.assertEqual(self.counts([runs]), {"waiting": 4, "running": 1})
+
+    def test_two_repositories_add_up(self):
+        self.assertEqual(self.counts(['[{"status":"queued"}]', '[{"status":"in_progress"},{"status":"queued"}]']),
+                         {"waiting": 2, "running": 1})
+
+    def test_an_answer_that_is_not_json_is_no_answer_not_a_crash(self):
+        self.assertIsNone(self.counts(["<html>rate limited</html>"]))
+        self.assertIsNone(self.counts(['{"message": "Bad credentials"}']))
+        self.assertIsNone(self.counts(['[{"status":"queued"}]', None]))  # one repository did not answer
+
+
+class TrimResultEdge(unittest.TestCase):
+    def test_a_vm_that_vanished_is_not_reported_as_a_win(self):
+        title, body = cistatus.format_trim_result(vm(), None, int(4.9 * GiB), None, 14 * GiB, None)
+        self.assertEqual(title, "CI VM is off now")
+        self.assertNotIn("gave back", title + body)
+
+
+def load_script():
+    """The ci-status script as a module (it has no .py name)."""
+    import importlib.machinery
+    import importlib.util
+    path = os.path.join(REPO, "bin", ".local", "bin", "ci-status")
+    spec = importlib.util.spec_from_loader("ci_status_script", importlib.machinery.SourceFileLoader("ci_status_script", path))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+class Wiring(unittest.TestCase):
+    """main(): what it shows, in which order, and when it asks the VM for anything."""
+
+    def setUp(self):
+        self.script = load_script()
+        self.events = []
+        lock_dir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, lock_dir)
+        env = mock.patch.dict(os.environ, {"CI_STATUS_LOCK": os.path.join(lock_dir, "lock")})
+        env.start()
+        self.addCleanup(env.stop)
+
+        def notify(cmd, **kw):
+            self.events.append(("notify", cmd[cmd.index("-t") + 1], cmd[-2], cmd[-1]))
+            return mock.Mock(returncode=0)
+
+        for target, new in (
+            (subprocess, ("run", notify)),
+            (cistatus, ("host_total_bytes", lambda: 14 * GiB)),
+            (cistatus, ("settle_held", lambda: int(3.2 * GiB))),
+            (cistatus, ("ask_vm", lambda t: vm(used=1.4 * GiB, cache=0.7 * GiB))),
+        ):
+            p = mock.patch.object(target, new[0], new[1])
+            p.start()
+            self.addCleanup(p.stop)
+        self.trim_calls = []
+        self.trim_ok = True
+
+        def trim(target, timeout=40):
+            self.events.append(("trim", target))
+            return self.trim_ok
+
+        p = mock.patch.object(cistatus, "trim_vm", trim)
+        p.start()
+        self.addCleanup(p.stop)
+
+    def collect(self, workers=0, github=None, held=int(5 * GiB)):
+        github = {"waiting": 0, "running": 0} if github is None else github
+        p = mock.patch.object(cistatus, "collect", lambda: (vm(workers=workers), held, github, "zekefarioli-arch", "ci@vm"))
+        p.start()
+        self.addCleanup(p.stop)
+
+    def kinds(self):
+        return [e[0] for e in self.events]
+
+    def test_idle_empty_queue_shows_then_trims_then_replaces_the_notification(self):
+        self.collect()
+        self.assertEqual(self.script.main([]), 0)
+        self.assertEqual(self.kinds(), ["notify", "trim", "notify"])
+        first, _, second = self.events
+        self.assertEqual(first[1], "60000")                       # still on screen when replaced
+        self.assertIn("asking the VM", first[3])
+        self.assertEqual(second[1], "10000")
+        self.assertEqual(second[2], "CI VM: gave back 1.8 GiB")   # 5.0 -> 3.2 GiB
+        self.assertEqual(self.events[1], ("trim", "ci@vm"))
+
+    def test_no_trim_only_looks(self):
+        self.collect()
+        self.assertEqual(self.script.main(["--no-trim"]), 0)
+        self.assertEqual(self.kinds(), ["notify"])
+
+    def test_a_queue_means_no_trim_and_says_why(self):
+        self.collect(github={"waiting": 3, "running": 0})
+        self.script.main([])
+        self.assertEqual(self.kinds(), ["notify"])
+        self.assertIn("3 runs on GitHub", self.events[0][3])
+
+    def test_a_working_runner_means_no_trim(self):
+        self.collect(workers=1)
+        self.script.main([])
+        self.assertEqual(self.kinds(), ["notify"])
+
+    def test_a_failed_trim_is_reported_and_is_an_error(self):
+        self.collect()
+        self.trim_ok = False
+        self.assertEqual(self.script.main([]), 1)
+        self.assertEqual(self.kinds(), ["notify", "trim", "notify"])
+        self.assertEqual(self.events[-1][2], "CI VM: could not give memory back")
+
+    def test_a_second_run_while_one_is_trimming_does_not_start_another(self):
+        self.collect()
+        import fcntl
+        held = open(os.environ["CI_STATUS_LOCK"], "w")
+        fcntl.flock(held, fcntl.LOCK_EX)
+        self.addCleanup(held.close)
+        self.assertEqual(self.script.main([]), 0)
+        self.assertEqual(self.kinds(), ["notify"])
+        self.assertEqual(self.events[0][2], "CI VM: already giving memory back")
+
+    def test_print_goes_to_the_terminal_not_to_notifications(self):
+        self.collect()
+        import io
+        out = io.StringIO()
+        with mock.patch("sys.stdout", out):
+            self.script.main(["--print"])
+        self.assertNotIn("notify", self.kinds())
+        self.assertIn("CI VM: gave back", out.getvalue())
 
 
 class FakeProc(unittest.TestCase):

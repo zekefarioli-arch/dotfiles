@@ -9,7 +9,10 @@ Where the numbers come from, and why:
 - The memory the VM holds on this computer is the resident size of its qemu process, read from
   /proc: it is what the host really lost, and it can stay high after a job (see DECISIONS.md).
 - GitHub (`gh`) only adds how many runs are waiting or running; it is optional.
-Nothing here writes anywhere: it only reads.
+- When nothing is working or waiting and the VM holds much more than it uses, ci-status also
+  asks the VM to give the memory back (`ci-trim-memory.sh --now`, installed inside the VM from
+  system/ci-vm/) and reports how much came back. That is the only thing here that changes
+  anything, and only under those conditions; `--no-trim` makes it read-only.
 """
 import concurrent.futures as cf
 import html
@@ -17,6 +20,7 @@ import json
 import os
 import re
 import subprocess
+import time
 
 # Run on the VM through `ssh ... sh -s`; prints key=value lines, one block per runner.
 REMOTE_SCRIPT = r"""
@@ -28,7 +32,7 @@ for u in $(systemctl list-units --type=service --no-legend 'actions.runner.*' | 
   echo "File=$(awk '$1=="file" {print $2}' /sys/fs/cgroup$cg/memory.stat 2>/dev/null)"
   echo "Workers=$(for p in $(cat /sys/fs/cgroup$cg/cgroup.procs 2>/dev/null); do cat /proc/$p/comm 2>/dev/null; done | grep -c '^Runner.Worker')"
 done
-free -b | awk '/Mem:/ {print "mem_total="$2; print "mem_used="$3; print "mem_avail="$7}'
+free -b | awk '/Mem:/ {print "mem_total="$2; print "mem_used="$3; print "mem_avail="$7; print "mem_cache="$6}'
 """
 
 GiB = 1 << 30
@@ -52,7 +56,7 @@ def _int(value):
 
 
 def parse_remote(text):
-    """The output of REMOTE_SCRIPT as {"runners": [...], "mem_total", "mem_used", "mem_avail"}."""
+    """The output of REMOTE_SCRIPT as {"runners": [...], "mem_total", "mem_used", "mem_avail", "mem_cache"}."""
     runners, vm, cur = [], {}, None
     for line in text.splitlines():
         if "=" not in line:
@@ -61,7 +65,7 @@ def parse_remote(text):
         if key == "unit":
             cur = {"unit": value}
             runners.append(cur)
-        elif key in ("mem_total", "mem_used", "mem_avail"):
+        elif key in ("mem_total", "mem_used", "mem_avail", "mem_cache"):
             vm[key] = _int(value)
         elif cur is not None:
             cur[key] = value
@@ -135,7 +139,7 @@ def host_total_bytes(proc="/proc"):
     return None
 
 
-def format_report(remote, held, github, owner=None, host_total=None, style=None):
+def format_report(remote, held, github, owner=None, host_total=None, style=None, note=None):
     """(title, body) of the notification.
 
     remote: parse_remote() result, or None if the VM could not be asked.
@@ -143,6 +147,7 @@ def format_report(remote, held, github, owner=None, host_total=None, style=None)
     github: {"waiting": n, "running": n} or None.
     host_total: RAM of this computer, to show the total as a share of it.
     style: None, "pango" or "ansi": how the last line (the total) is coloured.
+    note: one more line before the total (what was or was not done about the memory).
     """
     lines = []
     if remote is None:
@@ -166,6 +171,8 @@ def format_report(remote, held, github, owner=None, host_total=None, style=None)
     lines.append(f"VM: {fmt_bytes(remote.get('mem_used'))} of {fmt_bytes(remote.get('mem_total'))} used inside")
     if github is not None:
         lines.append(f"GitHub: {github['waiting']} waiting, {github['running']} running")
+    if note:
+        lines.append(note)
     if style == "pango":
         lines = [html.escape(x, quote=False) for x in lines]
     # Last, in colour: what all of this costs this computer, which is what the VM holds (it can
@@ -173,6 +180,58 @@ def format_report(remote, held, github, owner=None, host_total=None, style=None)
     share = f" ({round(100 * held / host_total)}% of RAM)" if held and host_total else ""
     lines.append(paint(f"Total on this computer: {fmt_bytes(held)}{share}", style))
     title = f"CI: {online} runner{'s' if online != 1 else ''} · {working} working"
+    return title, "\n".join(lines)
+
+
+MIN_GIVE_BACK = 512 * MiB  # below this the VM is already tight: not worth a trim
+
+
+def trim_decision(remote, held, github):
+    """(go, note): whether to ask the VM to give memory back, and one line saying why not.
+
+    Only when the VM could be read, no runner is working, GitHub says nothing is waiting or
+    running (a job is about to start otherwise, and it would find the cache empty), and the
+    VM holds clearly more than it uses.
+    """
+    if remote is None:
+        return False, None
+    if any(r["workers"] > 0 for r in remote["runners"]):
+        return False, None  # busy: the memory is in use, nothing to say
+    if github is None:
+        return False, "GitHub did not answer, so memory is left alone (a job may be about to start)"
+    pending = github["waiting"] + github["running"]
+    if pending:
+        return False, f"{pending} run{'s' if pending != 1 else ''} on GitHub: memory is left alone, a job starts soon"
+    spare = (held or 0) - (remote.get("mem_used") or 0)
+    if held is None or spare < MIN_GIVE_BACK:
+        return False, f"Nothing to give back: the VM holds only {fmt_bytes(max(spare, 0))} more than it uses"
+    return True, "Nothing running or waiting: asking the VM to give its unused memory back..."
+
+
+def format_trim_result(before, after, held_before, held_after, host_total=None, style=None):
+    """(title, body) for the notification that replaces the first one after a trim.
+
+    before, after: parse_remote() results taken before and after (either may be None).
+    held_before, held_after: bytes the VM held on this computer.
+    """
+    if held_after is None:
+        # The VM stopped between the trim and the reading: there is no "after" to compare with.
+        return "CI VM is off now", paint(f"It held {fmt_bytes(held_before)} on this computer before.", style)
+    freed = (held_before or 0) - held_after
+    share = f" ({round(100 * held_after / host_total)}% of RAM)" if held_after and host_total else ""
+    if freed >= 64 * MiB:
+        title = f"CI VM: gave back {fmt_bytes(freed)}"
+    else:
+        title = "CI VM: nothing came back"
+    lines = []
+    if before and after:
+        lines.append(f"Inside the VM: disk cache {fmt_bytes(before.get('mem_cache'))} → "
+                     f"{fmt_bytes(after.get('mem_cache'))}, used {fmt_bytes(after.get('mem_used'))}")
+    if freed < 64 * MiB:
+        lines.append("The VM could not free much, or a job just started and used it.")
+    if style == "pango":
+        lines = [html.escape(x, quote=False) for x in lines]
+    lines.append(paint(f"This computer: {fmt_bytes(held_before)} → {fmt_bytes(held_after)}{share}", style))
     return title, "\n".join(lines)
 
 
@@ -234,8 +293,12 @@ def github_queue(repos, owner):
         out = _gh(["run", "list", "-R", f"{owner}/{repo}", "--limit", "30", "--json", "status"])
         if out is None:
             return None
-        statuses = [x.get("status") for x in json.loads(out)]
-        return (sum(s in ("queued", "waiting", "pending") for s in statuses),
+        try:
+            statuses = [x.get("status") for x in json.loads(out)]
+        except (ValueError, AttributeError):
+            return None  # not the JSON gh promised: "GitHub did not answer", not a crash
+        # `requested` is a run just triggered whose jobs are not queued yet: a job is about to start.
+        return (sum(s in ("requested", "queued", "waiting", "pending") for s in statuses),
                 sum(s == "in_progress" for s in statuses))
 
     with cf.ThreadPoolExecutor() as ex:
@@ -251,22 +314,52 @@ def gh_owner():
 
 
 def _ask_with_fallback():
-    remote = ask_vm(vm_target())
+    """(remote, target): the answer of the VM and the `user@address` that gave it."""
+    target = vm_target()
+    remote = ask_vm(target)
     if remote is None:
         found = discover_vm_target()
-        if found and found != vm_target():
-            remote = ask_vm(found)
-    return remote
+        if found and found != target:
+            target, remote = found, ask_vm(found)
+    return remote, target
+
+
+def trim_vm(target, timeout=40):
+    """Ask the VM to give its unused memory back. True if its script ran without error."""
+    try:
+        r = subprocess.run(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=4", target,
+                            "sudo", "-n", "/usr/local/sbin/ci-trim-memory.sh", "--now"],
+                           capture_output=True, text=True, timeout=timeout, stdin=subprocess.DEVNULL)
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return r.returncode == 0
+
+
+def settle_held(sleep=time.sleep, read=None, step=3.0, limit=36.0, quiet=32 * MiB):
+    """What the VM holds on this computer once it stops changing: the host is told in batches,
+    for some seconds after the guest frees memory. Reads every `step` s until two readings differ
+    by less than `quiet` bytes, or `limit` s have passed."""
+    read = read or qemu_held_bytes
+    last, waited = read(), 0.0
+    while waited < limit:
+        sleep(step)
+        waited += step
+        now = read()
+        if now is None or last is None or abs(now - last) < quiet:
+            return now
+        last = now
+    return last
 
 
 def collect():
-    """Everything the report needs, asking the VM and GitHub at the same time."""
+    """Everything the report needs, asking the VM and GitHub at the same time.
+    Returns (remote, held, github, owner, target)."""
     with cf.ThreadPoolExecutor() as ex:
         f_vm = ex.submit(_ask_with_fallback)
         f_owner = ex.submit(gh_owner)
-        remote, owner = f_vm.result(), f_owner.result()
+        (remote, target), owner = f_vm.result(), f_owner.result()
     github = None
     if remote and owner:
         repos = [r for r in (repo_of(x["unit"], owner) for x in remote["runners"]) if r]
         github = github_queue(repos, owner)
-    return remote, qemu_held_bytes(), github, owner
+    return remote, qemu_held_bytes(), github, owner, target

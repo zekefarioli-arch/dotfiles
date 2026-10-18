@@ -1,13 +1,21 @@
 #!/usr/bin/env python3
-"""Show what the CI runners are doing and how much memory each one takes.
+"""Show what the CI runners are doing and how much memory each one takes, and give the VM's
+unused memory back when nothing is running.
 
-  ci-status            notification (the shortcut runs this)
-  ci-status --print    the same text in the terminal
+  ci-status               notification (the shortcut runs this)
+  ci-status --print       the same text in the terminal
+  ci-status --no-trim     only look: never ask the VM to give memory back
 
 The runners live in the CI virtual machine; the library explains where each number comes from
 (bin/.local/lib/ci-status/cistatus.py). The VM's address is read from $CI_VM or from the first
 line of ~/.config/ci-status/vm (user@address; private, not in the repo).
+
+Memory: if no runner is working AND GitHub has no run waiting or running AND the VM holds clearly
+more than it uses, it asks the VM to drop its disk cache (system/ci-vm/ci-trim-memory.sh --now),
+waits until the host has taken the memory back, and replaces the notification with how much came
+back. With anything waiting it does nothing and says so: the next job would find the cache empty.
 """
+import fcntl
 import os
 import subprocess
 import sys
@@ -18,18 +26,45 @@ import cistatus  # noqa: E402
 
 
 def main(argv):
-    remote, held, github, owner = cistatus.collect()
+    printing = "--print" in argv
+    # dunst renders Pango markup (markup = full in its config); a terminal gets ANSI colour.
+    style = ("ansi" if sys.stdout.isatty() else None) if printing else "pango"
+
+    def show(title, body, timeout=10000):
+        if printing:
+            print(title)
+            print(body)
+        else:
+            subprocess.run(["notify-send", "-a", "ci-status", "-u", "low", "-t", str(timeout), "-i", "computer",
+                            "-h", "string:x-dunst-stack-tag:ci-status", title, body])
+
+    remote, held, github, owner, target = cistatus.collect()
     total = cistatus.host_total_bytes()
-    if "--print" in argv:
-        style = "ansi" if sys.stdout.isatty() else None
-        title, body = cistatus.format_report(remote, held, github, owner, total, style)
-        print(title)
-        print(body)
+    go, note = (False, None) if "--no-trim" in argv else cistatus.trim_decision(remote, held, github)
+    title, body = cistatus.format_report(remote, held, github, owner, total, style, note)
+    if not go:
+        show(title, body)
         return 0
-    # dunst renders Pango markup (markup = full in its config).
-    title, body = cistatus.format_report(remote, held, github, owner, total, "pango")
-    subprocess.run(["notify-send", "-a", "ci-status", "-u", "low", "-t", "10000", "-i", "computer",
-                    "-h", "string:x-dunst-stack-tag:ci-status", title, body])
+
+    # One give-back at a time: a second Super+C while the first waits would start another.
+    lock_path = os.environ.get("CI_STATUS_LOCK") or os.path.join(os.environ.get("XDG_RUNTIME_DIR") or "/tmp",
+                                                                 "ci-status.lock")
+    with open(lock_path, "w") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            show("CI VM: already giving memory back", "Another ci-status is doing it; its result will replace this.")
+            return 0
+        # The result takes 10 to 40 s (ssh, sync, the host taking the memory): this one must still be
+        # on screen when it is replaced.
+        show(title, body, timeout=60000)
+        if not cistatus.trim_vm(target):
+            show("CI VM: could not give memory back",
+                 "The VM did not run ci-trim-memory.sh (is it installed there, and does the user have sudo?).")
+            return 1
+        held_after = cistatus.settle_held()
+        after = cistatus.ask_vm(target)
+        show(*cistatus.format_trim_result(remote, after, held, held_after, total, style))
     return 0
 
 
