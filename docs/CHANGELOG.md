@@ -4,9 +4,17 @@ What changed on the system, newest first, one line per change that matters
 to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
-## 2026-10-16
-- Rule for the router (hs-gateway) loosened at my request: Claude may write files in my home directory there when I ask for it (the migration backup); services, CI, containers and its firewall or Docker setup stay off limits. DECISIONS.md has the entry.
-- Planning the move of the laptop from Fedora 44 to Ubuntu Server 26.04 LTS: docs/UBUNTU-MIGRATION.md has the install steps, the Fedora-to-Ubuntu package map (checked against the Ubuntu index), what to restore and the risks, and scripts/ubuntu-post-install.sh installs it all (checked, not yet run). `findajob-login` is now a private GitLab project and a backup of /home and of the system files is on the gateway.
+## 2026-10-18
+- Rule for the router (hs-gateway) loosened again at my request: light services and containers with limits may run there while it has spare capacity; CI runners, build jobs, untrusted code and changes to its firewall or existing Docker setup stay off limits. DECISIONS.md has the entry.
+- Podman (rootless, with podman-compose) and Rust (rustup, in ~/.cargo) installed for the ia_general_workflow_improvement projects; decision in that repo's docs/decisiones.md.
+- The code index MCP is now called `appia` (was `ia01`; command `appia-mcp`, tools `mcp__appia__*`); the other four planned projects got Roman names too (tabularium, tollbooth, augur, legion). `listar_simbolos` now explains its `path` argument and errors.
+- MCP server `ia01` (code index: symbol search, definitions, callers) registered in Claude Code and agy; runs in Podman through `ia01-mcp`. Repo: zekefarioli-arch/code-index-mcp (private).
+- Ryzen 9 desktop only: the root volume was extended from 100 GB to 300 GB (`lvextend -r`, online): it was at 86% because the Ubuntu installer had used only 100 GB of the 931 GB disk. Use went from 86% to 29%; about 628 GB remain unassigned.
+- Ryzen 9 desktop: Super+C (`ci-status`) shows the CI runners of the VM and the memory each one takes (processes, file cache, peak), plus the runs waiting on GitHub and, as the last line in the pink accent, the total memory the VM takes on this computer with its share of RAM. `~/.xmonad/actions.conf` was a loose copy instead of a link to this repo; it is linked again.
+- Super+Q now recompiles first and restarts xmonad only if it compiled (`xmonad-reload`): "xmonad configuration reloaded" on success; on a mistake in xmonad.hs it does not restart, copies the error to the clipboard and shows it in a floating window with the lines around it and a hint. Before, a mistake was silently ignored and xmonad restarted with the old binary.
+- CI VM: a timer inside it (`ci-trim-memory`, every minute, only when no job runs and the load of the last minute is low, about 2 minutes after the last job) drops the disk cache and compacts memory so the VM gives its unused RAM back to this desktop; before, it kept about 5 GiB after a job although it used 1.4 GiB inside. Files in `system/ci-vm/`.
+- `ci-status` (Super+C) now also gives the CI VM's unused memory back, on the spot, when no runner is working and GitHub has nothing waiting or running, and reports how much came back; with a queue it leaves the memory alone and says so. `ci-status --no-trim` only looks.
+- Last review of the CI-memory work fixed: a failing `pgrep` no longer counts as "no job" in the VM script, runs just triggered count as waiting, the "asking" notification stays until replaced and only one give-back runs at a time, a vanished VM is not reported as a win. Details in DECISIONS.md.
 
 ## 2026-10-17
 - The CI VM on the Ryzen 9 now returns the memory it frees to the host (free page reporting): idle it holds about 1.6 GiB instead of 5.7, which was 74% of the machine's memory. One restart of the VM; the runners reconnected by themselves. Details in home-infra.
@@ -29,6 +37,10 @@ I can read in a minute. Add a line in the same commit as the change.
 - Ubuntu: the brightness keys needed a udev rule (system/etc/udev/rules.d/90-brightnessctl.rules) and the `video` group; log out and in once to use them.
 - The bar vanished after a login once; launch-bars.sh now logs polybar's output to $XDG_RUNTIME_DIR/polybar.log so the cause shows if it happens again.
 - The laptop runs Ubuntu 26.04 LTS instead of Fedora 44: packages installed with scripts/ubuntu-post-install.sh, home and settings restored from the backup on the gateway, NetworkManager manages Wi-Fi, printers, scanner, `wg-home` VPN, `findajob`, xmonad (0.18.0), polybar and picom checked. See DECISIONS.md.
+
+## 2026-10-16
+- Rule for the router (hs-gateway) loosened at my request: Claude may write files in my home directory there when I ask for it (the migration backup); services, CI, containers and its firewall or Docker setup stay off limits. DECISIONS.md has the entry.
+- Planning the move of the laptop from Fedora 44 to Ubuntu Server 26.04 LTS: docs/UBUNTU-MIGRATION.md has the install steps, the Fedora-to-Ubuntu package map (checked against the Ubuntu index), what to restore and the risks, and scripts/ubuntu-post-install.sh installs it all (checked, not yet run). `findajob-login` is now a private GitLab project and a backup of /home and of the system files is on the gateway.
 
 ## 2026-10-14
 - Decision recorded (nothing installed): the CI runner will live in a Debian VM on the new Ryzen desktop, whose host stays Fedora for work. See DECISIONS.md.
@@ -154,17 +166,6 @@ I can read in a minute. Add a line in the same commit as the change.
 - Catppuccin Mocha Pink for GTK, Qt, icons, cursor, rofi, dunst and CopyQ.
 - Dropdown terminal with persistent tmux sessions, visible lock screen,
   automatic timezone, XDG folders, Brave and Atril as defaults.
-
-## 2026-10-18
-- Rule for the router (hs-gateway) loosened again at my request: light services and containers with limits may run there while it has spare capacity; CI runners, build jobs, untrusted code and changes to its firewall or existing Docker setup stay off limits. DECISIONS.md has the entry.
-- Podman (rootless, with podman-compose) and Rust (rustup, in ~/.cargo) installed for the ia_general_workflow_improvement projects; decision in that repo's docs/decisiones.md.
-- MCP server `ia01` (code index: symbol search, definitions, callers) registered in Claude Code and agy; runs in Podman through `ia01-mcp`. Repo: zekefarioli-arch/code-index-mcp (private).
-- Ryzen 9 desktop only: the root volume was extended from 100 GB to 300 GB (`lvextend -r`, online): it was at 86% because the Ubuntu installer had used only 100 GB of the 931 GB disk. Use went from 86% to 29%; about 628 GB remain unassigned.
-- Ryzen 9 desktop: Super+C (`ci-status`) shows the CI runners of the VM and the memory each one takes (processes, file cache, peak), plus the runs waiting on GitHub and, as the last line in the pink accent, the total memory the VM takes on this computer with its share of RAM. `~/.xmonad/actions.conf` was a loose copy instead of a link to this repo; it is linked again.
-- Super+Q now recompiles first and restarts xmonad only if it compiled (`xmonad-reload`): "xmonad configuration reloaded" on success; on a mistake in xmonad.hs it does not restart, copies the error to the clipboard and shows it in a floating window with the lines around it and a hint. Before, a mistake was silently ignored and xmonad restarted with the old binary.
-- CI VM: a timer inside it (`ci-trim-memory`, every minute, only when no job runs and the load of the last minute is low, about 2 minutes after the last job) drops the disk cache and compacts memory so the VM gives its unused RAM back to this desktop; before, it kept about 5 GiB after a job although it used 1.4 GiB inside. Files in `system/ci-vm/`.
-- `ci-status` (Super+C) now also gives the CI VM's unused memory back, on the spot, when no runner is working and GitHub has nothing waiting or running, and reports how much came back; with a queue it leaves the memory alone and says so. `ci-status --no-trim` only looks.
-- Last review of the CI-memory work fixed: a failing `pgrep` no longer counts as "no job" in the VM script, runs just triggered count as waiting, the "asking" notification stays until replaced and only one give-back runs at a time, a vanished VM is not reported as a win. Details in DECISIONS.md.
 
 ## 2026-01 to 2026-05 (previous machine)
 - First XMonad, Polybar and Qtile configs; multi-monitor bar launcher,
