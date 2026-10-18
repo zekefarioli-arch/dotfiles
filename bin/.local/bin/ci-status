@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+"""Show what the CI runners are doing and how much memory each one takes.
+
+  ci-status            notification (the shortcut runs this)
+  ci-status --print    the same text in the terminal
+
+The runners live in the CI virtual machine; the library explains where each number comes from
+(bin/.local/lib/ci-status/cistatus.py). The VM's address is read from $CI_VM or from the first
+line of ~/.config/ci-status/vm (user@address; private, not in the repo).
+"""
+import os
+import subprocess
+import sys
+
+sys.dont_write_bytecode = True
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "lib", "ci-status"))
+import cistatus  # noqa: E402
+
+
+def main(argv):
+    remote, held, github, owner = cistatus.collect()
+    total = cistatus.host_total_bytes()
+    if "--print" in argv:
+        style = "ansi" if sys.stdout.isatty() else None
+        title, body = cistatus.format_report(remote, held, github, owner, total, style)
+        print(title)
+        print(body)
+        return 0
+    # dunst renders Pango markup (markup = full in its config).
+    title, body = cistatus.format_report(remote, held, github, owner, total, "pango")
+    subprocess.run(["notify-send", "-a", "ci-status", "-u", "low", "-t", "10000", "-i", "computer",
+                    "-h", "string:x-dunst-stack-tag:ci-status", title, body])
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
