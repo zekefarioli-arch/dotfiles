@@ -573,3 +573,88 @@ entries; the rest stands.
   (two ways to do the same, one of them wrong); testing on the real `~/.xmonad` (a mistake there is exactly
   what the tool is for, so every test uses XMONAD_CONFIG_DIR with a copy).
 
+## 2026-10-18: the CI VM gives its unused memory back with a timer inside the VM
+- Decided: `ci-trim-memory` runs inside the VM as a systemd timer (every minute, as root). If no
+  `Runner.Worker` process exists (a pgrep that fails for any reason other than "no process" counts as "unknown", not as "no job"), the 1-minute load average is under 0.30 and the cache is 300 MiB or more,
+  it runs `sync`, drops the page cache and compacts memory; the VM's free page reporting (already on) then
+  returns the freed blocks to the host. Otherwise it does nothing, and says nothing when there is nothing to give back.
+- Why: measured inside the VM, after a job it held 2.4 GiB of disk cache and 1.4 GiB of free memory in
+  small fragments next to 0.5 GiB of processes. The host keeps every page the guest ever touched until the
+  guest says it is free, and free page reporting only says it for blocks of 2 MiB or more (order 9), so the
+  host held 5.1 GiB of a VM that used 1.4 GiB. A cache that is dropped and a memory that is compacted become
+  such blocks. The cost is that the next job reads its files from disk once more; it cannot lose data.
+- Why inside the VM and not from the host (inflating and deflating the balloon with `virsh setmem`): the user
+  chose it, it needs no libvirt permission on the host, and the VM knows whether a job runs. A host-side timer
+  stays the alternative if the VM ever has no root.
+- Why the load average and not only "no job now": between two jobs of a queue no `Runner.Worker` exists for
+  a few seconds, and emptying the cache then would slow the next job for nothing; the load of the minute that
+  just ended is still high in that gap. First version: the 5-minute average, which fell under 0.30 only about
+  9 minutes after a job (it is a slow exponential: 1.7 to 0.3 takes 5 min x ln(1.7/0.3)). The user pointed out
+  that waiting 10 minutes with nothing running made no sense; changed to the 1-minute average and a timer
+  every minute: about 1.5 to 2 minutes after the last job, and still safe in a queue. The timer is silent
+  when it does nothing, since it now runs 1,440 times a day.
+- Tested: seven cases against the real script with fake /proc files (tests/test_ci_trim_memory.py; breaking the
+  job check makes a test fail); in the VM, one pass took the cache from 3.1 GiB to 0.7 GiB and the free memory
+  from 1.8 to 4.3 GiB, and the first automatic pass correctly skipped ("busy lately"). A job started right after
+  that pass and used the memory again, so a clean measurement of what the host gets back was made later, when idle.
+
+## 2026-10-18: `ci-status` also triggers the memory give-back, but only with GitHub's queue empty
+- Decided: when the shortcut finds no runner working AND GitHub shows no run waiting or running AND the VM
+  holds at least 512 MiB more than it uses, it runs `ci-trim-memory.sh --now` in the VM (ssh, sudo), waits
+  until the host's reading settles (every 3 s, up to 36 s) and replaces the notification with the result. With
+  anything waiting, or when GitHub does not answer, it does nothing and says why. `--no-trim` makes it read-only.
+- Why: the user asked for it ("when I check and it is 0, tell it to give the memory back"). "0 working" alone
+  is not enough: seen twice in one session, the runner shows idle for tens of seconds between two jobs of a
+  queue (it asks GitHub for the next one, runs its hooks, takes the shared lock) while runs wait; emptying the
+  cache then would make the next job slower. GitHub's queue is the one source that knows a job is coming, and
+  ci-status already reads it. (The VM has no GitHub token on purpose, so the timer inside the VM cannot ask.)
+- Both ways stay: the timer inside the VM (every minute, under 0.30 load) and this on demand. The first needs
+  nobody; the second answers "now" with certainty about the queue.
+- Not done: running `--now` when GitHub cannot be reached. A trim never loses data, but it can slow the job
+  that starts next, so without a reason to think the queue is empty it waits.
+
+## 2026-10-18: the CI VM's memory is left as it is; options were studied and one is ready if it is wanted
+- Decided: no further change to how the VM holds memory. The on-demand give-back (Super+C) and the idle timer
+  stay as they are. The user chose to leave it and wait for the 32 GiB upgrade, which removes the cause.
+- Measured, not guessed: with the queue empty, one trim returned 1.3 GiB of the 2.4 GiB the guest freed (5.11 to
+  3.79 GiB on the host) and the figure crept back to 4.5 GiB within two minutes as the guest reused the pages.
+  The host keeps nearly all the VM's RAM (RSS 5.9 GiB for 5.8 GiB), 3.4 GiB of it in 2 MiB host huge pages, and
+  free page reporting only returns free blocks of 2 MiB or more, so cache and fragmented free memory stay.
+- A second opinion (Gemini 4 Argon, asked to propose solutions given the numbers) and what checking it showed:
+  its diagnosis held; a cgroup slice with MemoryHigh would not cover Docker (containers live in their own
+  scopes) and 2.6 GiB is below the 3.4 GiB of real use seen in a build; a new job-completed hook would REPLACE
+  /home/ci/hooks/clean.sh, which holds the lock shared by the two repos (extend clean.sh instead); the guest
+  THP setting it suggested was already `madvise`.
+- Ready if it is wanted later, in this order: (1) lower the VM's memory ceiling to 4.5 GiB with
+  `virsh setmem ci-runner 4608M --live --config` (the balloon returns memory whatever the fragmentation, works
+  with a full queue, undone with the same command at 6144M; real use peaked near 3.4 GiB plus cache);
+  (2) at a time with an empty queue, one restart to add `autodeflate='on'` to the balloon (the guest takes
+  memory back instead of killing a process) and `cache='none'` on the qcow2 disk (the host stops caching it twice);
+  (3) experiment: `echo 5 > /sys/module/page_reporting/parameters/page_reporting_order` in the VM, undone with 9,
+  uncertain because of the host huge pages. Not recommended: MemoryHigh limits, jobs in containers on the
+  desktop (untrusted code without isolation), a VM per job, host-driven ballooning, DAMON.
+
+## 2026-10-18: last review of the CI-memory work by Fable, and what it changed
+- Method: a fresh Fable agent read the uncommitted work (ci-status, the VM script and its units, the tests and
+  the three documents) with no conclusions given, read-only and without access to the VM, GitHub or the
+  network. Every finding was checked here before being fixed. Nothing critical; seven findings, all real.
+- Fixed:
+  - The VM script read a failing `pgrep` (exit 2, 3 or 127) as "no job" and would drop the cache, also with
+    `--now`, the only guard a running job has against the request from the desktop. Only exit 1 means "no
+    process" now; the rest means "unknown" and does nothing. Test added (it fails with the old check).
+  - The GitHub queue count ignored `requested`, the state of a run just triggered whose jobs are not queued
+    yet: exactly when a job is about to start. It counts as waiting now. gh output that is not JSON is
+    "GitHub did not answer" instead of a traceback with no notification.
+  - The "asking the VM..." notification lasted 10 s but the result takes 10 to 40 s, and a second Super+C in
+    the gap started a second trim. It lasts 60 s and a lock (`$XDG_RUNTIME_DIR/ci-status.lock`) allows one at a time.
+  - A VM that vanished between the trim and the reading was reported as "gave back 4.9 GiB": it says "CI VM is off now".
+  - As root the script ignores the CI_TRIM_* test variables, so a changed environment cannot make it write into
+    other files. (Moot today, see below, but cheap and right if sudo is ever narrowed.)
+  - Documents: "more than 300 MiB" was "300 MiB or more"; the journalctl command needs the sudo rule that exists.
+  - Tests of main() (`--no-trim`, the order of the two notifications, a failed trim, a queue, the lock, `--print`),
+    of the queue count and of the `pgrep` error. 108 tests in the repository now.
+- Found while checking (not by the review): the VM user `ci` has `NOPASSWD:ALL` (cloud-init default) and runs the
+  jobs, with access to Docker: a job is root inside the VM. Acceptable for the owner's own repositories, and left
+  as it is; the VM sits on libvirt's NAT network, which reaches the home LAN. Before running pull requests from
+  other people on it, narrow `ci`'s sudo and give the VM no route to the LAN.
+
