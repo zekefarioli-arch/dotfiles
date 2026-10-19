@@ -132,6 +132,8 @@ sudo systemctl enable --now power-profiles-daemon
 
 echo "==> Login screen: LightDM with the Catppuccin greeter, session xmonad"
 sudo install -D -m 644 "$DOTFILES/system/etc/lightdm/lightdm-gtk-greeter.conf" /etc/lightdm/lightdm-gtk-greeter.conf
+# Flat popup menus in the greeter (no compositor there: round corners show square edges)
+sudo install -D -o lightdm -g lightdm -m 644 "$DOTFILES/system/etc/lightdm/greeter-gtk.css" /var/lib/lightdm/.config/gtk-3.0/gtk.css
 [[ -f ~/Pictures/catpuccin/kitty.jpg ]] &&
   sudo install -D -m 644 ~/Pictures/catpuccin/kitty.jpg /usr/share/backgrounds/login-kitty.jpg
 echo /usr/sbin/lightdm | sudo tee /etc/X11/default-display-manager >/dev/null

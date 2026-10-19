@@ -1,0 +1,32 @@
+/* Login screen (lightdm-gtk-greeter) menus, e.g. the power menu: flat, no radius, no shadow.
+ * Install: sudo install -D -o lightdm -g lightdm -m 644 this-file /var/lib/lightdm/.config/gtk-3.0/gtk.css
+ * (the greeter runs as the user `lightdm`, whose HOME is /var/lib/lightdm, and GTK loads that
+ * gtk.css on top of the theme). Why: there is no compositor at the login screen, so the theme's
+ * rounded popup menus are drawn inside a square X window and show square corners of another
+ * shade around the round ones. Same rules as ~/.config/gtk-3.0/gtk.css (the session's fix for
+ * the same problem under picom). Rejected: editing the theme in /usr/share/themes (a theme
+ * update would undo it).
+ */
+.popup decoration,
+.csd.popup decoration {
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border: 1px solid #45475a;
+}
+
+menu,
+.csd menu,
+.menu,
+.context-menu {
+  margin: 0;
+  padding: 2px 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+menu menuitem,
+.menu menuitem {
+  border-radius: 0;
+  margin: 0;
+}

@@ -6,7 +6,7 @@ every session; keep it short and true, and update it in the same commit as
 the change it describes. History goes in CHANGELOG.md, reasons in
 DECISIONS.md.
 
-_Last updated: 2026-10-18_
+_Last updated: 2026-10-19_
 
 ## Machine
 - Ryzen 9 desktop (the 1 TB NVMe, Crucial P310, moved here from the ThinkPad X13 on 2026-10-17; it was the laptop's disk since
@@ -184,6 +184,18 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
    d) Harden ssh on this desktop and the Arch desktop: keys first, then passwords off and a
       firewall rule for the LAN only (the details are in home-infra).
    e) Open claude-pick sessions inside tmux so the phone can attach to them.
+   f) Ephemeral CI VMs with a supervisor (idea, not decided or built; talked through 2026-10-19):
+      one VM at a time created from a base image (qcow2 overlay, Java and the tools already in
+      it, about 15 to 30 s to be ready) and destroyed after each job; a small host-side script
+      watches GitHub's queued jobs (GitHub is the queue), registers the runner with a JIT token
+      that never enters the VM, and kills a job that runs too long. A newer push to the same
+      branch or PR cancels the older run with `concurrency: group: ci-${{ github.ref }}` and
+      `cancel-in-progress: true` in each repo's ci.yml (per branch, not per project; false on
+      main). Needs a dependency cache (proxy on the host or warm caches in the image) and a VM
+      network with internet only, no route to the LAN. Plan: try it on the Ryzen 9 first (KVM
+      and libvirt are there), measure, then move it to the media server;
+      keep image, network and limits in one config file so the move is only that file. Not on
+      hs-gateway: see DECISIONS.md (2026-10-14 to 2026-10-18).
 9. LATER, a private repo for Claude's memory and settings (memory/,
    settings.json, keybindings.json, skills), not decided.
 
@@ -208,7 +220,7 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
   The backup on hs-gateway (~/migration-2026-10-16, holds private keys) is still to delete when you are sure.
   Delete the stray /etc/sudoers.d/zeke-nopasswd. on the Arch desktop (created by mistake).
 - Ubuntu migration done on 2026-10-17 (plan in docs/UBUNTU-MIGRATION.md); the old 236 GB Fedora disk is kept as the way back. The picom 12.5 check is still to do.
-- Login screen (2026-10-17): LightDM greeter with a Catppuccin wallpaper (/usr/share/backgrounds/login-kitty.jpg) and the theme and cursor copied to /usr/share; not seen on screen yet.
+- Login screen (2026-10-17): LightDM greeter with a Catppuccin wallpaper (/usr/share/backgrounds/login-kitty.jpg) and the theme and cursor copied to /usr/share; not seen on screen yet. Its popup menus are flat (2026-10-19, `system/etc/lightdm/greeter-gtk.css`, installed as the `lightdm` user's gtk.css) because the round corners showed square edges without a compositor; to check at the next login.
 - Firmware: BIOS 1.54 and Secure Boot KEK/UEFI CA 2023 plus dbx updates are
   available. Needs the charger plugged in: `sudo fwupdmgr update`.
 - Passwordless sudo (/etc/sudoers.d/zeke-nopasswd) was added for the setup;
