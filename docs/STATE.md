@@ -6,7 +6,7 @@ every session; keep it short and true, and update it in the same commit as
 the change it describes. History goes in CHANGELOG.md, reasons in
 DECISIONS.md.
 
-_Last updated: 2026-10-20_
+_Last updated: 2026-10-21_
 
 ## Machine
 - Ryzen 9 desktop (the 1 TB NVMe, Crucial P310, moved here from the ThinkPad X13 on 2026-10-17; it was the laptop's disk since
@@ -39,6 +39,7 @@ _Last updated: 2026-10-20_
 - picom (glx, vsync): rounded windows (14 px), blur and slide animation for the dropdown terminal.
 - Dropdown terminal: alacritty (class dropterm) with tmux session `drop`,
   toggled by Super+Ctrl+T; it hides before rofi, Super+Enter and Super+E.
+- Shutdown (2026-10-21): `system/etc/systemd/logind.conf.d/zz-inhibit-delay.conf` (installed in /etc/systemd/logind.conf.d) sets `InhibitDelayMaxSec=5`; with the CI VM running, shutdown from the login screen waited 30 s for libvirtd's inhibitor. Active from the next boot; the faster shutdown is not timed yet.
 - Lock: i3lock through `lock-screen`, by hand with Super+L only. There is no automatic
   lock any more (xss-lock was removed on 2026-10-07: it locked on every lid close).
   The monitor still turns off after 5 minutes of inactivity (DPMS), without a password.

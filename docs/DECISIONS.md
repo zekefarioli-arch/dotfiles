@@ -658,3 +658,14 @@ entries; the rest stands.
   as it is; the VM sits on libvirt's NAT network, which reaches the home LAN. Before running pull requests from
   other people on it, narrow `ci`'s sudo and give the VM no route to the LAN.
 
+
+## 2026-10-21: shutdown waits 5 s for inhibitors, not 30
+- Problem: from the login screen, shutdown sat 30 s doing nothing. The journal showed `Delay lock is active
+  (libvirtd) but inhibitor timeout is reached` exactly 30.0 s after `The system will power off now!` in two boots.
+  libvirtd's inhibitor is released when the CI VM stops, but libvirt-guests stops it only after logind gives up
+  waiting, so logind always waited the whole `InhibitDelayMaxSec` (30 s from unattended-upgrades' drop-in).
+- Decided: a drop-in `zz-inhibit-delay.conf` with `InhibitDelayMaxSec=5` (systemd's default), in `system/etc/systemd/logind.conf.d/`.
+- Considered: `ON_SHUTDOWN=suspend` in libvirt-guests (saves the VM to disk, slower, the runner reconnects on boot);
+  deleting the unattended-upgrades drop-in (a package update puts it back); stopping the VM before every shutdown
+  by hand (easy to forget). The VM still shuts down cleanly through libvirt-guests, only 25 s sooner.
+- Cost: an unattended upgrade running at the moment of shutdown has 5 s to finish instead of 30.
