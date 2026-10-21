@@ -4,6 +4,10 @@ What changed on the system, newest first, one line per change that matters
 to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
+## 2026-10-20
+- The `appia` MCP no longer fails silently in `~`, `/` or a folder that is not a git repository: it answers with a "not active here" message that Claude reads at once (repo code-index-mcp, `bin/appia-mcp`).
+- This desktop's MAC is in the router's NestNetController group `workstations` (never cut), so the night internet cut no longer leaves it offline.
+
 ## 2026-10-19
 - Login screen: the power menu (and any popup) had round corners drawn inside a square window, because the greeter has no compositor. A flat-menu gtk.css (`system/etc/lightdm/greeter-gtk.css`, installed in /var/lib/lightdm/.config/gtk-3.0/) removes the radius and shadow, like ~/.config/gtk-3.0/gtk.css does in the session. Not seen on screen yet.
 - Idea noted in STATE.md (8f), nothing built: ephemeral CI VMs with a small supervisor, tried first on the Ryzen 9 and moved to the media server later.

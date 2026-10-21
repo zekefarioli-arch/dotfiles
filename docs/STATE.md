@@ -6,7 +6,7 @@ every session; keep it short and true, and update it in the same commit as
 the change it describes. History goes in CHANGELOG.md, reasons in
 DECISIONS.md.
 
-_Last updated: 2026-10-19_
+_Last updated: 2026-10-20_
 
 ## Machine
 - Ryzen 9 desktop (the 1 TB NVMe, Crucial P310, moved here from the ThinkPad X13 on 2026-10-17; it was the laptop's disk since
@@ -17,7 +17,7 @@ _Last updated: 2026-10-19_
   disk is kept in a USB enclosure). Hostname `zeke-ryzen9-desktop` (was `zeke-thinkpad`); ufw on (ssh from the LAN only).
 - Wired (`eno1`, MAC 30:c5:99:d2:3b:ee), managed by NetworkManager through netplan; timezone Europe/London, set
   automatically by a NetworkManager dispatcher script. Fixed address `.23` (a DHCP reservation by this MAC in the router, outside
-  the pool; made and checked on 2026-10-17). The Wi-Fi card (`wlp8s0`) is down;
+  the pool; made and checked on 2026-10-17). Its MAC is in the NestNetController group `workstations` (protected) on `hs-gateway` since 2026-10-20, so the night cut of the house internet never takes it (tested with only `essential` on and open mode off). The Wi-Fi card (`wlp8s0`) is down;
   the netplan file for `CASITA_5G` is left over from the laptop (it matches `wlp3s0`) and does nothing here.
 - User `zeke`; LightDM starts the xmonad session.
 - Virtualization (2026-10-17): KVM and libvirt (`qemu:///system`, packages without recommends; user `zeke` is in `libvirt` and `kvm`).
@@ -28,7 +28,7 @@ _Last updated: 2026-10-19_
   `runbooks/ci-runner.md` (private repo). The suspend setting must stay off while it serves CI.
   Memory back to the host (2026-10-18): inside the VM a timer (`ci-trim-memory.timer`, every minute; files in `system/ci-vm/`, installed in the VM as `/usr/local/sbin/ci-trim-memory.sh` and `/etc/systemd/system/ci-trim-memory.{service,timer}`) drops the disk cache and compacts the memory so the free page reporting can return it; it only acts when no `Runner.Worker` runs, the 1-minute load is under 0.30 (about 2 minutes after the last job) and there are 300 MiB of cache or more; it is silent unless it trims. See what it did with `ssh ci@<vm> sudo journalctl -t ci-trim-memory` (works because the VM user `ci` has `NOPASSWD:ALL`, the cloud-init default; `ci-status` also needs `sudo -n` for the trim script); `ci-status` (Super+C) shows what the VM holds on this desktop.
 - Containers (2026-10-18): rootless Podman 5.7 and `podman-compose` (no daemon; no recommends), for the projects of ~/Zeke_projects/ia_general_workflow_improvement (the code index `appia` image builds and runs). Cargo/rustc 1.99 come from rustup in ~/.cargo (not on PATH by default: `export PATH=$HOME/.cargo/bin:$PATH`).
-- MCP (2026-10-18): the code index `appia` (formerly `ia01`; repo code-index-mcp, folder 01_appia) is registered as `appia` in Claude Code (user scope) and in `agy`; `~/.local/bin/appia-mcp` starts its Podman container for the folder you are in (read-only, no network, your own uid through `--userns=keep-id`; `bin/check-container` in the repo verifies it; one data volume per project, `appia-<folder>-<hash>`; the old `ia01-*` volumes and the `ia01:dev` image are unused and can be removed). Parses Python, Rust, JS/TS(X), Java, Elixir, Go, Bash and Erlang.
+- MCP (2026-10-18): the code index `appia` (formerly `ia01`; repo code-index-mcp, folder 01_appia) is registered as `appia` in Claude Code (user scope) and in `agy`; `~/.local/bin/appia-mcp` starts its Podman container for the folder you are in (read-only, no network, your own uid through `--userns=keep-id`; `bin/check-container` in the repo verifies it; one data volume per project, `appia-<folder>-<hash>`; the old `ia01-*` volumes and the `ia01:dev` image are unused and can be removed). Parses Python, Rust, JS/TS(X), Java, Elixir, Go, Bash and Erlang. Since 2026-10-20, in `~`, `/` and any folder that is not a git repository it starts no container and answers MCP with no tools and an `instructions` text ("appia is not active here, and why"), so Claude knows at once instead of seeing a failed server.
 
 ## Desktop
 - xmonad: action catalog in xmonad.hs, shortcuts in ~/.xmonad/keys.conf,
