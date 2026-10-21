@@ -10,8 +10,8 @@ _Last updated: 2026-10-21_
 
 ## Machine
 - Ryzen 9 desktop (the 1 TB NVMe, Crucial P310, moved here from the ThinkPad X13 on 2026-10-17; it was the laptop's disk since
-  2026-10-13). Hostname `zeke-ryzen9-desktop`. The ThinkPad no longer has this system. 14 GiB RAM now, a 32 GiB upgrade is
-  planned. KVM works (AMD-V, `kvm_amd` loaded). Other hardware details: not written down yet.
+  2026-10-13). Hostname `zeke-ryzen9-desktop`. The ThinkPad no longer has this system. 32 GB of RAM since the upgrade (2 x 16 GB Patriot DDR5, "6000 Series", dual channel; EXPO/XMP on, running at 6000 MT/s, checked
+  2026-10-21 with `sudo dmidecode -t memory`; 2 of the 4 slots are free). KVM works (AMD-V, `kvm_amd` loaded). Other hardware details: not written down yet.
 - Ubuntu 26.04 LTS (server install, minimized, plus the desktop of these dotfiles), kernel 7.0.x, ext4 on LVM (the root volume is 300 GB of the 931 GB disk, extended from the installer's 100 GB on 2026-10-18; about 628 GB stay unassigned in the volume group `ubuntu-vg` for later: `sudo lvextend -r -L +NG /dev/ubuntu-vg/ubuntu-lv`)
   (replaced Fedora 44 on 2026-10-17; plan and package map in docs/UBUNTU-MIGRATION.md; the old Fedora
   disk is kept in a USB enclosure). Hostname `zeke-ryzen9-desktop` (was `zeke-thinkpad`); ufw on (ssh from the LAN only).
@@ -24,7 +24,7 @@ _Last updated: 2026-10-21_
   One VM, `ci-runner`: Ubuntu Server 26.04.1, 6 vCPU, 6 GB, 80 GB, UEFI, CPU shares 256, autostart. It hosts a persistent GitHub Actions
   runners for the private repos `mock-oclock` and `due-card` (one runner each, label `ryzen-vm`; the repository variable `CI_RUNS_ON` of each
   switches its CI between the VM and GitHub's runners; a lock makes the two repos share the VM one job at a time). Two password-protected web panels for it (the runner's current step, the VM's load) are served by nginx on this
-  desktop and reachable from the home network only (ufw). The VM may use 6 GB of the 14 GiB of RAM and gives back what it frees (free page reporting on its memory balloon, 2026-10-17): idle it holds about 1.6 GiB of the host, not 5.7; with the 32 GB planned it is comfortable. Runbook and addresses: home-infra
+  desktop and reachable from the home network only (ufw). The VM may use 6 GB of the 30 GiB of RAM and gives back what it frees (free page reporting on its memory balloon, 2026-10-17): idle it holds about 1.6 GiB of the host, not 5.7; with the 32 GB now installed it is comfortable. Runbook and addresses: home-infra
   `runbooks/ci-runner.md` (private repo). The suspend setting must stay off while it serves CI.
   Memory back to the host (2026-10-18): inside the VM a timer (`ci-trim-memory.timer`, every minute; files in `system/ci-vm/`, installed in the VM as `/usr/local/sbin/ci-trim-memory.sh` and `/etc/systemd/system/ci-trim-memory.{service,timer}`) drops the disk cache and compacts the memory so the free page reporting can return it; it only acts when no `Runner.Worker` runs, the 1-minute load is under 0.30 (about 2 minutes after the last job) and there are 300 MiB of cache or more; it is silent unless it trims. See what it did with `ssh ci@<vm> sudo journalctl -t ci-trim-memory` (works because the VM user `ci` has `NOPASSWD:ALL`, the cloud-init default; `ci-status` also needs `sudo -n` for the trim script); `ci-status` (Super+C) shows what the VM holds on this desktop.
 - Containers (2026-10-18): rootless Podman 5.7 and `podman-compose` (no daemon; no recommends), for the projects of ~/Zeke_projects/ia_general_workflow_improvement (the code index `appia` image builds and runs). Cargo/rustc 1.99 come from rustup in ~/.cargo (not on PATH by default: `export PATH=$HOME/.cargo/bin:$PATH`).

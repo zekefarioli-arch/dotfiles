@@ -5,6 +5,7 @@ to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
 ## 2026-10-21
+- State file: this desktop has 32 GB of RAM (2 x 16 GB DDR5 at 6000 MT/s), not the 14 GiB written before.
 - Shutdown from the login screen no longer waits 30 s: logind waited for libvirtd's shutdown inhibitor (held while the CI VM runs, released only after the wait) up to `InhibitDelayMaxSec=30` (set by unattended-upgrades); now 5 s (`system/etc/systemd/logind.conf.d/zz-inhibit-delay.conf`, active from the next boot).
 
 ## 2026-10-20
