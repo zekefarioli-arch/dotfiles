@@ -6,7 +6,7 @@ every session; keep it short and true, and update it in the same commit as
 the change it describes. History goes in CHANGELOG.md, reasons in
 DECISIONS.md.
 
-_Last updated: 2026-10-21_
+_Last updated: 2026-10-26_
 
 ## Machine
 - Ryzen 9 desktop (the 1 TB NVMe, Crucial P310, moved here from the ThinkPad X13 on 2026-10-17; it was the laptop's disk since
@@ -215,6 +215,7 @@ and the Arch desktop, one step at a time (I decide each step before it is built)
   (`/etc/ssh/sshd_config.d/10-no-password.conf`) and remove the sudoers file when the setup is accepted.
   Antigravity IDE 1.107 (tarball 2.5.5) and the CLI `agy` 1.4.0 are installed again (2026-10-17); the IDE still needs its AppArmor profile
   (`system/etc/apparmor.d/antigravity-ide`, installed in /etc/apparmor.d on 2026-10-17, steps in its header) or Ubuntu blocks its sandbox.
+  `agy` asks which model to use when you start it in a terminal (`bash/.bashrc.d/agy.sh`, 2026-10-26: Argon's own weekly quota was empty and had been spent unnoticed); Enter = Gemini 3.8 Flash Medium; `AGY_MODEL=<id> agy` or `--model` skip the question.
   Both are signed in; `agy --print "/usage" --output-format json --mode plan < /dev/null` shows the quota left.
   Not tried on screen yet: the look of the bars and picom's rules, Super+Ctrl+T, `findajob` with Alt+G,
   Super+O, sound, brightness and the lid. Keyboard layout is `gb`; say if it should be another.

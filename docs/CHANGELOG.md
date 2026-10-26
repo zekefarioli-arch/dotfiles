@@ -4,6 +4,9 @@ What changed on the system, newest first, one line per change that matters
 to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
+## 2026-10-26
+- `agy` now asks which model to use when a conversation starts (numbered list from `agy models`, Enter = Gemini 3.8 Flash Medium, `q` cancels) and keeps it for that conversation (`bash/.bashrc.d/agy.sh`): its own default, Gemini 4 Argon, has a separate weekly quota that ran out on 2026-10-26 without anyone choosing it. No question with `--model`, `AGY_MODEL=<id>`, `-p/--print` or when stdin/stdout is not a terminal; `command agy` skips it.
+
 ## 2026-10-21
 - State file: this desktop has 32 GB of RAM (2 x 16 GB DDR5 at 6000 MT/s), not the 14 GiB written before.
 - Shutdown from the login screen no longer waits 30 s: logind waited for libvirtd's shutdown inhibitor (held while the CI VM runs, released only after the wait) up to `InhibitDelayMaxSec=30` (set by unattended-upgrades); now 5 s (`system/etc/systemd/logind.conf.d/zz-inhibit-delay.conf`, active from the next boot).

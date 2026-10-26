@@ -6,6 +6,20 @@ was considered, why. Small choices inside a file are explained in a comment
 next to the code instead; this file is for choices that shape the system.
 If a decision is reversed, add a new entry and mark the old one "Replaced".
 
+## 2026-10-26 · `agy` asks for the model at the start of a conversation
+Decided: `bash/.bashrc.d/agy.sh` defines an `agy` function that, when a person starts a conversation in a
+terminal, shows the models of `agy models` (cached a day) and asks; Enter takes Gemini 3.8 Flash Medium.
+The choice goes to `--model`, which fixes it for that whole session. No question with `--model`, `AGY_MODEL`,
+`-p/--print` or without a terminal, and subcommands are passed through. Considered: a fixed default only
+(first version; hides the choice, and Argon is better kept for important work); editing agy's settings.json
+(it has no model key; a `~/.agyrc` or `AGY_MODEL` variable suggested by a generic answer do not exist in agy);
+`/model` (changes one prompt and restores Gemini 4 Argon); an alias (would hand `--model` to `agy models` and
+`agy update`); a wrapper script named `agy` earlier in PATH (it would also change what the `gemini` skill and
+Tollbooth's quota timer call, and shadows the real binary). Why: Gemini 4 Argon has its own weekly quota, empty
+until 2026-11-01, while Flash and Pro had 85%, and it was spent without anyone choosing it. Not covered on
+purpose: scripts and the `gemini` skill call the real binary, so they need `--model` in their own command
+while Argon is empty.
+
 ## 2026-10-06 · Private and per-machine values stay out of the repo
 Decided: printer addresses live in ~/.config/printers.env (not in the repo);
 each machine has its own state file, linked as ~/.claude/STATE.local.md,
