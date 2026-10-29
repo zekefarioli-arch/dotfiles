@@ -6,6 +6,17 @@ was considered, why. Small choices inside a file are explained in a comment
 next to the code instead; this file is for choices that shape the system.
 If a decision is reversed, add a new entry and mark the old one "Replaced".
 
+## 2026-10-29 · A short STATE.md, and a `pc-admin` folder instead of working from ~
+Decided: STATE.md keeps only what is true now (machine, desktop, apps, known issues) plus pointers;
+the plan (ROADMAP.md) and the long to-do list (PENDING.md) are read on demand. Sessions for fixing the
+computer start with `pc-admin`, in ~/Zeke_projects/pc-admin, with dotfiles and home-infra added with
+`--add-dir`. Considered: moving dotfiles out of ~ (rejected: it means redoing the Stow links and every
+path written in scripts and docs, for no gain); opening dotfiles directly (no infra, and mixes with
+dotfiles work); only using /clear and subagents (does not cut what loads at the start). Why: ~/CLAUDE.md
+and the state file load in every session, and any folder under ~ also loads ~/CLAUDE.md, so only a
+smaller STATE saves context; the folder only organises the work. `--add-dir` folders do not load their
+CLAUDE.md, so pc-admin's CLAUDE.md tells Claude to read DECISIONS.md and the runbooks itself.
+
 ## 2026-10-26 · `agy` asks for the model at the start of a conversation
 Decided: `bash/.bashrc.d/agy.sh` defines an `agy` function that, when a person starts a conversation in a
 terminal, shows the models of `agy models` (cached a day) and asks; Enter takes Gemini 3.8 Flash Medium.
