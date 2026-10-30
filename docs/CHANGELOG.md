@@ -4,6 +4,9 @@ What changed on the system, newest first, one line per change that matters
 to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
+## 2026-10-30
+- xmonad wallpaper: a different image on each monitor (dark-forest on the left, dark-waves on the right), set by feh in autostart.sh.
+
 ## 2026-10-29
 - STATE.md went from 289 to about 129 lines: "In progress" moved to docs/ROADMAP.md and "Pending" to docs/PENDING.md (STATE keeps a pointer and the five most important pending items). It is loaded in every session, so this saves context.
 - New `pc-admin` (repo in ~/Zeke_projects/pc-admin, linked in ~/.local/bin): starts a numbered session there with ~/dotfiles and home-infra added, to fix the computer and do light chores on other projects.
