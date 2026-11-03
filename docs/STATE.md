@@ -6,7 +6,7 @@ every session; keep it short and true, and update it in the same commit as
 the change it describes. History goes in CHANGELOG.md, reasons in
 DECISIONS.md.
 
-_Last updated: 2026-10-29_
+_Last updated: 2026-11-03_
 
 ## Machine
 - Ryzen 9 desktop (the 1 TB NVMe, Crucial P310, moved here from the ThinkPad X13 on 2026-10-17; it was the laptop's disk since
@@ -27,6 +27,8 @@ _Last updated: 2026-10-29_
   desktop and reachable from the home network only (ufw). The VM may use 6 GB of the 30 GiB of RAM and gives back what it frees (free page reporting on its memory balloon, 2026-10-17): idle it holds about 1.6 GiB of the host, not 5.7; with the 32 GB now installed it is comfortable. Runbook and addresses: home-infra
   `runbooks/ci-runner.md` (private repo). The suspend setting must stay off while it serves CI.
   Memory back to the host (2026-10-18): inside the VM a timer (`ci-trim-memory.timer`, every minute; files in `system/ci-vm/`, installed in the VM as `/usr/local/sbin/ci-trim-memory.sh` and `/etc/systemd/system/ci-trim-memory.{service,timer}`) drops the disk cache and compacts the memory so the free page reporting can return it; it only acts when no `Runner.Worker` runs, the 1-minute load is under 0.30 (about 2 minutes after the last job) and there are 300 MiB of cache or more; it is silent unless it trims. See what it did with `ssh ci@<vm> sudo journalctl -t ci-trim-memory` (works because the VM user `ci` has `NOPASSWD:ALL`, the cloud-init default; `ci-status` also needs `sudo -n` for the trim script); `ci-status` (Super+C) shows what the VM holds on this desktop.
+- Sunshine (2026-10-31): game stream host for Moonlight, the LizardByte `.deb` for Ubuntu 26.04 (not Flatpak; no apt repo, so updates are a new download from github.com/LizardByte/Sunshine/releases). Started by `autostart.sh` through its user unit `app-dev.lizardbyte.app.Sunshine.service` (xmonad never reaches graphical-session.target). Web panel `https://localhost:47990`; first visit asks for a user and password. Its ports are open in ufw from the LAN only, 192.168.0.0/24 (47984, 47989, 47990, 48010/tcp; 47998-48000, 48002, 48010/udp; done 2026-10-31).
+- ProtonVPN (2026-11-03): no Proton app. `wireguard-tools` plus NetworkManager's own WireGuard support. Own tool `protonvpn-conf` (repo ~/Zeke_projects/protonvpn-conf, no GitHub remote yet; linked in ~/.local/bin): `login` (sign in once by hand in its own Brave profile, ~/.local/share/protonvpn-conf/profile), `refresh`/`list [country]` (server loads, read from the account page's own request), `get <server> --create` (makes this machine's config `<hostname>-<server>` in the account, 13 configs now; without --create it never changes the account), `up <server>`/`down` (autoconnect off). Configs in ~/.config/protonvpn-conf/confs (mode 600, never in a repo). Tried with AR#73. `menu` (Super+y after `xmonad --restart`): rofi, country -> servers by load -> connect, asks before creating a config. Not built: an alert when the connected server reaches 90% load.
 - Containers (2026-10-18): rootless Podman 5.7 and `podman-compose` (no daemon; no recommends), for the projects of ~/Zeke_projects/ia_general_workflow_improvement (the code index `appia` image builds and runs). Cargo/rustc 1.99 come from rustup in ~/.cargo (not on PATH by default: `export PATH=$HOME/.cargo/bin:$PATH`).
 - MCP (2026-10-18): the code index `appia` (formerly `ia01`; repo code-index-mcp, folder 01_appia) is registered as `appia` in Claude Code (user scope) and in `agy`; `~/.local/bin/appia-mcp` starts its Podman container for the folder you are in (read-only, no network, your own uid through `--userns=keep-id`; `bin/check-container` in the repo verifies it; one data volume per project, `appia-<folder>-<hash>`; the old `ia01-*` volumes and the `ia01:dev` image are unused and can be removed). Parses Python, Rust, JS/TS(X), Java, Elixir, Go, Bash and Erlang. Since 2026-10-20, in `~`, `/` and any folder that is not a git repository it starts no container and answers MCP with no tools and an `instructions` text ("appia is not active here, and why"), so Claude knows at once instead of seeing a failed server.
 
@@ -46,7 +48,7 @@ _Last updated: 2026-10-29_
 - Theme: Catppuccin Mocha with a pink accent in GTK, Qt, rofi, dunst, CopyQ,
   alacritty, tmux, Neovim, Polybar; Papirus-Dark icons.
 - Apps: Claude Desktop 2.42 (Linux beta, Anthropic's apt repo, installed 2026-10-17 without its recommends except QEMU/OVMF/virtiofsd for the Cowork tab; no gnome-keyring, so it may ask to sign in at each launch; `zeke` is in the `kvm` group (log out and in once for Cowork); not signed in or tried yet), Brave (default browser), Thunar, Atril, Neovim (LazyVim),
-  Mousepad (default for text files, Catppuccin Mocha colours), micro
+  ONLYOFFICE Desktop Editors 10.0.0 (2026-11-01, .deb from github.com/ONLYOFFICE/DesktopEditors/releases, no apt repo so updates are manual; not Flatpak), Mousepad (default for text files, Catppuccin Mocha colours), micro
   (terminal editor with normal shortcuts), CopyQ,
   KDE Connect and scrcpy for the phone, simple-scan.
 

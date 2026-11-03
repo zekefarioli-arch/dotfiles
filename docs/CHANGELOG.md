@@ -4,7 +4,14 @@ What changed on the system, newest first, one line per change that matters
 to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
+## 2026-11-03
+- ProtonVPN without the Proton app: `wireguard-tools` plus a new tool `protonvpn-conf` (own repo) that reads server loads from my account page and connects with `up`/`down` through NetworkManager. Tried with AR#73 (tunnel up, LAN direct, `down` restored the route). Super+y opens its rofi menu (country, then servers by load); needs `xmonad --restart`. One config added to the Proton account (`zeke-ryzen9-desktop-AR73`); a first attempt that lost its key was revoked.
+
+## 2026-11-01
+- ONLYOFFICE Desktop Editors 10.0.0 installed (official .deb from GitHub, no recommends; pulled in 4 small font packages).
+
 ## 2026-10-30
+- Sunshine 2026.914 installed (LizardByte .deb for Ubuntu 26.04, 3 packages) to stream this desktop to Moonlight; started by autostart.sh. Its ports are open in ufw from the LAN only (192.168.0.0/24).
 - xmonad wallpaper: a different image on each monitor (dark-forest on the left, dark-waves on the right), set by feh in autostart.sh.
 
 ## 2026-10-29

@@ -47,3 +47,7 @@ pasystray &
 copyq --start-server &
 kdeconnectd &        # phone integration (KDE Connect daemon only)
 dunst &
+# Sunshine (game stream host) on machines that have it. Its unit is WantedBy graphical-session.target,
+# which xmonad under LightDM never reaches, so it is started here instead of enabled.
+systemctl --user cat app-dev.lizardbyte.app.Sunshine.service >/dev/null 2>&1 &&
+  systemctl --user start app-dev.lizardbyte.app.Sunshine.service

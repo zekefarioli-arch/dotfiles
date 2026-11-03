@@ -694,3 +694,21 @@ entries; the rest stands.
   deleting the unattended-upgrades drop-in (a package update puts it back); stopping the VM before every shutdown
   by hand (easy to forget). The VM still shuts down cleanly through libvirt-guests, only 25 s sooner.
 - Cost: an unattended upgrade running at the moment of shutdown has 5 s to finish instead of 30.
+
+## 2026-10-31: Sunshine from the official .deb, started by autostart.sh
+- Decided: install Sunshine from the LizardByte `.deb` for Ubuntu 26.04 (3 packages with miniupnpc) and start its user unit from `autostart.sh`.
+- Considered: Flatpak (a runtime for one tool, against the light-system rule) and the AppImage (no service unit, no udev rules). Enabling the unit was rejected: it hangs off graphical-session.target, which the xmonad session does not reach. Cost: no apt repo, so updates are manual.
+
+
+## 2026-11-01: ONLYOFFICE from the official .deb
+- Decided: install the `.deb` from the GitHub releases with `--no-install-recommends` (adds only 4 font packages).
+- Considered: Flatpak (a runtime for one app, against the light-system rule), the snap, and the project's apt repo (adds a third-party source for one package). Cost: updates are manual.
+
+## 2026-11-03: ProtonVPN as plain WireGuard connections in NetworkManager
+- Decided: install only `wireguard-tools` and import Proton's WireGuard `.conf` files with `nmcli`, as `wg-home` already is.
+- Considered: the official `proton-vpn-gnome-desktop` app (third-party apt repo and GTK/GNOME dependencies, against the light-system rule) and OpenVPN (slower). Cost: no server list or automatic kill switch; one `.conf` per server.
+
+## 2026-11-03: `protonvpn-conf`, a signed-in Brave profile instead of Proton's API or app
+- Decided: an own tool (Node + Playwright on the installed Brave, like findajob) with a dedicated profile where I sign in by hand once. It listens to the server list the account page itself loads (load, city, plan, feature bits) and creates or downloads WireGuard configs through the page.
+- Considered: Proton's API called directly (answers 400 without the headers of its official apps; sending them would pass as an app that is not this one); the official CLI (beta, needs Proton's apt repo, shows no load that I could confirm); scraping the tables (breaks with the layout).
+- Found: the Download button of an already-created config returns a placeholder PrivateKey, so a usable config can only be captured when it is created. Hence one config per machine named `<hostname>-<server>`, never sharing the account's other configs (two machines on one key knock each other offline). Cost: each new server is one more config in the account.
