@@ -4,10 +4,11 @@ return {
     "neovim/nvim-lspconfig",
     opts = {
       servers = {
-        html = {},
+        -- htmldjango also covers Nunjucks (.njk, GOV.UK Frontend templates; see config/options.lua)
+        html = { filetypes = { "html", "templ", "htmldjango" } },
         cssls = {},
         emmet_language_server = {
-          filetypes = { "html", "css", "scss", "javascriptreact", "typescriptreact", "vue", "svelte", "eelixir", "heex" },
+          filetypes = { "html", "css", "scss", "javascriptreact", "typescriptreact", "vue", "svelte", "eelixir", "heex", "htmldjango" },
         },
       },
     },

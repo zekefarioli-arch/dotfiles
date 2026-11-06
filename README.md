@@ -18,7 +18,7 @@ stow --no-folding -t ~ xmonad polybar bin alacritty tmux nvim rofi dunst gtk qt 
 | `polybar` | one bar per monitor, fed by xmonad |
 | `bin` | scripts in `~/.local/bin` (shortcut tools, lock screen, OSD, phone) |
 | `alacritty`, `tmux`, `starship`, `bash` | terminal, dropdown session and prompt |
-| `nvim` | LazyVim for Java, Erlang, Elixir, TypeScript and front end |
+| `nvim` | LazyVim for Java (Spring Boot, Gradle, SQL, REST client), Erlang, Elixir, TypeScript and front end |
 | `micro` | quick terminal editor with normal shortcuts, Catppuccin Mocha |
 | `rofi`, `dunst`, `gtk`, `qt`, `copyq` | launcher, notifications and Catppuccin theming |
 | `x11`, `xdg` | X session environment, default apps, user folders |

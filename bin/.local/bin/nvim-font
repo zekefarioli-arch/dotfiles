@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Open Neovim in its own Alacritty window with a different font. Neovim has no font of its own
+# (it takes the terminal's), so this overrides the font for this one window and every other
+# terminal keeps JetBrainsMono. Change FAMILY to try another; it must be monospaced (a proportional
+# one such as Inter leaves gaps after i, l and t: tried and dropped on 2026-11-05).
+# To go back to the shared font, delete the launcher (xdg/.local/share/applications/nvim.desktop).
+# The font options are here and not in the .desktop Exec line because Alacritty needs literal
+# quotes around the family and launchers disagree on how to escape them.
+set -u
+
+# Tried: Inter (dropped, proportional), IBM Plex Mono (no Nerd Font icons), Maple Mono NF (current).
+FAMILY="Maple Mono NF"
+# Only this window: the shared size is in ~/.config/alacritty/local.toml (10.5 on the Ryzen 9)
+SIZE=11.5
+
+exec alacritty --class nvim-font --title Neovim \
+  -o "font.size=$SIZE" \
+  -o "font.normal.family=\"$FAMILY\"" \
+  -o "font.bold.family=\"$FAMILY\"" \
+  -o "font.italic.family=\"$FAMILY\"" \
+  -e nvim "$@"
