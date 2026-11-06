@@ -1,0 +1,12 @@
+[Unit]
+Description=Check for a new Chromium (Chrome for Testing) every few days
+
+[Timer]
+# Stable gets a new major about every 4 weeks and security fixes in between; twice a week keeps the delay short.
+OnCalendar=Mon,Thu *-*-* 12:00
+# Run at the next login if the computer was off at the scheduled time.
+Persistent=true
+RandomizedDelaySec=30min
+
+[Install]
+WantedBy=timers.target

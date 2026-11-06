@@ -1,0 +1,10 @@
+[Unit]
+Description=Update Chromium (Chrome for Testing, Stable) in ~/.local/opt/chromium
+# Needs the network; the timer below catches up after the computer was off or offline.
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/chromium-update
+# Replacing the files under a running browser is safe: the open window keeps the old ones until it is restarted.

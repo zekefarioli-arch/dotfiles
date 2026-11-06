@@ -1,0 +1,14 @@
+# Chromium from Google's Chrome for Testing (chromium-update, unpacked in ~/.local/opt/chromium) needs user
+# namespaces for its sandbox; Ubuntu 24.04+ denies that to unknown binaries (kernel.apparmor_restrict_unprivileged_userns=1).
+# Same shape as the profiles that ship for brave and chrome: it only names this one binary and lets it use userns,
+# it confines nothing else. Narrower than --no-sandbox, which turns the sandbox off.
+# Install: sudo install -m 644 system/etc/apparmor.d/chromium-cft /etc/apparmor.d/ &&
+#          sudo apparmor_parser -r /etc/apparmor.d/chromium-cft
+abi <abi/4.0>,
+include <tunables/global>
+
+profile chromium-cft /home/*/.local/opt/chromium/chrome flags=(unconfined) {
+  userns,
+
+  include if exists <local/chromium-cft>
+}

@@ -744,3 +744,8 @@ entries; the rest stands.
 - Decided: purge snapd and every snap; pin snapd to -10 so a stub package cannot pull it back; install Firefox from packages.mozilla.org (key fingerprint checked, pinned to 1000 so Ubuntu's snap stub never wins).
 - Considered: Flatpak (a runtime, against the light-system rule), Firefox tarball (no updates), leaving snap only for Firefox. Chromium has no native Ubuntu package (it is a snap stub), so it was dropped: Brave covers it. The snap `cups` ran beside the apt `cups` and held no queues, so it just went.
 - Cost: Firefox updates come from a third-party source. Ubuntu packages that are snap stubs (firefox, chromium-browser, and others later) will not install from Ubuntu.
+
+## 2026-11-06: Chromium from Google's Chrome for Testing, kept up to date by a timer
+- Decided: `chromium-update` unpacks the Stable build of Chrome for Testing (storage.googleapis.com, version read from the official JSON) in ~/.local/opt/chromium; a user timer runs it twice a week. Ubuntu's chromium is a snap stub and the xtradeb PPA could not be verified (maintainers anonymous, packages built locally by participants); no package was installed from the PPA.
+- Considered: Playwright's Chromium (for tests, no daily profile), Chromium snapshots (tip-of-tree builds, no stable channel), Flatpak (runtime), Google Chrome (not Chromium), Debian's deb (mixes releases).
+- Cost: no Sync or Google API keys; no automatic update inside the browser, only the timer. The sandbox works through an AppArmor profile naming only that binary.

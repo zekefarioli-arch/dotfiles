@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Install or update Chromium (Google's "Chrome for Testing", Stable channel) in ~/.local/opt/chromium and link it
+# as ~/.local/bin/chromium. Why this and not a package: Ubuntu's chromium is a snap stub (snap is banned here, see
+# DECISIONS.md 2026-11-06) and the third-party PPAs are unverifiable. These builds are Google's own, versioned like
+# Chrome Stable, but do not update themselves: run this now and then (`chromium-update --check` only compares).
+# The profile is the normal one (~/.config/google-chrome-for-testing), so logins like Gmail persist.
+set -euo pipefail
+
+dest="$HOME/.local/opt/chromium"
+json=https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json
+
+read -r version url < <(curl -fsS "$json" | python3 -c '
+import sys, json
+d = json.load(sys.stdin)["channels"]["Stable"]
+url = next(x["url"] for x in d["downloads"]["chrome"] if x["platform"] == "linux64")
+print(d["version"], url)')
+
+have=$(cat "$dest/.version" 2>/dev/null || echo none)
+echo "installed: $have, stable: $version"
+[ "${1:-}" = --check ] && exit 0
+[ "$have" = "$version" ] && { echo "up to date"; exit 0; }
+
+tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+curl -fL --progress-bar -o "$tmp/chrome.zip" "$url"
+unzip -q "$tmp/chrome.zip" -d "$tmp"
+echo "$version" > "$tmp/chrome-linux64/.version"
+mkdir -p "$HOME/.local/opt" "$HOME/.local/bin"
+rm -rf "$dest.old"; [ -d "$dest" ] && mv "$dest" "$dest.old"
+mv "$tmp/chrome-linux64" "$dest"
+rm -rf "$dest.old"
+ln -sfn "$dest/chrome" "$HOME/.local/bin/chromium"
+echo "installed $version"

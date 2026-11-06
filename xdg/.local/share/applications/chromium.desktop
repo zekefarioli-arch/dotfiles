@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Chromium
+GenericName=Web Browser
+Comment=Chromium (Google's Chrome for Testing, installed by chromium-update)
+Exec=chromium %U
+Icon=/home/zeke/.local/opt/chromium/product_logo_48.png
+Terminal=false
+Categories=Network;WebBrowser;
+StartupWMClass=Chromium-browser
