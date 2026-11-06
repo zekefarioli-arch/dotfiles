@@ -2,13 +2,20 @@
 # Automatic timezone: when a network connects, look up the location by IP
 # with Fedora's geoip service (the same one the installer uses) and switch
 # the timezone if it changed (e.g. when travelling to another country).
-# Note: with a VPN up, the VPN server's location is used.
+# With a Proton VPN connection up (a WireGuard connection named pvpn-*, made by protonvpn-conf)
+# nothing changes: the IP then belongs to the VPN server's country, and connecting to Argentina
+# used to switch the clock to Buenos Aires (2026-11-03). The zone is checked again at the next
+# network change after the VPN is down. wg-home (my house) is not skipped: its exit is home.
 # Install: sudo install -m 755 this-file /etc/NetworkManager/dispatcher.d/
 #           sudo restorecon -v /etc/NetworkManager/dispatcher.d/90-auto-timezone
 case "$2" in
   up|connectivity-change) ;;
   *) exit 0 ;;
 esac
+
+# $1 is the interface (pvpn-ar73 for the VPN itself); a connectivity-change has none, so also ask NM
+case "$1" in pvpn-*) exit 0 ;; esac
+nmcli -t -f NAME,TYPE connection show --active 2>/dev/null | grep -q '^pvpn-.*:wireguard$' && exit 0
 
 tz=$(curl -fsS --max-time 8 https://geoip.fedoraproject.org/city |
      python3 -c 'import sys, json; print(json.load(sys.stdin).get("time_zone") or "")' 2>/dev/null)
