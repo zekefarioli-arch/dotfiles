@@ -712,3 +712,35 @@ entries; the rest stands.
 - Decided: an own tool (Node + Playwright on the installed Brave, like findajob) with a dedicated profile where I sign in by hand once. It listens to the server list the account page itself loads (load, city, plan, feature bits) and creates or downloads WireGuard configs through the page.
 - Considered: Proton's API called directly (answers 400 without the headers of its official apps; sending them would pass as an app that is not this one); the official CLI (beta, needs Proton's apt repo, shows no load that I could confirm); scraping the tables (breaks with the layout).
 - Found: the Download button of an already-created config returns a placeholder PrivateKey, so a usable config can only be captured when it is created. Hence one config per machine named `<hostname>-<server>`, never sharing the account's other configs (two machines on one key knock each other offline). Cost: each new server is one more config in the account.
+
+## 2026-11-03: the automatic timezone ignores the Proton VPN
+- Decided: `90-auto-timezone` exits when the interface is `pvpn-*` or a `pvpn-*` WireGuard connection is active.
+- Why: it takes the zone from the public IP, and with the VPN up that IP belongs to the server's country; my first tests of `protonvpn-conf` moved the clock to Buenos Aires (-03) and a disconnect did not always move it back.
+- Considered: handling the `down` event to reset the zone (races with the route coming back, which is what failed) and turning the script off (loses the travel case). Cost: if I travel with the VPN on, the zone is fixed after it is disconnected, at the next network change. `wg-home` is not skipped on purpose, its exit is my house.
+
+## 2026-11-04: Neovim for the Java challenge, with no AI plugins and no spring-boot.nvim
+- Decided: keep LazyVim's Java extra (jdtls) and add only REST (kulala), SQL (dadbod), edgy and dial; install `postgresql-client` (4 small packages) for dadbod; map `.njk` to htmldjango.
+- Why no AI plugin (Copilot and the like): the task-manager challenge must be written and explained by me, and the repo must carry no AI marks.
+- Considered: `spring-boot.nvim` (Spring-aware completion and endpoint search; needs Neovim 0.12+, which came the same day, see the next entry, so it can be added); VS Code with Copilot disabled (works, but jdtls already runs here); a nunjucks/jinja treesitter parser (not needed, htmldjango gives the same highlighting for `{% %}`).
+- Found: a new file in `~/dotfiles/nvim` is not active until `stow --no-folding -t ~ nvim` links it (`plugins/java.lua` was silently ignored for a day; check with `ls ~/.config/nvim/lua/plugins/`).
+- Found: `Lazy sync` updates every plugin, so the lock file was restored and only the new plugins were installed (`Lazy restore`); a jdtls killed mid-import leaves a workspace that hangs, deleting `~/.cache/nvim/jdtls/<project>` fixes it.
+
+## 2026-11-05: a separate font for Neovim only, through its own launcher (Inter dropped; now Maple Mono NF)
+- Decided: open Neovim from rofi in a separate Alacritty window (`nvim-font`, a `nvim.desktop` override) with its own font; currently Maple Mono NF (the free release v7.9, the NF zip, only the 4 styles Alacritty needs, in ~/.local/share/fonts/MapleMonoNF; not Flatpak, not apt). Other terminals keep JetBrainsMono Nerd Font.
+- Why Maple: I wanted a font with character (MonoLisa-like cursive italics) and MonoLisa is paid; Maple Mono is free and open, and the NF build carries the icons Neovim's tree needs.
+- Also tried: IBM Plex Mono (apt `fonts-ibm-plex`), kept installed.
+- Why: Neovim takes the terminal's font, so the font can only differ per window. I wanted the Plex/Inter look in the editor.
+- Tried first: Inter (and IBM Plex Sans was considered). Both are proportional: in Alacritty's fixed grid they leave gaps after i, l and t ("ARCHI TECTURE") and squeeze m and w. I had been warned and tried it anyway; seen on screen, it was dropped the same day.
+- Considered: the shared Alacritty config (every terminal would change); Neovide (a GUI install for one editor).
+- Cost: Plex Mono has no Nerd Font icons, so those fall back to JetBrainsMono and may look different; if they break, change `FAMILY` in `nvim-font` back to "JetBrainsMono Nerd Font". `fonts-inter` stays installed, unused.
+- Found: `stow bin` aborts because of stale `__pycache__` files in ~/.local/lib; `nvim-font` was linked by hand like the other scripts.
+
+## 2026-11-04: Neovim 0.12 from the official tarball, not the PPA, AppImage or Flatpak
+- Decided: extract the release tarball into `~/.local/nvim-linux-x86_64` and link `~/.local/bin/nvim` to it. Ubuntu 26.04 only has 0.11.6 and `refactoring.nvim` (and `spring-boot.nvim`) need 0.12.
+- Considered: the neovim-ppa/stable PPA (a third-party apt source for one package), the AppImage (needs FUSE, slower to start), Flatpak or snap (a runtime for one tool, against the light-system rule).
+- Cost: updates are manual, like Sunshine and ONLYOFFICE. Undo: remove the link and `hash -r`; apt's nvim is still in /usr/bin. The release's `shasum.txt` is a 404; the checksum comes from the `digest` field of GitHub's releases API.
+
+## 2026-11-06: No snap on this desktop; Firefox from Mozilla's apt repo
+- Decided: purge snapd and every snap; pin snapd to -10 so a stub package cannot pull it back; install Firefox from packages.mozilla.org (key fingerprint checked, pinned to 1000 so Ubuntu's snap stub never wins).
+- Considered: Flatpak (a runtime, against the light-system rule), Firefox tarball (no updates), leaving snap only for Firefox. Chromium has no native Ubuntu package (it is a snap stub), so it was dropped: Brave covers it. The snap `cups` ran beside the apt `cups` and held no queues, so it just went.
+- Cost: Firefox updates come from a third-party source. Ubuntu packages that are snap stubs (firefox, chromium-browser, and others later) will not install from Ubuntu.

@@ -4,8 +4,20 @@ What changed on the system, newest first, one line per change that matters
 to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
+## 2026-11-04
+- Neovim opens from rofi in its own Alacritty window with Maple Mono NF (v7.9 from github.com/subframe7536/maple-font, 4 styles in ~/.local/share/fonts/MapleMonoNF, checksum checked): new `nvim-font` script and a `nvim.desktop` override. Other terminals keep JetBrainsMono. Tried first: Inter (dropped: proportional, gaps after i, l and t) and IBM Plex Mono (installed from apt as `fonts-ibm-plex`, no Nerd Font icons). `fonts-inter` and `fonts-ibm-plex` are still installed, unused.
+- Neovim's jdtls re-reads `build.gradle` on save (`updateBuildConfiguration = "automatic"`); before, new dependencies showed as unresolved until `:JdtUpdateConfig`. `plugins/java.lua` was not linked by Stow until now, so none of its settings (organize imports on save, test-friendly completion) had been applied.
+- Neovim shows whitespace by default (spaces as `·`, tabs as `»`, trailing spaces as `•`); `<leader>uW` toggles it. Alacritty font size on this desktop raised from 8.5 to 10.5 (`~/.config/alacritty/local.toml`, not in the repo).
+- Neovim updated from apt's 0.11.6 to 0.12.6 (official tarball in ~/.local, checksum checked against GitHub's digest). The `refactoring.nvim` extra, which warned at every start, now loads.
+- Neovim set up for Java/Spring Boot work: LazyVim extras `util.rest` (kulala, `.http` files), `lang.sql` (vim-dadbod, with `postgresql-client` installed), `ui.edgy`, `editor.dial`, `ui.mini-indentscope`; new `plugins/java.lua` (jdtls settings for Gradle and JUnit/Mockito/MockMvc completion) and `.njk` files as htmldjango. No AI plugins.
+
 ## 2026-11-03
+- The automatic timezone (`90-auto-timezone`) no longer follows a Proton VPN: connecting to Argentina had switched the clock to Buenos Aires. It does nothing for `pvpn-*` interfaces or while a `pvpn-*` WireGuard connection is active; 5 new tests. Timezone set back to Europe/London by hand.
+- `protonvpn-conf` published as a public repo (github.com/zekefarioli-arch/protonvpn-conf) with a README in my voice, screenshots of the rofi menu and a licence (MIT). The menu window is wider so the services column is not cut off; it opens at once and refreshes the loads in the background.
 - ProtonVPN without the Proton app: `wireguard-tools` plus a new tool `protonvpn-conf` (own repo) that reads server loads from my account page and connects with `up`/`down` through NetworkManager. Tried with AR#73 (tunnel up, LAN direct, `down` restored the route). Super+y opens its rofi menu (country, then servers by load); needs `xmonad --restart`. One config added to the Proton account (`zeke-ryzen9-desktop-AR73`); a first attempt that lost its key was revoked.
+
+## 2026-11-06
+- snap removed from this desktop (firefox, chromium, cups, their runtimes and snapd itself). Firefox 159 now comes from Mozilla's apt repo; Chromium is gone (Brave is the browser); printing uses the apt CUPS, which already served both queues. `/etc/apt/preferences.d/no-snap` keeps snapd from coming back. The snap Firefox profile (977 MB) was deleted with snapd's purge before it was migrated. The dead remmina PPA source was removed (remmina 1.4.43 comes from Ubuntu).
 
 ## 2026-11-01
 - ONLYOFFICE Desktop Editors 10.0.0 installed (official .deb from GitHub, no recommends; pulled in 4 small font packages).
