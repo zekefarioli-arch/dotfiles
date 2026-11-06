@@ -1,32 +1,53 @@
 #!/usr/bin/env bash
-# Install or update Chromium (Google's "Chrome for Testing", Stable channel) in ~/.local/opt/chromium and link it
-# as ~/.local/bin/chromium. Why this and not a package: Ubuntu's chromium is a snap stub (snap is banned here, see
-# DECISIONS.md 2026-11-06) and the third-party PPAs are unverifiable. These builds are Google's own, versioned like
-# Chrome Stable, but do not update themselves: run this now and then (`chromium-update --check` only compares).
-# The profile is the normal one (~/.config/google-chrome-for-testing), so logins like Gmail persist.
+# Install or update Chromium in ~/.local/opt/chromium and link it as ~/.local/bin/chromium.
+# Why this and not a package: Ubuntu's chromium is a snap stub (snap is banned here, see DECISIONS.md 2026-11-06)
+# and the third-party PPAs are unverifiable. The Chromium project publishes its own builds (Chromium branding, no
+# Google Chrome logo or Sync) as snapshots of every few commits; this script takes the one closest to, and not newer
+# than, the commit of the current Stable release (chromiumdash), so it follows the stable code, not the tip.
+# No self-update: `chromium-update --check` only compares, the user timer runs it twice a week.
+# Profile: ~/.config/chromium, so logins like Gmail persist. (Google's Chrome for Testing was tried first and dropped:
+# it is Chrome-branded, with the Chrome tray icon; DECISIONS.md 2026-11-06.)
 set -euo pipefail
 
 dest="$HOME/.local/opt/chromium"
-json=https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json
+api="https://chromiumdash.appspot.com/fetch_releases?channel=Stable&platform=Linux&num=1"
+bucket="https://www.googleapis.com/storage/v1/b/chromium-browser-snapshots/o"
+dl="https://storage.googleapis.com/chromium-browser-snapshots/Linux_x64"
 
-read -r version url < <(curl -fsS "$json" | python3 -c '
+read -r version pos < <(curl -fsS "$api" | python3 -c '
 import sys, json
-d = json.load(sys.stdin)["channels"]["Stable"]
-url = next(x["url"] for x in d["downloads"]["chrome"] if x["platform"] == "linux64")
-print(d["version"], url)')
+d = json.load(sys.stdin)[0]
+print(d["version"], d["chromium_main_branch_position"])')
 
-have=$(cat "$dest/.version" 2>/dev/null || echo none)
-echo "installed: $have, stable: $version"
+# Largest published revision <= pos that has the zip; look in the pos block and up to 4 blocks of 100 below.
+rev=""
+for n in 0 1 2 3 4; do
+  prefix=$(( pos / 100 - n ))
+  cands=$(curl -fsS "$bucket?prefix=Linux_x64/$prefix&delimiter=/&maxResults=1000" | python3 -c '
+import sys, json
+pos = int(sys.argv[1])
+for p in sorted(json.load(sys.stdin).get("prefixes", []), reverse=True):
+    r = p.split("/")[1]
+    if len(r) == len(sys.argv[1]) and int(r) <= pos:
+        print(r)' "$pos")
+  for r in $cands; do
+    if curl -fsI "$dl/$r/chrome-linux.zip" >/dev/null 2>&1; then rev=$r; break 2; fi
+  done
+done
+[ -n "$rev" ] || { echo "no snapshot found at or below revision $pos" >&2; exit 1; }
+
+have=$(cat "$dest/.revision" 2>/dev/null || echo none)
+echo "installed revision: $have, wanted: $rev (Stable $version is revision $pos)"
 [ "${1:-}" = --check ] && exit 0
-[ "$have" = "$version" ] && { echo "up to date"; exit 0; }
+[ "$have" = "$rev" ] && { echo "up to date"; exit 0; }
 
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
-curl -fL --progress-bar -o "$tmp/chrome.zip" "$url"
+curl -fL --progress-bar -o "$tmp/chrome.zip" "$dl/$rev/chrome-linux.zip"
 unzip -q "$tmp/chrome.zip" -d "$tmp"
-echo "$version" > "$tmp/chrome-linux64/.version"
+echo "$rev" > "$tmp/chrome-linux/.revision"
 mkdir -p "$HOME/.local/opt" "$HOME/.local/bin"
 rm -rf "$dest.old"; [ -d "$dest" ] && mv "$dest" "$dest.old"
-mv "$tmp/chrome-linux64" "$dest"
+mv "$tmp/chrome-linux" "$dest"
 rm -rf "$dest.old"
 ln -sfn "$dest/chrome" "$HOME/.local/bin/chromium"
-echo "installed $version"
+echo "installed revision $rev (Stable $version)"

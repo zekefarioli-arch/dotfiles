@@ -1,4 +1,4 @@
-# Chromium from Google's Chrome for Testing (chromium-update, unpacked in ~/.local/opt/chromium) needs user
+# Chromium from the project's own snapshots (chromium-update, unpacked in ~/.local/opt/chromium) needs user
 # namespaces for its sandbox; Ubuntu 24.04+ denies that to unknown binaries (kernel.apparmor_restrict_unprivileged_userns=1).
 # Same shape as the profiles that ship for brave and chrome: it only names this one binary and lets it use userns,
 # it confines nothing else. Narrower than --no-sandbox, which turns the sandbox off.

@@ -749,3 +749,8 @@ entries; the rest stands.
 - Decided: `chromium-update` unpacks the Stable build of Chrome for Testing (storage.googleapis.com, version read from the official JSON) in ~/.local/opt/chromium; a user timer runs it twice a week. Ubuntu's chromium is a snap stub and the xtradeb PPA could not be verified (maintainers anonymous, packages built locally by participants); no package was installed from the PPA.
 - Considered: Playwright's Chromium (for tests, no daily profile), Chromium snapshots (tip-of-tree builds, no stable channel), Flatpak (runtime), Google Chrome (not Chromium), Debian's deb (mixes releases).
 - Cost: no Sync or Google API keys; no automatic update inside the browser, only the timer. The sandbox works through an AppArmor profile naming only that binary.
+
+## 2026-11-06: Chromium snapshots at the Stable commit, replacing Chrome for Testing (Replaces the entry above)
+- Decided: `chromium-update` takes the Chromium project's snapshot closest to, and not newer than, the commit of the current Stable release (chromiumdash gives the position); same timer, AppArmor profile and launcher.
+- Why: Chrome for Testing is Chrome-branded (Chrome logo, tray icon, name) and I wanted real Chromium, a lighter and less Google-flavoured browser.
+- Cost: snapshots are not signed as a release and are a few commits off Stable; no Sync, no Google API keys. Profile moved to ~/.config/chromium (logins redone).
