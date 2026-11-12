@@ -4,6 +4,9 @@ What changed on the system, newest first, one line per change that matters
 to me. Commit messages have the details (`git log`); this file is the summary
 I can read in a minute. Add a line in the same commit as the change.
 
+## 2026-11-12
+- Android SDK and emulator from the command-line tools (no Android Studio) in ~/Android/Sdk, with a Pixel 8 / Android 17 virtual device `horarium-api37`, to build and see Horarium on this desktop.
+
 ## 2026-11-04
 - Neovim opens from rofi in its own Alacritty window with Maple Mono NF (v7.9 from github.com/subframe7536/maple-font, 4 styles in ~/.local/share/fonts/MapleMonoNF, checksum checked): new `nvim-font` script and a `nvim.desktop` override. Other terminals keep JetBrainsMono. Tried first: Inter (dropped: proportional, gaps after i, l and t) and IBM Plex Mono (installed from apt as `fonts-ibm-plex`, no Nerd Font icons). `fonts-inter` and `fonts-ibm-plex` are still installed, unused.
 - Neovim's jdtls re-reads `build.gradle` on save (`updateBuildConfiguration = "automatic"`); before, new dependencies showed as unresolved until `:JdtUpdateConfig`. `plugins/java.lua` was not linked by Stow until now, so none of its settings (organize imports on save, test-friendly completion) had been applied.
