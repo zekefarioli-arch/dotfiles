@@ -6,6 +6,7 @@ I can read in a minute. Add a line in the same commit as the change.
 
 ## 2026-11-12
 - Android SDK and emulator from the command-line tools (no Android Studio) in ~/Android/Sdk, with a Pixel 8 / Android 17 virtual device `horarium-api37`, to build and see Horarium on this desktop.
+- Second Android virtual device `horarium-play` with Play Store and Google Maps (to test Horarium's "Find on a map" and sign in to Google), and the PC keyboard turned on in both emulators.
 
 ## 2026-11-04
 - Neovim opens from rofi in its own Alacritty window with Maple Mono NF (v7.9 from github.com/subframe7536/maple-font, 4 styles in ~/.local/share/fonts/MapleMonoNF, checksum checked): new `nvim-font` script and a `nvim.desktop` override. Other terminals keep JetBrainsMono. Tried first: Inter (dropped: proportional, gaps after i, l and t) and IBM Plex Mono (installed from apt as `fonts-ibm-plex`, no Nerd Font icons). `fonts-inter` and `fonts-ibm-plex` are still installed, unused.
